@@ -16,3 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+
+Route::name('public.')->group(function () {
+    Route::resource('masters', \App\Http\Controllers\MasterController::class);
+    Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
+    Route::resource('places', \App\Http\Controllers\PlaceController::class);
+});
