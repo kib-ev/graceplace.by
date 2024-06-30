@@ -13,7 +13,7 @@ class PlaceController extends Controller
     public function index()
     {
         $places = \App\Models\Place::all();
-        return view('public.places.index', compact('places'));
+        return view('admin.places.index', compact('places'));
     }
 
     /**
@@ -21,7 +21,7 @@ class PlaceController extends Controller
      */
     public function create()
     {
-        return view('public.places.create');
+        return view('admin.places.create');
     }
 
     /**
@@ -32,7 +32,7 @@ class PlaceController extends Controller
         $place = Place::make();
         $place->fill($request->all())->save();
 
-        return redirect()->route('public.places.show', $place);
+        return redirect()->route('admin.places.show', $place);
     }
 
     /**
@@ -40,7 +40,7 @@ class PlaceController extends Controller
      */
     public function show(Place $place)
     {
-        return view('public.places.show', compact('place'));
+        return view('admin.places.show', compact('place'));
     }
 
     /**
@@ -48,7 +48,7 @@ class PlaceController extends Controller
      */
     public function edit(Place $place)
     {
-        //
+        return view('admin.places.edit', compact('place'));
     }
 
     /**
@@ -56,7 +56,9 @@ class PlaceController extends Controller
      */
     public function update(Request $request, Place $place)
     {
-        //
+        $place->fill($request->all())->save();
+
+        return redirect()->route('admin.places.index');
     }
 
     /**

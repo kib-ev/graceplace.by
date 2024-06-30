@@ -1,11 +1,11 @@
 @extends('app')
 
 
-@section('container')
+@section('content')
     <div class="row">
         <div class="col">
             <h1>Appointment</h1>
-            <a href="{{ route('public.appointments.index') }}">appointments</a>
+            <a href="{{ route('admin.appointments.index') }}">appointments</a>
             <hr>
             <table class="table table-bordered">
                 <tr>

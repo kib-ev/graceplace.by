@@ -16,8 +16,26 @@ class Master extends Model
         return $this->belongsTo(Person::class);
     }
 
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     public function getFullNameAttribute(): string
     {
-        return implode(' ', [$this->person->first_name, $this->person->last_name]);
+
+        return $this->person->first_name . ($this->person->last_name ? ' ' . $this->person->last_name : '');
     }
+
+    public function getPhoneAttribute(): string
+    {
+        $phone = $this->person->phones->first();
+        return $phone ? $phone->number : '';
+    }
+
+    public function lastAppointment(): ?Appointment
+    {
+        return \App\Models\Appointment::where('master_id', $this->id)->latest()->first();
+    }
+
 }

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('person_id');
             $table->text('description')->nullable();
+            $table->text('instagram')->nullable();
             $table->timestamps();
         });
     }

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->dateTime('date')->nullable();
             $table->integer('duration')->nullable(); // minutes
             $table->text('description')->nullable();
+            $table->decimal('price', 8, 2)->default(0);
             $table->timestamps();
         });
     }

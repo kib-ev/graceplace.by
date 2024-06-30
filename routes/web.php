@@ -13,13 +13,36 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/1', function () {
+    $date = request('date');
+    return view('welcome', compact('date'));
 });
 
+Route::get('/', function () {
+    $date = request('date');
 
-Route::name('public.')->group(function () {
+    if(is_null($date)) {
+        return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
+    }
+
+
+    return view('index', compact('date'));
+});
+
+Route::get('/admin/stats', function () {
+    return view('admin.stats');
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::resource('masters', \App\Http\Controllers\MasterController::class);
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
     Route::resource('places', \App\Http\Controllers\PlaceController::class);
 });
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

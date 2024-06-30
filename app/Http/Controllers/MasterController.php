@@ -15,7 +15,7 @@ class MasterController extends Controller
     public function index()
     {
         $masters = \App\Models\Master::all();
-        return view('public.masters.index', compact('masters'));
+        return view('admin.masters.index', compact('masters'));
     }
 
     /**
@@ -23,7 +23,7 @@ class MasterController extends Controller
      */
     public function create()
     {
-        return view('public.masters.create');
+        return view('admin.masters.create');
     }
 
     /**
@@ -37,6 +37,7 @@ class MasterController extends Controller
         $master = Master::create([
             'description' => $request->get('description'),
             'person_id' => $person->id,
+            'instagram' => $request->get('instagram'),
         ]);
 
         $phone = Phone::create([
@@ -44,7 +45,7 @@ class MasterController extends Controller
             'person_id' => $person->id,
         ]);
 
-        return redirect()->route('public.masters.show', $master);
+        return redirect()->route('admin.masters.show', $master);
     }
 
     /**
@@ -52,7 +53,7 @@ class MasterController extends Controller
      */
     public function show(Master $master)
     {
-        return view('public.masters.show', compact('master'));
+        return view('admin.masters.show', compact('master'));
     }
 
     /**
@@ -60,7 +61,7 @@ class MasterController extends Controller
      */
     public function edit(Master $master)
     {
-        return view('public.masters.edit', compact('master'));
+        return view('admin.masters.edit', compact('master'));
     }
 
     /**
@@ -68,7 +69,17 @@ class MasterController extends Controller
      */
     public function update(Request $request, Master $master)
     {
-        //
+        $person = $master->person;
+        $person->fill($request->all())->save();
+
+        $master->fill($request->all())->save();
+
+        $phone = $person->phones->first();
+        $phone->update([
+            'number' => $request->get('phone')
+        ]);
+
+        return redirect()->route('admin.masters.show', $master);
     }
 
     /**
@@ -76,6 +87,10 @@ class MasterController extends Controller
      */
     public function destroy(Master $master)
     {
-        //
+        if($master->appointments()->count() == 0) {
+            $master->delete();
+        }
+
+        return redirect()->route('admin.masters.index');
     }
 }
