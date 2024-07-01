@@ -17,7 +17,12 @@
 
                 <div class="form-group">
                     <label for="description">Описание</label>
-                    <textarea id="description" class="form-control" name="description" autocomplete="off">{{ isset($master) ? $master->description : '' }}</textarea>
+                    <textarea id="description" class="form-control" name="description" autocomplete="off">{{ isset($place) ? $place->description : '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="priceHour">Цена за час</label>
+                    <input id="priceHour" class="form-control" type="number" step="0.01" min="0" name="price_hour" value="{{ isset($place) ? $place->price_hour : '' }}" autocomplete="off">
                 </div>
 
                 <div class="form-group">

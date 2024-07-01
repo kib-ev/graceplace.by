@@ -94,7 +94,18 @@ class AppointmentController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
+        // CANCEL
+        if($request->get('cancel') == 1) {
+            $appointment->update([
+                'canceled_at' => now()
+            ]);
+
+            return back();
+        }
+
+        // UPDATE
         $appointment->fill($request->all())->save();
+
         return redirect()->route('admin.appointments.index');
     }
 

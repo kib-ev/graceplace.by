@@ -15,6 +15,15 @@ class Appointment extends Model
         'date' => 'datetime'
     ];
 
+//    protected static function boot()
+//    {
+//        parent::boot();
+//
+//        static::addGlobalScope('canceled', function (\Illuminate\Database\Eloquent\Builder $builder) {
+//            $builder->where('canceled_at', null);
+//        });
+//    }
+
     public function master()
     {
         return $this->belongsTo(Master::class);

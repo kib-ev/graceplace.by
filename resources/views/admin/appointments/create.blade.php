@@ -6,6 +6,10 @@
         <div class="col-6 offset-3">
             <h1>Add Appointment</h1>
 
+            @if($appointment->canceled_at)
+                <h2 class="bg-danger text-white p-2">ОТМЕНА</h2>
+            @endif
+
             <hr>
 
             <form action="{{ isset($appointment) ? route('admin.appointments.update', $appointment) : route('admin.appointments.store') }}" method="post" autocomplete="off">
@@ -118,10 +122,20 @@
 
 
             @if(isset($appointment) && is_null($appointment->price))
+                <form action="{{ route('admin.appointments.update', $appointment) }}" method="post" style="float: right;">
+                    @csrf
+                    @method('patch')
+                    <input type="hidden" name="cancel" value="1">
+                    <button class="btn btn-danger" type="submit">Отменить</button>
+                </form>
+            @endif
+
+
+            @if(isset($appointment) && is_null($appointment->price))
                 <form action="{{ route('admin.appointments.destroy', $appointment) }}" method="post" style="float: right;">
                     @csrf
                     @method('delete')
-                    <button type="submit">Удалить</button>
+                    <button type="submit" disabled>Удалить</button>
                 </form>
             @endif
         </div>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,7 +22,7 @@ class Place extends Model
     {
         $isAppointment = null;
 
-        foreach($this->appointments()->whereDay('date', $date)->get() as $appointment) {
+        foreach($this->appointments()->whereNull('canceled_at')->whereDay('date', $date)->get() as $appointment) {
             if($date->greaterThanOrEqualTo($appointment->date) && $date->lessThan($appointment->date->addMinutes($appointment->duration))) {
                 $isAppointment = $appointment;
             }
@@ -33,5 +34,16 @@ class Place extends Model
     public function isFree(Carbon $date): bool
     {
          return !$this->isAppointment($date);
+    }
+
+    public function nextAppointmentToMinutes(Carbon $date) //: ?CarbonInterval
+    {
+        $appointment = $this->appointments()->whereDay('date', $date)->where('date', '>=', $date)->first();
+
+        if($appointment) {
+            return CarbonInterval::minutes($date->diffInMinutes($appointment->date))->totalMinutes;
+        }
+
+        return null;
     }
 }

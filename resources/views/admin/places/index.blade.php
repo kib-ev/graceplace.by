@@ -11,11 +11,19 @@
             <hr>
 
             <table class="table table-bordered">
+                <tr>
+                    <th></th>
+                    <th>Наименование</th>
+                    <th>Описание</th>
+                    <th>Цена за час</th>
+                    <th></th>
+                </tr>
                 @foreach($places->sortBy('name') as $place)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
                         <td><a href="{{ route('admin.places.show', $place) }}">{{ $place->name }}</a></td>
                         <td>{{ $place->description }}</td>
+                        <td>{{ $place->price_hour }}</td>
                         <td><a href="{{ route('admin.places.edit', $place) }}">edit</a></td>
                     </tr>
                 @endforeach

@@ -22,8 +22,17 @@
         body {
             background-color: #f2f4f7;
         }
+
+
+        * {
+            touch-action: manipulation;
+        }
         table#appointmentsList tr th {
             background: #f3f3f3;
+        }
+
+        table#appointmentsList .canceled td {
+            background: #ffe4e4;
         }
 
         a {
@@ -59,16 +68,24 @@
             align-items: center;
             border-radius: 4px;
         }
+        .place .time {
+            user-select: none;
+        }
         .place .hour {
             border: 1px solid #c7c7c7;
             margin-bottom: 2px;
             padding: 1px 5px;
             border-radius: 4px;
+            cursor: pointer;
         }
-        .hour.busy {
+        .place .hour.busy {
             background: #ffdede;
         }
-        .hour.free {
+        .place .hour.busy .info {
+            color: #e5b7b7;
+            float: right;
+        }
+        .place .hour.free {
             background: #e1fbe1;
         }
     </style>

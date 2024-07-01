@@ -82,7 +82,7 @@
 
                         @forelse($appointmentsToDay as $appointment)
 
-                            <tr>
+                            <tr class="{{ !is_null($appointment->canceled_at) ? 'canceled' : '' }}">
                                 {{--                            <td style="width: 50px;">--}}
                                 {{--                                {{ $appointment->id }}--}}
                                 {{--                            </td>--}}
@@ -133,7 +133,13 @@
                                 </td>
 
                                 <td style="width: 100px; white-space: nowrap; text-align: right;">
-                                    <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
+
+                                    @if(is_null($appointment->price))
+                                        <span style="color: #e1e1e1;">{{ $appointment->place->price_hour * $appointment->duration / 60 }} BYN</span>
+                                    @else
+                                        <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
+                                    @endif
+
                                 </td>
 
                                 <td style="width: 80px;">
