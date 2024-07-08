@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+if (request()->has('dev') && file_exists(base_path('/routes/_dev.php'))) {
+    include_once (base_path('/routes/_dev.php'));
+}
+
 Route::get('/masters/{}', function () {
     $date = request('date');
     return view('welcome', compact('date'));

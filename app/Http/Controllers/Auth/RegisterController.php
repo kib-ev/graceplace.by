@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -48,8 +49,11 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
+        $this->fillEmail($data);
+
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:255', 'unique:users'], // todo correct validation
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -63,10 +67,26 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $this->fillEmail($data);
+
+        $user = User::create([
             'name' => $data['name'],
+            'phone' => $data['phone'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+
+        return $user;
+    }
+
+    /**
+     * Generate fake email for user.
+     *
+     * @param  array  $data
+     * @return void
+     */
+    private function fillEmail(&$data)
+    {
+        $data['email'] = Str::replace(['+', '-', '(', ')', ' '], '', $data['phone']) . '@' . 'graceplace.by'; // todo domain
     }
 }

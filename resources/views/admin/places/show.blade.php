@@ -23,9 +23,32 @@
                 </tr>
 
                 <tr>
+                    <td>Среднее время аренды: {{ $place->appointments->sum('duration') / 60 / $place->appointments->count() }}</td>
+                </tr>
+
+                <tr>
                     <td>СУММА: {{ $place->appointments->sum('price') }} BYN</td>
                 </tr>
 
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <table class="table table-bordered">
+                <tr>
+                    @for($i = 1; $i <=12; $i++)
+                        <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2024')->format('M-Y') }}</td>
+                    @endfor
+                </tr>
+                <tr>
+                    @for($i = 1; $i <=12; $i++)
+                        <td>
+                            {{ $place->appointments()->whereMonth('date', $i)->sum('price') }}
+                        </td>
+                    @endfor
+                </tr>
             </table>
         </div>
     </div>
@@ -38,7 +61,7 @@
 
             <table class="table table-bordered">
                 @foreach($place->appointments->sortBy('date') as $appointment)
-                    <tr>
+                    <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
                         <td>{{ $loop->index + 1 }}</td>
                         <td>{{ $appointment->date?->format('d.m.Y') }}</td>
 

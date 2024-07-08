@@ -25,7 +25,7 @@
                 <div style="display: flex; gap: 20px;">
                     <a href="{{ route('admin.appointments.index', ['date_from' => now()->subDays(7)->startOfWeek()->format('Y-m-d'), 'date_to' => now()->subDays(7)->endOfWeek()->format('Y-m-d')]) }}">прошлая неделя</a>
                     <a href="{{ route('admin.appointments.index', ['date_from' => now()->startOfWeek()->format('Y-m-d'), 'date_to' => now()->endOfWeek()->format('Y-m-d')]) }}">текущая неделя</a>
-                    <a href="{{ route('admin.appointments.index', ['date_from' => now()->startOfDay()->format('Y-m-d'), 'date_to' => now()->addDays(7)->endOfDay()->format('Y-m-d')]) }}">сегодня</a>
+                    <a href="{{ route('admin.appointments.index', ['date_from' => now()->startOfDay()->format('Y-m-d'), 'date_to' => now()->addDays(30)->endOfDay()->format('Y-m-d')]) }}">сегодня +30</a>
                     <a href="{{ route('admin.appointments.index', ['date_from' => now()->addDays(7)->startOfWeek()->format('Y-m-d'), 'date_to' => now()->addDays(7)->endOfWeek()->format('Y-m-d')]) }}">следующая неделя</a>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                                 <td style="width: 100px; white-space: nowrap; text-align: right;">
 
                                     @if(is_null($appointment->price))
-                                        <span style="color: #e1e1e1;">{{ $appointment->place->price_hour * $appointment->duration / 60 }} BYN</span>
+                                        <span style="color: #c1bebe;">{{ $appointment->place->price_hour * $appointment->duration / 60 }} BYN</span>
                                     @else
                                         <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
                                     @endif

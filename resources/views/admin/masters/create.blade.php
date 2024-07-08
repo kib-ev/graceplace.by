@@ -67,6 +67,16 @@
                 </div>
 
             </form>
+
+
+            @if(isset($master) && $master->appointments->count() == 0)
+                <form action="{{ route('admin.masters.destroy', $master) }}" method="post" style="float: right;">
+                    @csrf
+                    @method('delete')
+                    <button type="submit">Удалить</button>
+                </form>
+            @endif
+
         </div>
     </div>
 @endsection

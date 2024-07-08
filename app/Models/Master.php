@@ -35,7 +35,7 @@ class Master extends Model
 
     public function lastAppointment(): ?Appointment
     {
-        return \App\Models\Appointment::where('master_id', $this->id)->latest()->first();
+        return \App\Models\Appointment::where('master_id', $this->id)->whereNull('canceled_at')->latest()->first();
     }
 
 }

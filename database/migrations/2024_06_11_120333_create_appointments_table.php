@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('price', 8, 2)->nullable();
             $table->timestamp('canceled_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

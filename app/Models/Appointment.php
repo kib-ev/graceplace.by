@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Appointment extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -22,6 +24,11 @@ class Appointment extends Model
 //        static::addGlobalScope('canceled', function (\Illuminate\Database\Eloquent\Builder $builder) {
 //            $builder->where('canceled_at', null);
 //        });
+//    }
+//
+//    public function scopeExceptCanceled(\Illuminate\Database\Eloquent\Builder $builder)
+//    {
+//        return $builder->whereNotNull('canceled_at');
 //    }
 
     public function master()

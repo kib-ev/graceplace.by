@@ -38,7 +38,10 @@ class Place extends Model
 
     public function nextAppointmentToMinutes(Carbon $date) //: ?CarbonInterval
     {
-        $appointment = $this->appointments()->whereDay('date', $date)->where('date', '>=', $date)->first();
+        $appointment = $this->appointments()
+            ->whereNull('canceled_at')
+            ->whereDay('date', $date)
+            ->where('date', '>=', $date)->first();
 
         if($appointment) {
             return CarbonInterval::minutes($date->diffInMinutes($appointment->date))->totalMinutes;

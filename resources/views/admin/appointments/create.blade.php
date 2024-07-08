@@ -6,7 +6,7 @@
         <div class="col-6 offset-3">
             <h1>Add Appointment</h1>
 
-            @if($appointment->canceled_at)
+            @if(isset($appointment) && $appointment->canceled_at)
                 <h2 class="bg-danger text-white p-2">ОТМЕНА</h2>
             @endif
 
@@ -131,11 +131,11 @@
             @endif
 
 
-            @if(isset($appointment) && is_null($appointment->price))
+            @if(isset($appointment) && is_null($appointment->price) && $appointment->canceled_at)
                 <form action="{{ route('admin.appointments.destroy', $appointment) }}" method="post" style="float: right;">
                     @csrf
                     @method('delete')
-                    <button type="submit" disabled>Удалить</button>
+                    <button type="submit">Удалить</button>
                 </form>
             @endif
         </div>

@@ -5,9 +5,13 @@
 
     <div class="row mb-3 mt-3">
         <div class="col">
-            <form id="dateForm" action="" style="font-size: 20px;">
+            <form class="me-2" id="dateForm" action="" style="display: inline-block;">
                 <input type="date" name="date" value="{{ request('date') }}"  onchange="document.getElementById('dateForm').submit();">
             </form>
+
+{{--            @if(auth()->id())--}}
+{{--                <div class="d-inline-block">{{ auth()->user()->name }}</div>--}}
+{{--            @endif--}}
         </div>
     </div>
 
@@ -25,8 +29,28 @@
                                 {{ $place->name }}
                             </div>
 
-                            <div class="title" style="height: 30px; text-align: center;">
-                                {{ $place->price_hour }} руб. / ч.
+                            <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
+{{--                                @if(now()->isSameDay($date))--}}
+{{--                                    <s>&nbsp;{{ $place->price_hour }}&nbsp;</s>&nbsp;--}}
+{{--                                    {{ $place->price_hour / 2 }} руб. / час--}}
+{{--                                @else--}}
+{{--                                    {{ $place->price_hour }} руб. / час--}}
+{{--                                @endif--}}
+
+                                {{ $place->price_hour }} руб. / час
+
+                            </div>
+
+                            <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
+{{--                                @if(now()->isSameDay($date))--}}
+{{--                                    <s>&nbsp;{{ $place->price_hour * 8 }}&nbsp;</s>&nbsp;--}}
+{{--                                    {{ $place->price_hour * 8 / 2 }} руб. / день--}}
+{{--                                @else--}}
+{{--                                    {{ $place->price_hour * 8 }} руб. / день--}}
+{{--                                @endif--}}
+
+                                {{ $place->price_hour * 8 }} руб. / день
+
                             </div>
 
                             <div class="time">

@@ -22,7 +22,7 @@ class AppointmentController extends Controller
             return redirect()->route('admin.appointments.index', $parameters);
         }
 
-        $appointments = \App\Models\Appointment::orderBy('date');
+        $appointments = \App\Models\Appointment::withoutGlobalScopes(['canceled'])->orderBy('date');
 
         // DATE_FROM DATE_TO
         $dateFrom = Carbon::parse($request->get('date_from'));
