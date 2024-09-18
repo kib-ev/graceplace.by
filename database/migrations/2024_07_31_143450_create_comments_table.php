@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('masters', function (Blueprint $table) {
+        Schema::create('comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id');
-            $table->text('image_path')->nullable();
-            $table->text('description')->nullable();
-            $table->text('instagram')->nullable();
-            $table->text('direct')->nullable();
+            $table->foreignId('user_id')->nullable();
+            $table->string('model_class')->index();
+            $table->integer('model_id')->unsigned()->index();
+            $table->text('text')->nullable();
+            $table->string('type')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('masters');
+        Schema::dropIfExists('comments');
     }
 };

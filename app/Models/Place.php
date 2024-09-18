@@ -36,17 +36,33 @@ class Place extends Model
          return !$this->isAppointment($date);
     }
 
+    public function nextAppointment(Carbon $date) : ?Appointment
+    {
+        return $this->appointments()
+            ->whereNull('canceled_at')
+            ->whereDate('date', $date)
+            ->where('date', '>=', $date)
+            ->orderBy('date')
+            ->first();
+    }
+
     public function nextAppointmentToMinutes(Carbon $date) //: ?CarbonInterval
     {
-        $appointment = $this->appointments()
-            ->whereNull('canceled_at')
-            ->whereDay('date', $date)
-            ->where('date', '>=', $date)->first();
+        $appointment = $this->nextAppointment($date);
 
         if($appointment) {
             return CarbonInterval::minutes($date->diffInMinutes($appointment->date))->totalMinutes;
         }
 
         return null;
+    }
+
+    public function isFullDayBusy(Carbon $date): Appointment|null
+    {
+        return $this->appointments()
+            ->whereNull('canceled_at')
+            ->whereDate('date', $date)
+            ->where('full_day', 1)
+            ->first();
     }
 }

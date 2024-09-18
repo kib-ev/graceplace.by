@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable();
             $table->foreignId('master_id')->nullable();
             $table->foreignId('place_id')->nullable();
             $table->foreignId('client_id')->nullable();
             $table->dateTime('date')->nullable();
             $table->integer('duration')->nullable(); // minutes
+            $table->boolean('full_day')->default(0);
             $table->text('description')->nullable();
             $table->decimal('price', 8, 2)->nullable();
             $table->timestamp('canceled_at')->nullable();

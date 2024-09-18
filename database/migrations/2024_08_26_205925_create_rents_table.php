@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('masters', function (Blueprint $table) {
+        Schema::create('rents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id');
-            $table->text('image_path')->nullable();
+            $table->foreignId('master_id')->nullable();
+            $table->string('model_class')->index()->index();
+            $table->integer('model_id')->unsigned()->index();
             $table->text('description')->nullable();
-            $table->text('instagram')->nullable();
-            $table->text('direct')->nullable();
+            $table->dateTime('start_at');
+            $table->integer('duration')->comment('days');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('masters');
+        Schema::dropIfExists('rents');
     }
 };

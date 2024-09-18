@@ -4,22 +4,40 @@
 @section('content')
     <div class="row">
         <div class="col-6 offset-3">
-            <h1>Add Appointment</h1>
+            @if(isset($appointment))
+                <h1>Редактировать запись</h1>
+            @else
+                <h1>Добавить запись</h1>
+            @endif
 
             @if(isset($appointment) && $appointment->canceled_at)
-                <h2 class="bg-danger text-white p-2">ОТМЕНА</h2>
+                <h2 class="bg-danger text-white p-2">ОТМЕНА {{ $appointment->canceled_at->format('d.m.Y H:i') }}</h2>
             @endif
 
             <hr>
+
+            @if($errors->any())
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            @foreach($errors->all() as $error)
+                                <strong>{{ $error }}</strong><br>
+                            @endforeach
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
 
             <form action="{{ isset($appointment) ? route('admin.appointments.update', $appointment) : route('admin.appointments.store') }}" method="post" autocomplete="off">
                 @csrf
                 @method(isset($appointment) ? 'patch' : 'post')
 
 
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="masterId">Master</label>
-                    <select id="masterId" name="master_id" class="form-control">
+                    <select id="masterId" name="master_id" class="form-control" required>
                         <option value=""></option>
                         @foreach(\App\Models\Master::all()->sortBy('person.first_name') as $master)
                             <option value="{{ $master->id }}" @selected($master->id == (isset($appointment) ? $appointment->master_id : request('master_id')))>
@@ -29,9 +47,9 @@
                     </select>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="placeId">Place</label>
-                    <select id="placeId" name="place_id" class="form-control">
+                    <select id="placeId" name="place_id" class="form-control" required>
                         <option value=""></option>
                         @foreach(\App\Models\Place::all()->sortBy('name') as $place)
                             <option value="{{ $place->id }}" @selected($place->id == (isset($appointment) ? $appointment->place_id : request('place_id')))>
@@ -41,14 +59,45 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="datetime">Date</label>
-                    <input id="datetime" type="datetime-local" class="form-control" name="date" value="{{ isset($appointment) ? $appointment->date : (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d 09:00') : now()->addDay()->floorHour(1)->format('Y-m-d H:i')) }}">
+                <div class="form-group mb-2">
+                    <label for="date">Дата</label>
+                    @if(isset($appointment))
+                        <input id="date" type="date" class="form-control" name="date" value="{{ $appointment->date->format('Y-m-d') }}" required>
+                    @else
+                        <input id="date" type="date" class="form-control" name="date" value="{{ (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d') : now()->addDay()->floorHour(1)->format('Y-m-d')) }}" required>
+                    @endif
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mb-2">
+                    <label for="time">Время</label>
+
+                    <div class="float-end">
+                        <input type="hidden" name="full_day" value="0">
+                        <input id="fullDay" class="form-check-input" type="checkbox" name="full_day" value="1" {{ isset($appointment) && $appointment->full_day ? 'checked' : '' }}>
+                        <label class="form-check-label" for="fullDay" style="user-select: none;">
+                            Полный день
+                        </label>
+                    </div>
+
+                    <input name="time" type="hidden" value="09:00">
+                    <input name="duration" type="hidden" value="480">
+
+                    @if(isset($appointment))
+                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ $appointment->date->format('H:i') }}" {{ $appointment->full_day ? 'disabled' : '' }} required>
+                    @else
+                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d 09:00') : now()->addDay()->floorHour(1)->format('Y-m-d H:i')) }}" required>
+                    @endif
+                </div>
+
+{{--                <div class="form-group">--}}
+{{--                    <input id="datetime" type="checkbox" class="form-check" value="">--}}
+{{--                    <label for="datetime">Полный день</label>--}}
+{{--                </div>--}}
+
+                <div class="form-group mb-2">
                     <label for="duration">Продолжительность (ч.)</label>
-                    <select id="duration" name="duration" class="form-control">
+
+                    <select id="duration" name="duration" class="form-control" {{ isset($appointment) && $appointment->full_day ? 'disabled' : '' }} required>
                         <option value=""></option>
 
 {{--                        @for($step = 30, $time = now()->startOfDay()->addMinutes($step); $time->lessThan(now()->startOfDay()->addMinutes(21*$step)); $newT$time->addMinutes($step))--}}
@@ -74,18 +123,38 @@
 {{--                        <option value="330" @selected(isset($appointment) ? $appointment->duration == 330 : '')>5:30</option>--}}
 {{--                        <option value="360" @selected(isset($appointment) ? $appointment->duration == 360 : '')>6:00</option>--}}
                     </select>
+
+
+                    <script>
+                        $(document).ready(function () {
+                            $('#fullDay').on('click', function () {
+                                if($(this).is(':checked')) {
+                                    // $('select#duration option:first').prop('selected', true);
+                                    $('select#duration').attr('disabled', 'disabled');
+                                    $('input#time').attr('disabled', 'disabled');
+                                } else {
+                                    $('select#duration').removeAttr('disabled');
+                                    $('input#time').removeAttr('disabled');
+                                }
+                            });
+                        });
+                    </script>
+
+
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="description">Описание</label>
                     <textarea id="description" class="form-control" name="description">{{ isset($appointment) ? $appointment->description : '' }}</textarea>
                 </div>
 
                 <hr>
 
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="price">Стоимость</label>
-                    <input id="price" type="number" step="0.01" min="0" class="form-control" name="price" value="{{ isset($appointment) ? $appointment->price : '' }}">
+                    <input id="price" type="number" step="0.01" min="0" class="form-control" name="price"
+                           value="{{ isset($appointment) ? $appointment->price : '' }}"
+                           placeholder="Расчетная: {{ isset($appointment) ? $appointment->getExpectedPrice() : '' }} BYN">
                 </div>
 
 {{--                <div class="form-group">--}}

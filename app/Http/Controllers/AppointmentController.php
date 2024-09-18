@@ -22,7 +22,7 @@ class AppointmentController extends Controller
             return redirect()->route('admin.appointments.index', $parameters);
         }
 
-        $appointments = \App\Models\Appointment::withoutGlobalScopes(['canceled'])->orderBy('date');
+        $appointments = \App\Models\Appointment::orderBy('date');
 
         // DATE_FROM DATE_TO
         $dateFrom = Carbon::parse($request->get('date_from'));
@@ -68,9 +68,20 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $appointment = Appointment::make();
-        $appointment->fill($request->all())->save();
+        $appointment->fill($request->all());
+        $appointment->date = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
+        $appointment->save();
 
-        return redirect()->route('admin.appointments.index');
+        if($appointment->id) {
+            if(auth()->id()) {
+                $appointment->update([
+                    'user_id' => auth()->id()
+                ]);
+            }
+            return redirect()->route('admin.appointments.edit', $appointment);
+        } else {
+            return back()->withErrors('Ошибка сохранения.');;
+        }
     }
 
     /**
@@ -104,9 +115,14 @@ class AppointmentController extends Controller
         }
 
         // UPDATE
-        $appointment->fill($request->all())->save();
+        $appointment->fill($request->all());
+        $appointment->date = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
 
-        return redirect()->route('admin.appointments.index');
+        if($appointment->save()) {
+            return back();
+        } else {
+            return back()->withErrors('Ошибка сохранения.');;
+        }
     }
 
     /**

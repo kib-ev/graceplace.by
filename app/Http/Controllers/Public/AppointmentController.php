@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
 {
@@ -15,8 +16,18 @@ class AppointmentController extends Controller
         $appointment->fill($request->all());
         $appointment->date = Carbon::parse($request->get('datetime'));
 
+        $appointment->user_id = auth()->id();
         $appointment->save();
 
-        return back();
+        if($appointment->id && $request->get('comment')) {
+            $appointment->addComment(Auth::user(), $request->get('comment'), USER_COMMENT_TYPE);
+        }
+
+        if($appointment->id) {
+            return back();
+        } else {
+            return back()->withErrors('Ошибка сохранения.');;
+        }
+
     }
 }

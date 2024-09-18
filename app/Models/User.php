@@ -45,4 +45,18 @@ class User extends Authenticatable
         'phone_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function person()
+    {
+        return $this->hasOneThrough(Master::class, Phone::class, 'number', 'person_id', 'phone', 'id');
+    }
+
+//    public function getMasterId()
+//    {
+//        $person = Person::whereHas('phones', function ($query) {
+//            $query->where('number', $this->phone);
+//        })->first();
+//
+//        return isset($person->master) ? $person->master->id : null;
+//    }
 }

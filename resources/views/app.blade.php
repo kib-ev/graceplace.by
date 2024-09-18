@@ -17,6 +17,8 @@
 
     <link href="{{ asset('/build/assets/app-D-sv12UV.css') }}" rel="stylesheet">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
 
         body {
@@ -48,6 +50,10 @@
             margin: 2px;
         }
 
+        .self-added {
+            color: #4ab728;
+        }
+
         .place {
             min-width: 170px;
         }
@@ -77,18 +83,46 @@
             padding: 1px 5px;
             border-radius: 4px;
             cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+
+            white-space: nowrap;
         }
         .place .hour.busy {
             background: #ffdede;
         }
+        .place .hour.busy.break {
+            background: #ffebeb !important;
+        }
         .place .hour.busy .info {
             color: #e5b7b7;
             float: right;
+            font-size: 0.9em;
+        }
+        .place .hour.busy.master {
+            background: #b5cfff;
+        }
+        .place .time.master .hour {
+            background: #b5cfff !important;
+        }
+        .place .time.master .hour .info,
+        .place .hour.busy.master .info {
+            color: #95aedd;
         }
         .place .hour.free {
             background: #e1fbe1;
         }
+
+        .place .hour .add-app {
+            padding: 0px 5px;
+        }
+
+        .place .hour .add-app:hover {
+            color: gold;
+        }
     </style>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
     <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
 
@@ -102,35 +136,28 @@
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> GracePlace</a>
 
 
-        @if(str_contains(url()->full(), '/admin/') || auth()->id())
+        @if(auth()->user() && auth()->user()->hasRole('admin'))
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
+
 
     {{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
                         <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
                         <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
-                        <a class="nav-link" href="{{ route('admin.places.index') }}">Места</a>
+                        <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
+
+                        <a class="nav-link" href="{{ route('admin.compartments.index') }}">Локер</a>
+
+
                         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
-                </div>
-            </div>
 
-        @else
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                        <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
 
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <div class="navbar-nav">
-                    <a class="nav-link" href="{{ route('login') }}">Вход</a>
-                    {{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
-{{--                    <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>--}}
-{{--                    <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>--}}
-{{--                    <a class="nav-link" href="{{ route('admin.places.index') }}">Места</a>--}}
-{{--                    <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>--}}
+                        <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
                 </div>
             </div>
         @endif
@@ -149,5 +176,6 @@
         </div>
     </div>
 </footer>
+
 </body>
 </html>

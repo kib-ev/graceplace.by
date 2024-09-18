@@ -23,7 +23,15 @@
                 </tr>
 
                 <tr>
-                    <td>Среднее время аренды: {{ $place->appointments->sum('duration') / 60 / $place->appointments->count() }}</td>
+                    <td>
+                        Среднее время аренды:
+
+                        @if($place->appointments->count())
+                            {{ $place->appointments->sum('duration') / 60 / $place->appointments->count() }}
+                        @else
+                            0
+                        @endif
+                    </td>
                 </tr>
 
                 <tr>
@@ -59,39 +67,7 @@
 
             <hr>
 
-            <table class="table table-bordered">
-                @foreach($place->appointments->sortBy('date') as $appointment)
-                    <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
-                        <td>{{ $loop->index + 1 }}</td>
-                        <td>{{ $appointment->date?->format('d.m.Y') }}</td>
-
-                        <td>
-                            @if(isset($appointment->date))
-                                {{ $appointment->date?->format('H:i') }} -
-                                {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
-                            @endif
-                        </td>
-
-                        <td>
-                            @if($appointment->master)
-                                <a href="{{ route('admin.masters.show', $appointment->master) }}">{{ $appointment->master->full_name }}</a>
-                            @endif
-                        </td>
-
-                        <td>
-                            @if(isset($appointment->price))
-                                @if($appointment->price == 0)
-                                    FREE
-                                @else
-                                    {{ $appointment->price }} BYN
-                                @endif
-                            @endif
-                        </td>
-                    </tr>
-                @endforeach
-            </table>
-
-
+            @include('admin.appointments.includes.table', ['appointments' => $place->appointments])
 
         </div>
     </div>

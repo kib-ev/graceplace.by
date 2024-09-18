@@ -39,6 +39,7 @@ class MasterController extends Controller
             'description' => $request->get('description'),
             'person_id' => $person->id,
             'instagram' => $request->get('instagram'),
+            'direct' => $request->get('direct'),
         ]);
 
         $phone = Phone::create([
@@ -80,7 +81,9 @@ class MasterController extends Controller
             'number' => $request->get('phone')
         ]);
 
-        return redirect()->route('admin.masters.show', $master);
+        return back();
+
+//        return redirect()->route('admin.masters.show', $master);
     }
 
     /**

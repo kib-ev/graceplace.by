@@ -13,12 +13,14 @@
             <table class="table table-bordered mb-5">
                 <tr>
                     <td></td>
+                    <td></td>
                     <td>Имя мастера</td>
                     <td>Телефон</td>
                     <td>Инста</td>
+                    <td>Директ</td>
                     <td>Услуги</td>
                     <td>Дата <br> регистрации</td>
-                    <td>Количество <br> записей</td>
+                    <td>Записи</td>
                     <td>Последний <br> визит</td>
 
 
@@ -28,10 +30,14 @@
                 @foreach($masters/*->sortBy('person.first_name')*/ as $master)
                     <tr>
                         <td style="width: 50px;">{{ $loop->index + 1 }}</td>
+                        <td>
+                            <img src="{{ $master->image_path }}" style="width: 30px;">
+                        </td>
                         <td style="width: 300px;">
                             <a href="{{ route('admin.masters.show', $master) }}">{{ $master->full_name }}</a>
 
                             <span style="color: #ccc;">id: {{ $master->id }}</span>
+
 
                         </td>
 
@@ -49,14 +55,29 @@
                             @endif
                         </td>
 
+                        <td>
+                            @if(isset($master->direct))
+                                <span class="float-end">
+                                    <a href="{{ $master->direct }}" target="_blank">direct</a>
+                                </span>
+                            @endif
+                        </td>
+
                         <td>{{ $master->description }}</td>
 
                         <td>
                             {{ $master->created_at->format('d.m.Y') }}
                         </td>
 
-                        <td>
-                            {{ \App\Models\Appointment::where('master_id', $master->id)->count() }}
+                        <td style="white-space: nowrap;">
+                            @php
+                                $appointments = \App\Models\Appointment::where('master_id', $master->id)->get();
+                            @endphp
+
+                            {{ $appointments->count() }} /
+                            {{ $appointments->whereNull('canceled_at')->count() }} /
+                            {{ $appointments->whereNotNull('canceled_at')->count() }}
+
                         </td>
 
                         <td style="white-space: nowrap;">

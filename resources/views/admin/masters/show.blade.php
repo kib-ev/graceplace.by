@@ -4,12 +4,14 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Master</h1>
-            <a href="{{ route('admin.masters.index') }}">Masters</a>
+            <h1>Мастер</h1>
             <hr>
             <table class="table table-bordered">
                 <tr>
-                    <td>{{ $master->id }}</td>
+                    <td>id: {{ $master->id }}</td>
+                </tr>
+                <tr>
+                    <td>user_id: {{ \App\Services\AppointmentService::getUserByMasterId($master->id)?->id }}</td>
                 </tr>
                 <tr>
                     <td>{{ $master->person->first_name }} {{ $master->person->last_name }}</td>
@@ -19,7 +21,7 @@
 {{--                </tr>--}}
                 <tr>
                     <td>
-                        <ul style="list-style-type: none; margin-bottom: 0px;">
+                        <ul style="list-style-type: none; margin: 0px; padding: 0px;">
                             @foreach($master->person->phones as $phone)
                                 <li>{{ $phone->number }}</li>
                             @endforeach
@@ -58,7 +60,7 @@
 
             </table>
 
-            <a href="{{ route('admin.masters.edit', $master) }}">edit</a>
+            <a class="btn btn-primary float-end" href="{{ route('admin.masters.edit', $master) }}">edit</a>
 
             @if($master->appointments->count() == 0)
                 <form action="{{ route('admin.masters.destroy', $master) }}" method="post">
@@ -71,7 +73,15 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row mt-3">
+        <div class="col">
+            <div class="comments">
+                @include('admin.comments.includes.widget', ['model' => $master, 'title' => 'Комментарий', 'type' => 'admin'])
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
         <div class="col">
             <table class="table table-bordered">
                 <tr>
@@ -92,44 +102,9 @@
 
     <div class="row">
         <div class="col">
+            <a class="btn btn-primary me-3 mb-3" href="https://graceplace.by/admin/appointments/create?master_id={{ $master->id }}">Добавить запись</a>
 
-            <table class="table table-bordered">
-                @foreach($master->appointments->sortBy('date') as $appointment)
-                    <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
-                        <td>{{ $loop->index + 1 }}</td>
-                        <td>{{ $appointment->date?->format('d.m.Y') }}</td>
-
-                        <td>
-                            @if(isset($appointment->date))
-                                {{ $appointment->date?->format('H:i') }} -
-                                {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
-                            @endif
-                        </td>
-
-                        <td>
-                            @if($appointment->place)
-                                <a href="{{ route('admin.places.show', $appointment->place) }}">{{ $appointment->place->name }}</a>
-                            @endif
-                        </td>
-
-                        <td>
-                            @if(isset($appointment->price))
-                                @if($appointment->price == 0)
-                                    FREE
-                                @else
-                                    {{ $appointment->price }} BYN
-                                @endif
-                            @endif
-                        </td>
-
-                        <td>
-                            <a href="{{ route('admin.appointments.edit', $appointment) }}">edit</a>
-                        </td>
-                    </tr>
-                @endforeach
-            </table>
-
-
+            @include('admin.appointments.includes.table', ['appointments' => $master->appointments])
         </div>
     </div>
 @endsection

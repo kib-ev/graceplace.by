@@ -1,0 +1,75 @@
+@extends('app')
+
+
+@section('content')
+    <div class="row">
+        <div class="col-6 offset-3">
+            @if(isset($compartment))
+                <h1>Редактировать ячейку</h1>
+            @else
+                <h1>Добавить ячейку</h1>
+            @endif
+
+            <hr>
+
+{{--            @if($errors->any())--}}
+{{--                <div class="row">--}}
+{{--                    <div class="col-12">--}}
+{{--                        <div class="alert alert-warning alert-dismissible fade show" role="alert">--}}
+{{--                            @foreach($errors->all() as $error)--}}
+{{--                                <strong>{{ $error }}</strong><br>--}}
+{{--                            @endforeach--}}
+{{--                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--            @endif--}}
+
+
+            <form action="{{ isset($compartment) ? route('admin.compartments.update', $compartment) : route('admin.compartments.store') }}" method="post" autocomplete="off">
+                @csrf
+                @method(isset($compartment) ? 'patch' : 'post')
+
+                <div class="form-group mb-2">
+                    <label for="compartmentName">Название</label>
+                    <input class="form-control" id="compartmentName" type="text" name="name" value="{{ isset($compartment) ? $compartment->name : '' }}" required>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="compartmentDescription">Описание</label>
+                    <textarea class="form-control"  name="description"  id="compartmentDescription" cols="30" rows="10">{{ isset($compartment) ? $compartment->description : '' }}</textarea>
+                </div>
+
+                <hr>
+
+                <div class="form-group">
+                    @if(isset($compartment))
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    @else
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    @endif
+                </div>
+
+            </form>
+
+
+{{--            @if(isset($compartment) && is_null($compartment->price))--}}
+{{--                <form action="{{ route('admin.appointments.update', $compartment) }}" method="post" style="float: right;">--}}
+{{--                    @csrf--}}
+{{--                    @method('patch')--}}
+{{--                    <input type="hidden" name="cancel" value="1">--}}
+{{--                    <button class="btn btn-danger" type="submit">Отменить</button>--}}
+{{--                </form>--}}
+{{--            @endif--}}
+
+
+{{--            @if(isset($compartment) && is_null($compartment->price) && $compartment->canceled_at)--}}
+{{--                <form action="{{ route('admin.appointments.destroy', $appointment) }}" method="post" style="float: right;">--}}
+{{--                    @csrf--}}
+{{--                    @method('delete')--}}
+{{--                    <button type="submit">Удалить</button>--}}
+{{--                </form>--}}
+{{--            @endif--}}
+        </div>
+    </div>
+@endsection

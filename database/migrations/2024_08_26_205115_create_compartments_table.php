@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('masters', function (Blueprint $table) {
+        Schema::create('compartments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id');
-            $table->text('image_path')->nullable();
+            $table->string('name')->index();
             $table->text('description')->nullable();
-            $table->text('instagram')->nullable();
-            $table->text('direct')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('masters');
+        Schema::dropIfExists('compartments');
     }
 };

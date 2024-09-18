@@ -29,17 +29,44 @@ Route::get('/', function () {
         return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
     }
 
-    return view('index', compact('date'));
+    return view('public/index2', compact('date'));
 });
 
-Route::get('/admin/stats', function () {
-    return view('admin.stats');
+Route::get('/index1', function () {
+    $date = request('date');
+
+//    if(is_null($date)) {
+//        return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
+//    }
+
+    return view('public/index', compact('date'));
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
     Route::resource('places', \App\Http\Controllers\PlaceController::class);
+    Route::resource('compartments', \App\Http\Controllers\CompartmentController::class);
+
+    Route::get('stats', function () {
+        return view('admin.stats');
+    });
+
+    Route::get('logs', function () {
+        return view('admin.logs');
+    });
+
+    // COMMENTS
+    Route::resource('comments', \App\Http\Controllers\CommentController::class)->only(['store', 'destroy']);
+
+    // RENTS
+    Route::resource('rents', \App\Http\Controllers\RentController::class);
+
+    // USER
+    Route::get('/user/{user}/schedule', function ($user) {
+        $master = \App\Services\AppointmentService::getMasterByUserId($user);
+        return view('user.schedule', compact('master'));
+    });
 });
 
 Route::name('public.')->middleware(['auth'])->group(function () {
@@ -49,4 +76,23 @@ Route::name('public.')->middleware(['auth'])->group(function () {
 
 Auth::routes(['register' => false]);
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/logout', function () {
+    \Illuminate\Support\Facades\Auth::logout();
+    return redirect('/');
+});
+
+Route::get('/home', function () {
+    return redirect()->to('/');
+})->name('home');
+
+
+Route::get('/test', function () {
+
+
+    $value = \App\Services\AppointmentService::getMasterByUserId(1);
+
+    dump($value);
+
+
+    return view('welcome');
+});

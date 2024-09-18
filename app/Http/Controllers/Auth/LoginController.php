@@ -3,7 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Master;
+use App\Models\Person;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -41,5 +48,31 @@ class LoginController extends Controller
     public function username()
     {
         return 'phone';
+    }
+
+    public function login(Request $request)
+    {
+        $person = Person::whereHas('phones', function (Builder $query) use ($request) {
+            $query->where('number', $request->get('phone'));
+        })->first();
+
+        if(isset($person->master) && $request->get('password') == 'graceplace' . $person->master->id) {
+
+            User::updateOrCreate([
+
+                'email' => Str::replace(['+'], '', $request->get('phone')). '@graceplace.by',
+                'phone' => $request->get('phone'),
+            ], [
+                'name' => $person->master->full_name,
+                'password' => bcrypt($request->get('password'))
+            ]);
+        }
+
+        $result = Auth::attempt([
+            'phone' => $request->phone,
+            'password' => $request->password,
+        ], $request->has('remember'));
+
+        return $result ? redirect()->to('/') : back();
     }
 }

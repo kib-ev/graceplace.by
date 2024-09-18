@@ -32,8 +32,18 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="imagePath">Ссылка на фото</label>
+                    <input id="imagePath" class="form-control" name="image_path" value="{{ isset($master) ? $master->image_path : '' }}">
+                </div>
+
+                <div class="form-group">
                     <label for="instagram">Инстаграм</label>
                     <textarea id="instagram" class="form-control" name="instagram">{{ isset($master) ? $master->instagram : '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="direct">Ссылка на direct</label>
+                    <input id="direct" class="form-control" name="direct" value="{{ isset($master) ? $master->direct : '' }}">
                 </div>
 
 {{--                <div class="form-group">--}}

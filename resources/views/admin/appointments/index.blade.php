@@ -4,7 +4,7 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Appointments</h1>
+            <h1>Записи</h1>
 
             <hr>
             <a href="{{ route('admin.appointments.create', request()->all()) }}" class="btn btn-primary me-3">Добавить</a>
@@ -53,13 +53,20 @@
 
                     <table id="appointmentsList" class="table table-bordered mb-5">
                         <tr>
-                            <th colspan="7">
-                                <a style="font-size: 20px; text-decoration: none;" href="{{ request()->fullUrlWithQuery(['date' => \Carbon\Carbon::parse($nextDate)->format('Y-m-d')]) }}">{{ $nextDate->format('d/m Y') }}</a>
+                            <th colspan="9">
 
-                                <span style="font-size: 20px; color: #ccc;">[{{ Carbon\Carbon::parse($nextDate)->isoFormat('dddd') }}]</span>
+                                <a style="font-size: 20px; color: #333;" href="{{ url('https://graceplace.by?date=' . \Carbon\Carbon::parse($nextDate)->format('Y-m-d')) }}" target="_blank">
+
+                                    {{ $nextDate->format('d/m Y') }}
+
+{{--                                <a style="font-size: 20px; text-decoration: none;" href="{{ request()->fullUrlWithQuery(['date' => \Carbon\Carbon::parse($nextDate)->format('Y-m-d')]) }}"></a>--}}
+
+                                    [{{ Carbon\Carbon::parse($nextDate)->isoFormat('dddd') }}]
+                                </a>
+
 
                                 @if(now()->subDay()->startOfDay()->equalTo(\Carbon\Carbon::parse($nextDate)->startOfDay()))
-                                    <b style="font-size: 20px; color: #ccc;">Вчера</b>
+                                    <span style="font-size: 20px; color: #ccc;">Вчера</span>
                                 @endif
 
                                 @if(now()->startOfDay()->equalTo(\Carbon\Carbon::parse($nextDate)->startOfDay()))
@@ -70,9 +77,7 @@
                                     <b style="font-size: 20px; color: #ccc;">Завтра</b>
                                 @endif
 
-                                <span style="float: right; font-size: 20px;">
-                                    <a style="color: #333;" href="{{ url('https://graceplace.by?date=' . \Carbon\Carbon::parse($nextDate)->format('Y-m-d')) }}" target="_blank">График</a>
-                                </span>
+
                             </th>
                         </tr>
 
@@ -89,23 +94,46 @@
 
                                 {{--                            <td>{{ $appointment->date?->format('d.m.Y') }}</td>--}}
 
-                                <td style="width: 150px;">
-                                    @if(isset($appointment->date))
-                                        {{ $appointment->date?->format('H:i') }} -
-                                        {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
+                                <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
+
+                                    @if($appointment->full_day)
+                                        Полный день
+                                    @else
+                                        @if(isset($appointment->date))
+                                            {{ $appointment->date?->format('H:i') }} -
+                                            {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
+                                        @endif
+                                    @endif
+
+                                </td>
+
+                                <td style="width: 1%; min-width: 30px;">
+                                    @if($appointment->isSelfAdded())
+                                        <span class="self-added"><i class="fa fa-user"></i></span>
+                                    @else
+
                                     @endif
                                 </td>
 
-                                <td style="width: 250px;">
+                                <td style="width: 180px;">
                                     @if(isset($appointment->master))
 
                                         <div class="flex-fill" style="display:flex; justify-content: space-between;">
-                                            <a href="{{ request()->fullUrlWithQuery(['master_id' => $appointment->master_id]) }}">{{ $appointment->master->full_name }}</a>
-                                            <a target="_blank" href="{{ route('admin.masters.show', $appointment->master) }}">?</a>
+                                            <a href="{{ route('admin.masters.show', $appointment->master) }}">{{ $appointment->master->full_name }}</a>
+
                                         </div>
 
                                         {{--                                <a href="{{ route('admin.masters.show', $appointment->master) }}">{{ $appointment->master->full_name }}</a>--}}
                                     @endif
+
+
+                                    <div class="comments">
+                                        @foreach($appointment->comments as $comment)
+                                            <div class="comment" style="border: 1px solid #ccc; padding: 5px 10px;background: #fbffc5;">
+                                                {{ $comment->text }}
+                                            </div>
+                                        @endforeach
+                                    </div>
 
                                     {{--                            @if($appointment->client)--}}
                                     {{--                                <br>--}}
@@ -120,8 +148,13 @@
                                     @endif
                                 </td>
 
+                                <td style="width: 40px;">
+                                    @if(isset($appointment->master) && $appointment->master->direct)
+                                        <a target="_blank" href="{{ $appointment->master->direct }}">direct</a>
+                                    @endif
+                                </td>
 
-                                <td style="width: 250px;">
+                                <td style="width: 180px; white-space: nowrap;">
                                     @if(isset($appointment->place))
                                         <a href="{{ request()->fullUrlWithQuery(['place_id' => $appointment->place_id]) }}">{{ $appointment->place->name }}</a>
                                         {{--                                <a href="{{ route('admin.places.show', $appointment->place) }}?date_from={{ now()->format('Y-m-d') }}&date_to={{ now()->addWeek()->format('Y-m-d') }}">{{ $appointment->place->name }}</a>--}}
@@ -134,22 +167,22 @@
 
                                 <td style="width: 100px; white-space: nowrap; text-align: right;">
 
-                                    @if(is_null($appointment->price))
-                                        <span style="color: #c1bebe;">{{ $appointment->place->price_hour * $appointment->duration / 60 }} BYN</span>
+                                    @if(is_null($appointment->price) && isset($appointment->place))
+                                        <span style="color: #c1bebe;">{{ $appointment->getExpectedPrice() }} BYN</span>
                                     @else
                                         <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
                                     @endif
 
                                 </td>
 
-                                <td style="width: 80px;">
-                                    <a href="{{ route('admin.appointments.edit', $appointment) }}">edit</a>
+                                <td style="width: 1%;">
+                                    <a href="{{ route('admin.appointments.edit', $appointment) }}"><i class="fa fa-edit"></i></a>
                                 </td>
                             </tr>
 
                             @empty
                                 <tr>
-                                    <td colspan="7">Нет записей</td>
+                                    <td colspan="9">Нет записей</td>
                                 </tr>
                         @endforelse
 
@@ -158,7 +191,9 @@
                             <th></th>
                             <th></th>
                             <th></th>
-                            <th style="text-align: right;">Сумма</th>
+                            <th></th>
+                            <th></th>
+                            <th style="text-align: right;">ИТОГО</th>
 
                             <th style="width: 100px; white-space: nowrap; text-align: right;">
                                 <b>{{ number_format($appointmentsToDay->sum('price'), 2, '.') }} BYN</b>
