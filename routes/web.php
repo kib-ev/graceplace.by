@@ -22,6 +22,20 @@ Route::get('/masters/{}', function () {
     return view('welcome', compact('date'));
 });
 
+Route::get('/gpt', function () {
+    return view('gpt');
+});
+
+Route::get('/schedule', function () {
+    $date = request('date');
+
+    if(is_null($date)) {
+        return redirect()->to('https://graceplace.by/schedule?date=' . now()->format('Y-m-d'));
+    }
+
+    return view('public/index2', compact('date'));
+});
+
 Route::get('/', function () {
     $date = request('date');
 
@@ -43,6 +57,11 @@ Route::get('/index1', function () {
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+
+    Route::get('/', function () {
+        return redirect()->to('/admin/appointments');
+    });
+
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
     Route::resource('places', \App\Http\Controllers\PlaceController::class);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AppointmentService;
 use App\Traits\HasComments;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,19 +19,10 @@ class Appointment extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'date' => 'datetime',
+        'start_at' => 'datetime',
         'canceled_at' => 'datetime',
         'duration' => 'integer'
     ];
-
-//    protected static function boot() // редактирование не работает при этом
-//    {
-//        parent::boot();
-//
-//        static::addGlobalScope('canceled', function (\Illuminate\Database\Eloquent\Builder $builder) {
-//            $builder->where('canceled_at', null);
-//        });
-//    }
 
     public function scopeWithoutCanceled(\Illuminate\Database\Eloquent\Builder $builder)
     {
@@ -75,7 +67,7 @@ class Appointment extends Model
     {
         $thisDayAppointments = Appointment::where('master_id', $this->master_id)
             ->where('place_id', $this->place_id)
-            ->whereDate('date', $this->date)
+            ->whereDate('start_at', $this->start_at)
             ->where('id', '!=', $this->id)
             ->get();
 
@@ -88,16 +80,16 @@ class Appointment extends Model
     {
         // TODO add force merge
 
-        $startTime = Carbon::parse($this->date);
-        $endTime = Carbon::parse($this->date->clone()->addMinutes($this->duration));
+        $startTime = Carbon::parse($this->start_at);
+        $endTime = Carbon::parse($this->start_at->clone()->addMinutes($this->duration));
 
-        $appStartTime = Carbon::parse($appointment->date);
-        $appEndTime = Carbon::parse($appointment->date->clone()->addMinutes($appointment->duration));
+        $appStartTime = Carbon::parse($appointment->start_at);
+        $appEndTime = Carbon::parse($appointment->start_at->clone()->addMinutes($appointment->duration));
 
         if ($startTime->between($appStartTime, $appEndTime) || $endTime->between($appStartTime, $appEndTime)) {
 
             $this->update([
-                'date' => $startTime->lessThan($appStartTime) ? $startTime : $appStartTime,
+                'start_at' => $startTime->lessThan($appStartTime) ? $startTime : $appStartTime,
                 'duration' => $this->duration + $appointment->duration - $appEndTime->diffInMinutes($startTime)
             ]);
 
@@ -109,19 +101,19 @@ class Appointment extends Model
 
     public static function contains(Appointment $haystack, Appointment $needle)
     {
-        $startTime = Carbon::parse($haystack->date);
-        $endTime = Carbon::parse($haystack->date->clone()->addMinutes($haystack->duration));
+        $startTime = Carbon::parse($haystack->datstart_ate);
+        $endTime = Carbon::parse($haystack->start_at->clone()->addMinutes($haystack->duration));
 
-        $appStartTime = Carbon::parse($needle->date);
-        $appEndTime = Carbon::parse($needle->date->clone()->addMinutes($needle->duration));
+        $appStartTime = Carbon::parse($needle->start_at);
+        $appEndTime = Carbon::parse($needle->start_at->clone()->addMinutes($needle->duration));
 
         return $appEndTime >= $startTime && $appEndTime <= $endTime && $appStartTime >= $startTime && $appStartTime <= $endTime;
     }
 
     public function isOverlay($masterId = null): bool
     {
-        $startTime = Carbon::parse($this->date);
-        $endTime = Carbon::parse($this->date->clone()->addMinutes($this->duration));
+        $startTime = Carbon::parse($this->start_at);
+        $endTime = Carbon::parse($this->start_at->clone()->addMinutes($this->duration));
 
         $placeId = $this->place_id;
 
@@ -131,16 +123,16 @@ class Appointment extends Model
             $builder->where('master_id', $masterId);
         })->when(isset($this->id), function (Builder $builder) {
             $builder->where('id', '!=',  $this->id);
-        })->whereDate('date', $this->date)->get();
+        })->whereDate('start_at', $this->start_at)->get();
 
-        if(count($appointments) > 0 && $this->full_day || count($appointments->where('full_day'))) {
+        if(count($appointments) > 0 && $this->is_full_day || count($appointments->where('is_full_day'))) {
             return true;
         }
 
         foreach ($appointments as $appointment) {
 
-            $appStartTime = Carbon::parse($appointment->date);
-            $appEndTime = Carbon::parse($appointment->date->clone()->addMinutes($appointment->duration));
+            $appStartTime = Carbon::parse($appointment->start_at);
+            $appEndTime = Carbon::parse($appointment->start_at->clone()->addMinutes($appointment->duration));
 
             if ($startTime->between($appStartTime, $appEndTime, false) || $endTime->between($appStartTime, $appEndTime, false)) {
                 return true;
@@ -152,6 +144,6 @@ class Appointment extends Model
 
     public function getExpectedPrice(): float
     {
-        return round($this->place->price_hour * $this->duration / 60, 2);
+        return (new AppointmentService())->calculateAppointmentCost($this);
     }
 }

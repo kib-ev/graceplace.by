@@ -13,9 +13,25 @@ class MasterController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $masters = \App\Models\Master::all();
+        $search = $request->get('search');
+
+        $masters = \App\Models\Master::
+            when($search && is_numeric($search), function ($query) use ($search) {
+                $query->where('direct', 'like', '%'. $search .'%')->orWhere('instagram', 'like', '%'. $search .'%');
+            })
+            ->when($search && !is_numeric($search), function ($query) use ($search) {
+                $query->whereHas('person', function ($query) use ($search) {
+                    $query->where('first_name', 'like',  '%'. $search .'%')
+                        ->orWhere('last_name', 'like',  '%'. $search .'%');
+                });
+            })->get();
+
+//        $masters->filter(function ($master) use ($request) {
+//            return $master->
+//        });
+
         return view('admin.masters.index', compact('masters'));
     }
 

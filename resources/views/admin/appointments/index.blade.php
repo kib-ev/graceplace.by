@@ -82,7 +82,7 @@
                         </tr>
 
                         @php
-                            $appointmentsToDay = $appointments->filter(function ($appointment) use ($nextDate) { return $appointment->date->format('Y-m-d') == $nextDate->format('Y-m-d'); });
+                            $appointmentsToDay = $appointments->filter(function ($appointment) use ($nextDate) { return $appointment->start_at->format('Y-m-d') == $nextDate->format('Y-m-d'); });
                         @endphp
 
                         @forelse($appointmentsToDay as $appointment)
@@ -92,16 +92,16 @@
                                 {{--                                {{ $appointment->id }}--}}
                                 {{--                            </td>--}}
 
-                                {{--                            <td>{{ $appointment->date?->format('d.m.Y') }}</td>--}}
+                                {{--                            <td>{{ $appointment->start_at?->format('d.m.Y') }}</td>--}}
 
                                 <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
 
-                                    @if($appointment->full_day)
+                                    @if($appointment->is_full_day)
                                         Полный день
                                     @else
-                                        @if(isset($appointment->date))
-                                            {{ $appointment->date?->format('H:i') }} -
-                                            {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
+                                        @if(isset($appointment->start_at))
+                                            {{ $appointment->start_at?->format('H:i') }} -
+                                            {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
                                         @endif
                                     @endif
 

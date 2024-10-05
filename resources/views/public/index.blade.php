@@ -35,9 +35,9 @@
 
                 @if(isset($master))
                     @php
-                        $masterAppointments = $master->appointments()->where('date', '>=', now()->startOfDay())->get();
+                        $masterAppointments = $master->appointments()->where('start_at', '>=', now()->startOfDay())->get();
                     @endphp
-                    @foreach($masterAppointments->sortBy('date')->groupBy(function ($a) { return $a->date->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
+                    @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
                         @php
                             $masterCarbonDate = \Carbon\Carbon::parse($masterDate);
                         @endphp
@@ -134,7 +134,7 @@
 {{--                                        $isAppointment = $place->isAppointment($nextDate);--}}
 
 {{--                                        $nextAppointment = $place->nextAppointment($nextDate);--}}
-{{--                                        $nextAppointmentToMinutes = $nextAppointment ? $nextAppointment->date->diffInMinutes($nextDate) : '';--}}
+{{--                                        $nextAppointmentToMinutes = $nextAppointment ? $nextAppointment->start_at->diffInMinutes($nextDate) : '';--}}
 {{--                                    @endphp--}}
 
 {{--                                    <div class="hour {{ $isAppointment || $place->isFullDayBusy($nextDate) ? 'busy' : 'free' }} {{ auth()->user() && $isAppointment && is_master($isAppointment->master_id) ? 'master' : '' }}"--}}
@@ -198,7 +198,7 @@
 
                             <div class="form-group mb-2">
                                 <label for="appointmentDate">Дата</label>
-                                <input class="form-control" id="appointmentDate" type="text" name="time" value="" disabled>
+                                <input class="form-control" id="appointmentDate" type="text" name="date" value="" disabled>
                             </div>
 
                             <div class="form-group mb-2">

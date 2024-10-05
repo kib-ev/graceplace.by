@@ -92,7 +92,7 @@
                 <tr>
                     @for($i = 1; $i <=12; $i++)
                         <td>
-                            {{ $master->appointments()->whereMonth('date', $i)->sum('price') }}
+                            {{ $master->appointments()->whereMonth('start_at', $i)->sum('price') }}
                         </td>
                     @endfor
                 </tr>

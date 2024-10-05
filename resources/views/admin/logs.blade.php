@@ -43,11 +43,11 @@
                                 @endif
                             </td>
                             <td>
-                                <a target="_blank" href="https://graceplace.by/?date={{ $appointment->date->format('Y-m-d') }}">{{ $appointment->date->format('d.m.Y') }}</a>
+                                <a target="_blank" href="https://graceplace.by/?date={{ $appointment->start_at->format('Y-m-d') }}">{{ $appointment->start_at->format('d.m.Y') }}</a>
                             </td>
                             <td>
-                                {{ $appointment->date->format('H:i') }} -
-                                {{ $appointment->date->addMinutes($appointment->duration)->format('H:i') }}
+                                {{ $appointment->start_at->format('H:i') }} -
+                                {{ $appointment->start_at->addMinutes($appointment->duration)->format('H:i') }}
                             </td>
                             <td>
                                 {{ $appointment->place->name }}

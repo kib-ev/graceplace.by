@@ -1,24 +1,24 @@
 <table class="table table-bordered">
-    @foreach($appointments->sortBy('date') as $appointment)
+    @foreach($appointments->sortBy('start_at') as $appointment)
         <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
             <td style="width: 1%; min-width: 30px;">
                 {{ $loop->index + 1 }}
             </td>
 
             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
-                {{ $appointment->date->format('d.m.Y') }}
+                {{ $appointment->start_at->format('d.m.Y') }}
             </td>
 
             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
-                {{ short_day_name($appointment->date, true) }}
+                {{ short_day_name($appointment->start_at, true) }}
             </td>
 
             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
-                @if($appointment->full_day)
+                @if($appointment->is_full_day)
                     Полный день
-                @elseif(isset($appointment->date))
-                    {{ $appointment->date?->format('H:i') }} -
-                    {{ $appointment->date->addMinutes($appointment->duration)?->format('H:i') }}
+                @elseif(isset($appointment->start_at))
+                    {{ $appointment->start_at->format('H:i') }} -
+                    {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
                 @endif
             </td>
 

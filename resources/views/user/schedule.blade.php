@@ -35,16 +35,16 @@
                 </nav>
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                        @foreach($master->appointments->where('date', '>', now())->sortByDesc('date')->groupBy(function ($a) { return $a->date->format('y.m.d'); }) as $appointmentByDate)
+                        @foreach($master->appointments->where('start_at', '>', now())->sortByDesc('start_at')->groupBy(function ($a) { return $a->start_at->format('y.m.d'); }) as $appointmentByDate)
                             <table class="table table-bordered">
-                                @foreach($appointmentByDate->sortBy('date') as $appointment)
+                                @foreach($appointmentByDate->sortBy('start_at') as $appointment)
                                     <tr>
                                         <td>
-                                            {{ $appointment->date->format('Y-m-d') }}
+                                            {{ $appointment->start_at->format('Y-m-d') }}
                                         </td>
                                         <td>
-                                            {{ $appointment->date->format('H:i') }} -
-                                            {{ $appointment->date->addMinutes($appointment->duration)->format('H:i') }}
+                                            {{ $appointment->start_at->format('H:i') }} -
+                                            {{ $appointment->start_at->addMinutes($appointment->duration)->format('H:i') }}
                                         </td>
                                         <td>
                                             {{ $appointment->place->name }}
@@ -56,17 +56,17 @@
                         @endforeach
                     </div>
                     <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-                        @foreach($master->appointments->where('date', '<', now())->sortBy('date')->groupBy(function ($a) { return $a->date->format('y.m.d'); }) as $appointmentByDate)
+                        @foreach($master->appointments->where('start_at', '<', now())->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('y.m.d'); }) as $appointmentByDate)
                             <table class="table table-bordered">
-                                @foreach($appointmentByDate->sortBy('date') as $appointment)
+                                @foreach($appointmentByDate->sortBy('start_at') as $appointment)
 
                                     <tr>
                                         <td>
-                                            {{ $appointment->date->format('Y-m-d') }}
+                                            {{ $appointment->start_at->format('Y-m-d') }}
                                         </td>
                                         <td>
-                                            {{ $appointment->date->format('H:i') }} -
-                                            {{ $appointment->date->addMinutes($appointment->duration)->format('H:i') }}
+                                            {{ $appointment->start_at->format('H:i') }} -
+                                            {{ $appointment->start_at->addMinutes($appointment->duration)->format('H:i') }}
                                         </td>
                                         <td>
                                             {{ $appointment->place->name }}

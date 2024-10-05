@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('price_hour', 8, 2)->nullable();
             $table->text('image_path')->nullable();
+            $table->integer('sort')->unsigned()->nullable();
             $table->timestamps();
         });
     }

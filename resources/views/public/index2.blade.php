@@ -31,10 +31,10 @@
 
                 @if(isset($currentMaster))
                     @php
-                        $masterAppointments = $currentMaster->appointments()->where('date', '>=', now()->startOfDay())->get();
+                        $masterAppointments = $currentMaster->appointments()->where('start_at', '>=', now()->startOfDay())->get();
                     @endphp
 
-                    @foreach($masterAppointments->sortBy('date')->groupBy(function ($a) { return $a->date->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
+                    @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
                         @php
                             $masterCarbonDate = \Carbon\Carbon::parse($masterDate);
                         @endphp
@@ -51,7 +51,7 @@
         <div class="row mb-3" style="overflow-x: scroll;">
             <div class="col">
                 <div id="places" class="" style="display: flex; gap: 3px; margin-right: 5px;" class="overflow-scroll">
-                    @foreach(\App\Models\Place::all()->sortBy('name') as $place)
+                    @foreach(\App\Models\Place::all()->sortBy('sort') as $place)
                         <div class="place">
                             <div class="image">
                                 <img style="width: 100%;" src="{{ $place->image_path ?? 'https://placehold.co/200x125' }}">
@@ -81,8 +81,7 @@
 
                             </div>
 
-                            <div
-                                class="time {{ auth()->user() && $place->isFullDayBusy(\Carbon\Carbon::parse($date)) && is_master($place->isFullDayBusy(\Carbon\Carbon::parse($date))->master_id) ? 'master' : '' }}">
+                            <div class="time {{ auth()->user() && $place->isFullDayBusy(\Carbon\Carbon::parse($date)) && is_master($place->isFullDayBusy(\Carbon\Carbon::parse($date))->master_id) ? 'master' : '' }}">
 
                                 @php
                                     $calendar = new \App\Services\AppointmentService();
@@ -181,14 +180,12 @@
 
                             <div class="form-group mb-2">
                                 <label for="appointmentDate">Дата</label>
-                                <input class="form-control" id="appointmentDate" type="text" name="time" value=""
-                                       disabled>
+                                <input class="form-control" id="appointmentDate" type="text" name="date" value="" disabled>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label for="appointmentTime">Время</label>
-                                <input class="form-control" id="appointmentTime" type="text" name="time" value=""
-                                       disabled>
+                                <input class="form-control" id="appointmentTime" type="text" name="time" value="" disabled>
                             </div>
 
                             @if(auth()->user() && auth()->user()->hasRole('admin'))

@@ -62,7 +62,7 @@
                 <div class="form-group mb-2">
                     <label for="date">Дата</label>
                     @if(isset($appointment))
-                        <input id="date" type="date" class="form-control" name="date" value="{{ $appointment->date->format('Y-m-d') }}" required>
+                        <input id="date" type="date" class="form-control" name="date" value="{{ $appointment->start_at->format('Y-m-d') }}" required>
                     @else
                         <input id="date" type="date" class="form-control" name="date" value="{{ (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d') : now()->addDay()->floorHour(1)->format('Y-m-d')) }}" required>
                     @endif
@@ -72,8 +72,8 @@
                     <label for="time">Время</label>
 
                     <div class="float-end">
-                        <input type="hidden" name="full_day" value="0">
-                        <input id="fullDay" class="form-check-input" type="checkbox" name="full_day" value="1" {{ isset($appointment) && $appointment->full_day ? 'checked' : '' }}>
+                        <input type="hidden" name="is_full_day" value="0">
+                        <input id="fullDay" class="form-check-input" type="checkbox" name="is_full_day" value="1" {{ isset($appointment) && $appointment->is_full_day ? 'checked' : '' }}>
                         <label class="form-check-label" for="fullDay" style="user-select: none;">
                             Полный день
                         </label>
@@ -83,7 +83,7 @@
                     <input name="duration" type="hidden" value="480">
 
                     @if(isset($appointment))
-                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ $appointment->date->format('H:i') }}" {{ $appointment->full_day ? 'disabled' : '' }} required>
+                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ $appointment->start_at->format('H:i') }}" {{ $appointment->is_full_day ? 'disabled' : '' }} required>
                     @else
                         <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d 09:00') : now()->addDay()->floorHour(1)->format('Y-m-d H:i')) }}" required>
                     @endif
@@ -97,7 +97,7 @@
                 <div class="form-group mb-2">
                     <label for="duration">Продолжительность (ч.)</label>
 
-                    <select id="duration" name="duration" class="form-control" {{ isset($appointment) && $appointment->full_day ? 'disabled' : '' }} required>
+                    <select id="duration" name="duration" class="form-control" {{ isset($appointment) && $appointment->is_full_day ? 'disabled' : '' }} required>
                         <option value=""></option>
 
 {{--                        @for($step = 30, $time = now()->startOfDay()->addMinutes($step); $time->lessThan(now()->startOfDay()->addMinutes(21*$step)); $newT$time->addMinutes($step))--}}

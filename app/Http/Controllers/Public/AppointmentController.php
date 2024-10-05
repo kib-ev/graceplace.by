@@ -12,9 +12,9 @@ class AppointmentController extends Controller
 {
     public function store(Request $request)
     {
-        $appointment = Appointment::make();
+        $appointment = new Appointment();
         $appointment->fill($request->all());
-        $appointment->date = Carbon::parse($request->get('datetime'));
+        $appointment->start_at = Carbon::parse($request->get('datetime'));
 
         $appointment->user_id = auth()->id();
         $appointment->save();
@@ -28,6 +28,5 @@ class AppointmentController extends Controller
         } else {
             return back()->withErrors('Ошибка сохранения.');;
         }
-
     }
 }

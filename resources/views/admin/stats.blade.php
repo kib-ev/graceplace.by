@@ -56,11 +56,11 @@
                 <tr>
                     @for($i = 1; $i <=12; $i++)
                         <td>
-                            {{ \App\Models\Appointment::whereMonth('date', $i)->sum('price') }}
+                            {{ \App\Models\Appointment::whereMonth('start_at', $i)->sum('price') }}
                         </td>
                     @endfor
                     <td>
-                        {{ \App\Models\Appointment::whereYear('date', '2024')->sum('price') }}
+                        {{ \App\Models\Appointment::whereYear('start_at', '2024')->sum('price') }}
                     </td>
                 </tr>
             </table>

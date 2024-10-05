@@ -6,6 +6,20 @@
         <div class="col">
             <h1>Masters</h1>
 
+            <div class="form">
+                <form id="searchMaster" method="get" autocomplete="off">
+                    <div class="form-group" style="width: 300px; display: inline-block;">
+                        <input class="form-control"  type="text" name="search" value="{{ request('search') }}" placeholder="Имя, Фамилия, ID диркет">
+                    </div>
+                    <input class="btn btn-primary" type="submit" value="Найти">
+
+                    @if(request('search'))
+                        <a class="btn btn-danger" href="{{ route('admin.masters.index') }}" >X</a>
+                    @endif
+                </form>
+
+            </div>
+
             <hr>
             <a href="{{ route('admin.masters.create') }}" class="btn btn-primary">Создать</a>
             <hr>
@@ -13,7 +27,7 @@
             <table class="table table-bordered mb-5">
                 <tr>
                     <td></td>
-                    <td></td>
+{{--                    <td></td>--}}
                     <td>Имя мастера</td>
                     <td>Телефон</td>
                     <td>Инста</td>
@@ -30,9 +44,9 @@
                 @foreach($masters/*->sortBy('person.first_name')*/ as $master)
                     <tr>
                         <td style="width: 50px;">{{ $loop->index + 1 }}</td>
-                        <td>
-                            <img src="{{ $master->image_path }}" style="width: 30px;">
-                        </td>
+{{--                        <td>--}}
+{{--                            <img src="{{ $master->image_path }}" style="width: 30px;">--}}
+{{--                        </td>--}}
                         <td style="width: 300px;">
                             <a href="{{ route('admin.masters.show', $master) }}">{{ $master->full_name }}</a>
 
@@ -85,9 +99,9 @@
                                 $lastAppointment = $master->lastAppointment();
                             @endphp
 
-                            @if($lastAppointment && $lastAppointment->date < now())
-                                {{ \Carbon\Carbon::now()->startOfDay()->diffInDays($lastAppointment->date) }} д. назад
-                            @elseif($lastAppointment && $lastAppointment->date >= now())
+                            @if($lastAppointment && $lastAppointment->start_at < now())
+                                {{ \Carbon\Carbon::now()->startOfDay()->diffInDays($lastAppointment->start_at) }} д. назад
+                            @elseif($lastAppointment && $lastAppointment->start_at >= now())
                                 <span style="color: greenyellow;">запись</span>
                             @else
                                 <span style="color: orangered;">нет</span>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\Master;
 use App\Models\Person;
+use App\Models\Place;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -20,9 +21,39 @@ class AppointmentService
     protected Collection|null $appointments = null;
     protected Carbon|null $date = null;
 
+    /**
+     * Проверяет, нет ли пересечений текущей встречи с другими встречами в тот же день.
+     *
+     * @param Appointment $appointment
+     * @return bool
+     */
+    public function hasOverlappingAppointments(Appointment $appointment): bool
+    {
+        $start = $appointment->start_at;
+        $end = $appointment->start_at->copy()->addMinutes($appointment->duration);
+
+        // Получаем все встречи в этот день
+        $existingAppointments = Appointment::where('user_id', $appointment->user_id)
+            ->whereDate('start_at', $start->toDateString())
+            ->where('id', '!=', $appointment->id) // Исключаем текущую встречу, если она уже существует
+            ->get();
+
+        foreach ($existingAppointments as $existingAppointment) {
+            $existingStart = $existingAppointment->start_at;
+            $existingEnd = $existingAppointment->start_at->copy()->addMinutes($existingAppointment->duration);
+
+            // Проверяем пересечение интервалов
+            if ($start->lt($existingEnd) && $end->gt($existingStart)) {
+                return true; // Пересечение найдено
+            }
+        }
+
+        return false; // Пересечений нет
+    }
+
     public function loadAppointments(Collection $appointments): AppointmentService
     {
-        $this->appointments = $appointments->sortBy('date')->whereNull('canceled_at');
+        $this->appointments = $appointments->sortBy('start_at')->whereNull('canceled_at');
         return $this;
     }
 
@@ -43,14 +74,14 @@ class AppointmentService
         $result = true;
 
         $this->appointments->each(function ($appointment) use (&$result, $datetime) {
-            if($appointment->full_day) {
+            if($appointment->is_full_day) {
                 $result = false;
             }
 
             $breakTime = $this->getBreakTime($appointment);
 
-            if($datetime->greaterThanOrEqualTo($appointment->date->subMinutes($breakTime))
-                && $datetime->lessThan($appointment->date->addMinutes($appointment->duration + $breakTime))) {
+            if($datetime->greaterThanOrEqualTo($appointment->start_at->subMinutes($breakTime))
+                && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration + $breakTime))) {
                 $result = false;
             }
         });
@@ -63,11 +94,11 @@ class AppointmentService
         $result = true;
 
         $this->appointments->each(function ($appointment) use (&$result, $datetime) {
-            if($appointment->full_day) {
+            if($appointment->is_full_day) {
                 $result = false;
             }
 
-            if($datetime->greaterThanOrEqualTo($appointment->date) && $datetime->lessThan($appointment->date->addMinutes($appointment->duration))) {
+            if($datetime->greaterThanOrEqualTo($appointment->start_at) && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
                 $result = false;
             }
         });
@@ -82,7 +113,7 @@ class AppointmentService
 
     public function getNextAppointment(Carbon $datetime)
     {
-        return $this->appointments->where('date', '>=', $datetime)->first();
+        return $this->appointments->where('start_at', '>=', $datetime)->first();
     }
 
     public function getMinutesToNextAppointment(Carbon $datetime): int|null
@@ -90,7 +121,7 @@ class AppointmentService
         $appointment = $this->getNextAppointment($datetime);
 
         if($appointment) {
-            $interval = CarbonInterval::minutes($datetime->diffInMinutes($appointment->date));
+            $interval = CarbonInterval::minutes($datetime->diffInMinutes($appointment->start_at));
 
             $breakTime = $this->getBreakTime($appointment);
             if($breakTime) {
@@ -111,7 +142,7 @@ class AppointmentService
         }
 
         foreach($this->appointments as $appointment) {
-            if($datetime->greaterThanOrEqualTo($appointment->date) && $datetime->lessThan($appointment->date->addMinutes($appointment->duration))) {
+            if($datetime->greaterThanOrEqualTo($appointment->start_at) && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
                 $isAppointment = $appointment;
             }
         }
@@ -129,7 +160,7 @@ class AppointmentService
         $result = null;
 
         $this->appointments->each(function ($appointment) use (&$result, $datetime) {
-            if($appointment->full_day) {
+            if($appointment->is_full_day) {
                 $result = $appointment;
             }
         });
@@ -169,7 +200,7 @@ class AppointmentService
     public function loadAppointmentsByPlaceId(int $placeId, Carbon $date): AppointmentService
     {
         $this->date = $date;
-        $appointments = \App\Models\Appointment::onlyActive()->whereDate('date', $date)->where('place_id', $placeId)->get();
+        $appointments = \App\Models\Appointment::onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
         return $this->loadAppointments($appointments);
     }
 
@@ -196,8 +227,8 @@ class AppointmentService
                 $item['status'] = 'busy';
                 $item['appointment'] = [
                     'id' => $appointment->id,
-                    'start' => $appointment->date->format('H:i'),
-                    'end' => $appointment->date->clone()->addMinutes($appointment->duration)->format('H:i'),
+                    'start' => $appointment->start_at->format('H:i'),
+                    'end' => $appointment->start_at->clone()->addMinutes($appointment->duration)->format('H:i'),
                 ];
                 $item['master'] = [
                     'id' => $appointment->master->id,
@@ -227,5 +258,26 @@ class AppointmentService
         }
 
         return $items;
+    }
+
+    public function calculateAppointmentCost(Appointment $appointment): float
+    {
+        $start = $appointment->start_at;
+        $end = $appointment->start_at->copy()->addMinutes($appointment->duration);
+
+        // Рассчитываем длительность аренды в часах
+        $durationInMinutes = $start->diffInMinutes($end);
+
+        if ($durationInMinutes >= 8 * 60) {
+            // Аренда на целый день
+            $appointment->is_full_day = true;
+            $appointment->cost = $appointment->place->getHourlyCost() * 8; // Стоимость аренды на 8 часов
+        } else {
+            // Обычная почасовая аренда
+            $appointment->is_full_day = false;
+            $appointment->cost = $appointment->place->getHourlyCost() * $durationInMinutes / 60;
+        }
+
+        return $appointment->cost;
     }
 }

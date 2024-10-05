@@ -22,16 +22,16 @@ class AppointmentController extends Controller
             return redirect()->route('admin.appointments.index', $parameters);
         }
 
-        $appointments = \App\Models\Appointment::orderBy('date');
+        $appointments = \App\Models\Appointment::orderBy('start_at');
 
         // DATE_FROM DATE_TO
         $dateFrom = Carbon::parse($request->get('date_from'));
         $dateTo = Carbon::parse($request->get('date_to'))->endOfDay();
 
         $appointments->when($request->get('date_from'), function ($query) use ($request, $dateFrom) {
-            $query->where('date', '>=', $dateFrom);
+            $query->where('start_at', '>=', $dateFrom);
         })->when($request->get('date_to'), function ($query) use ($request, $dateTo) {
-            $query->where('date', '<=', $dateTo);
+            $query->where('start_at', '<=', $dateTo);
         });
 
         // PLACE
@@ -46,7 +46,7 @@ class AppointmentController extends Controller
 
         // SELECTED DATE
         $appointments->when($request->has('date'), function ($query) use ($request) {
-            $query->whereDate('date', $request->get('date'));
+            $query->whereDate('start_at', $request->get('date'));
         });
 
         $appointments = $appointments->get();
@@ -69,7 +69,7 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::make();
         $appointment->fill($request->all());
-        $appointment->date = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
+        $appointment->start_at = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
         $appointment->save();
 
         if($appointment->id) {
@@ -116,7 +116,7 @@ class AppointmentController extends Controller
 
         // UPDATE
         $appointment->fill($request->all());
-        $appointment->date = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
+        $appointment->start_at = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
 
         if($appointment->save()) {
             return back();
