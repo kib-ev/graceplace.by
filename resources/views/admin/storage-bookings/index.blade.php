@@ -7,7 +7,7 @@
             <h1>Places</h1>
 
             <hr>
-            <a href="{{ route('admin.rents.create') }}" class="btn btn-primary">Создать</a>
+            <a href="{{ route('admin.storage-bookings.create') }}" class="btn btn-primary">Создать</a>
             <hr>
 
             <table class="table table-bordered">
@@ -18,13 +18,13 @@
                     <th>Цена за час</th>
                     <th></th>
                 </tr>
-                @foreach($rents as $rent)
+                @foreach($storageBookings as $booking)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
-                        <td><a href="{{ route('admin.rents.show', $rent) }}">id: {{ $rent->id }}</a></td>
-                        <td>{{ $rent->description }}</td>
-                        <td>{{ $rent->price_hour }}</td>
-                        <td><a href="{{ route('admin.rents.edit', $rent) }}">edit</a></td>
+                        <td><a href="{{ route('admin.storage-bookings.show', $rent) }}">id: {{ $booking->id }}</a></td>
+                        <td>{{ $booking->description }}</td>
+                        <td>{{ $booking->price_hour }}</td>
+                        <td><a href="{{ route('admin.storage-bookings.edit', $booking) }}">edit</a></td>
                     </tr>
                 @endforeach
             </table>

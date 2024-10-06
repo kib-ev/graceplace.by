@@ -150,7 +150,7 @@
                         <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
                         <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
 
-                        <a class="nav-link" href="{{ route('admin.compartments.index') }}">Локер</a>
+                        <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
 
 
                         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>

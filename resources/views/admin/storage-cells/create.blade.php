@@ -26,24 +26,24 @@
 {{--            @endif--}}
 
 
-            <form action="{{ isset($compartment) ? route('admin.compartments.update', $compartment) : route('admin.compartments.store') }}" method="post" autocomplete="off">
+            <form action="{{ isset($storageCell) ? route('admin.storage-cells.update', $storageCell) : route('admin.storage-cells.store') }}" method="post" autocomplete="off">
                 @csrf
-                @method(isset($compartment) ? 'patch' : 'post')
+                @method(isset($storageCell) ? 'patch' : 'post')
 
                 <div class="form-group mb-2">
-                    <label for="compartmentName">Название</label>
-                    <input class="form-control" id="compartmentName" type="text" name="name" value="{{ isset($compartment) ? $compartment->name : '' }}" required>
+                    <label for="storageCellNumber">Номер</label>
+                    <input class="form-control" id="storageCellNumber" type="text" name="number" value="{{ isset($storageCell) ? $storageCell->number : '' }}" required>
                 </div>
 
                 <div class="form-group mb-2">
-                    <label for="compartmentDescription">Описание</label>
-                    <textarea class="form-control"  name="description"  id="compartmentDescription" cols="30" rows="10">{{ isset($compartment) ? $compartment->description : '' }}</textarea>
+                    <label for="storageCellDescription">Описание</label>
+                    <textarea class="form-control"  name="description"  id="storageCellDescription" cols="30" rows="10">{{ isset($storageCell) ? $storageCell->description : '' }}</textarea>
                 </div>
 
                 <hr>
 
                 <div class="form-group">
-                    @if(isset($compartment))
+                    @if(isset($storageCell))
                         <button type="submit" class="btn btn-primary">Сохранить</button>
                     @else
                         <button type="submit" class="btn btn-primary">Добавить</button>

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Rent extends Model
+class StorageBooking extends Model
 {
     use HasFactory;
     use SoftDeletes;
@@ -18,7 +19,19 @@ class Rent extends Model
         'duration' => 'integer'
     ];
 
-    public function master() {
+    public function master()
+    {
         return $this->hasOne(Master::class, 'id', 'master_id');
+    }
+
+    public function cell()
+    {
+        return $this->hasOne(StorageCell::class, 'id', 'model_id');
+    }
+
+    public function daysLeft(): int
+    {
+        $endDate = Carbon::parse($this->start_at)->addDays($this->duration);
+        return now()->diffInDays($endDate,false);
     }
 }

@@ -13,6 +13,104 @@
         </div>
     </div>
 
+    @if(auth()->user())
+
+        @php
+            $currentMaster = \App\Services\AppointmentService::getMasterByUserId(auth()->id());
+        @endphp
+
+        @if(isset($currentMaster))
+
+            @php
+                $masterAppointments = $currentMaster->appointments()->where('start_at', '>=', now()->startOfDay())->get();
+            @endphp
+
+
+            <div class="row mb-3 mt-3">
+                <div class="col">
+
+                    <a data-bs-toggle="collapse" href="#collapseAppointments" role="button">
+                        Мои записи
+                    </a>
+
+                    <div class="collapse" id="collapseAppointments">
+                        <div class="card card-body">
+
+                                @forelse($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
+                                    @php
+                                        $masterCarbonDate = \Carbon\Carbon::parse($masterDate);
+                                    @endphp
+                                    <a style="display: inline-block;" href="/?date={{ $masterCarbonDate->format('Y-m-d') }}" class="m-1">{{ $masterCarbonDate->format('d.m') }} ({{ count($masterAppointmentByDate) }})</a>
+                                @empty
+
+                                    У вас еще нет записей.
+
+                                @endforelse
+
+
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+        @endif
+
+
+    @endif
+
+    {{-- Storage Cell --}}
+    @if(auth()->user())
+
+        @php
+            $bookings = \App\Models\StorageBooking::where('master_id', $currentMaster?->id)->get();
+        @endphp
+
+        @if(count($bookings))
+            <div class="row mb-3 mt-3">
+                <div class="col">
+                    <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">
+                        Локер
+                    </a>
+                    <div class="collapse" id="collapseStorageCells">
+                        <div class="card card-body">
+
+                            @foreach($bookings as $booking)
+                                <table class="table table-bordered table-sm mb-0">
+                                    <tr>
+                                        <td>Номер ячейки</td>
+                                        <td>{{ $booking->cell->number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Дата начала бронирования</td>
+                                        <td>{{ $booking->start_at->format('d-m-Y') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Дата окончания бронирования</td>
+                                        <td>{{ $booking->start_at->addDays($booking->duration)->format('d-m-Y') }}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Статус</td>
+                                        <td>
+                                            @if($bookings->first()->daysLeft() < 0)
+                                                <span style="color: red;">Просрочено</span>
+                                            @else
+                                                <span style="color: green;">Активно</span>
+                                            @endif
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <div class="row mb-3 mt-3">
         <div class="col">
             <form class="me-2" id="dateForm" action="" style="display: inline-block;">
@@ -22,30 +120,7 @@
         </div>
     </div>
 
-    @if(auth()->user())
-        <div class="row mb-3 mt-3">
-            <div class="col">
-                @php
-                    $currentMaster = \App\Services\AppointmentService::getMasterByUserId(auth()->id());
-                @endphp
 
-                @if(isset($currentMaster))
-                    @php
-                        $masterAppointments = $currentMaster->appointments()->where('start_at', '>=', now()->startOfDay())->get();
-                    @endphp
-
-                    @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
-                        @php
-                            $masterCarbonDate = \Carbon\Carbon::parse($masterDate);
-                        @endphp
-                        <a href="/?date={{ $masterCarbonDate->format('Y-m-d') }}"
-                           class="m-1">{{ $masterCarbonDate->format('d.m') }} ({{ count($masterAppointmentByDate) }}
-                            )</a>
-                    @endforeach
-                @endif
-            </div>
-        </div>
-    @endif
 
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
         <div class="row mb-3" style="overflow-x: scroll;">

@@ -65,7 +65,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
     Route::resource('places', \App\Http\Controllers\PlaceController::class);
-    Route::resource('compartments', \App\Http\Controllers\CompartmentController::class);
+
 
     Route::get('stats', function () {
         return view('admin.stats');
@@ -78,8 +78,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // COMMENTS
     Route::resource('comments', \App\Http\Controllers\CommentController::class)->only(['store', 'destroy']);
 
-    // RENTS
-    Route::resource('rents', \App\Http\Controllers\RentController::class);
+    // STORAGE CELLS BOOKING
+    Route::resource('storage-cells', \App\Http\Controllers\StorageCellController::class);
+    Route::resource('storage-bookings', \App\Http\Controllers\StorageBookingController::class);
 
     // USER
     Route::get('/user/{user}/schedule', function ($user) {
