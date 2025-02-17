@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->index();
             $table->text('description')->nullable();
+            $table->decimal('cost_per_month')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

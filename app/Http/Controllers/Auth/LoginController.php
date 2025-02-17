@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Master;
 use App\Models\Person;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;

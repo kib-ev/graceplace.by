@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('rents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('master_id')->nullable();
+            $table->foreignId('user_id')->unsigned()->index();
             $table->string('model_class')->index()->index();
             $table->integer('model_id')->unsigned()->index();
             $table->text('description')->nullable();
-            $table->dateTime('start_at');
+            $table->timestamp('start_at')->nullable();
             $table->integer('duration')->comment('days');
+            $table->timestamp('finished_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

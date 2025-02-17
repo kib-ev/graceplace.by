@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\StorageBooking;
 use Carbon\Carbon;
 
-class StorageBookingService
+final class StorageBookingService
 {
     /**
      * Рассчитывает стоимость бронирования ячейки и создает запись о бронировании.

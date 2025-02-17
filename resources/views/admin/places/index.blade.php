@@ -13,21 +13,29 @@
             <table class="table table-bordered">
                 <tr>
                     <th></th>
+                    <th>Сортировка</th>
                     <th>Наименование</th>
                     <th>Описание</th>
                     <th>Цена за час</th>
+                    <th>Средняя выручка в месяц (3 послед. мес.)</th>
+                    <th>Среднее количество часов аренды в день</th>
                     <th></th>
                 </tr>
-                @foreach($places->sortBy('name') as $place)
+                @foreach($places->sortBy('sort') as $place)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
+                        <td class="text-end">{{ $place->sort }}</td>
                         <td><a href="{{ route('admin.places.show', $place) }}">{{ $place->name }}</a></td>
                         <td>{{ $place->description }}</td>
-                        <td>{{ $place->price_hour }}</td>
-                        <td><a href="{{ route('admin.places.edit', $place) }}">edit</a></td>
+                        <td class="text-end">{{ $place->price_hour }}</td>
+                        <td class="text-end">{{ $place->getAverageProfitPerMonth() }}</td>
+                        <td class="text-end">{{ $place->getAverageRentHoursPerDay() }}</td>
+                        <td><a href="{{ route('admin.places.edit', $place) }}"><i class="fa fa-edit"></i></a></td>
                     </tr>
                 @endforeach
             </table>
+
+            Сегодня: {{ now()->format('d.m.Y') }}
         </div>
     </div>
 @endsection

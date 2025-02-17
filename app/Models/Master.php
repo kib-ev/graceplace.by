@@ -14,6 +14,11 @@ class Master extends Model
 
     protected $guarded = ['id'];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function person()
     {
         return $this->belongsTo(Person::class);
@@ -44,15 +49,6 @@ class Master extends Model
 
     public function lastAppointment(): ?Appointment
     {
-        return \App\Models\Appointment::where('master_id', $this->id)->whereNull('canceled_at')->latest()->first();
+        return \App\Models\Appointment::where('user_id', $this->user_id)->whereNull('canceled_at')->latest()->first();
     }
-
-//    static function getByUser(User $user): Master|null
-//    {
-//        $person = Person::whereHas('phones', function ($query) use ($user) {
-//            $query->where('number', $user->phone);
-//        })->first();
-//
-//        return $person->master ?? null;
-//    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasSettings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,19 +12,13 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens,
+        HasFactory,
+        Notifiable,
+        HasRoles;
+    use HasSettings;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'phone',
-        'password',
-    ];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -43,20 +38,169 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
+        'offer_accept_date' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function getFirstNameAttribute(): string
+    {
+        return explode(' ', $this->getAttribute('name'))[0];
+    }
 
     public function person()
     {
         return $this->hasOneThrough(Master::class, Phone::class, 'number', 'person_id', 'phone', 'id');
     }
 
-//    public function getMasterId()
-//    {
-//        $person = Person::whereHas('phones', function ($query) {
-//            $query->where('number', $this->phone);
-//        })->first();
-//
-//        return isset($person->master) ? $person->master->id : null;
-//    }
+    public function master()
+    {
+        return $this->hasOne(Master::class);
+    }
+
+    public function info()
+    {
+        return $this->hasOne(Master::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(UserTransaction::class);
+    }
+
+    public function getFullName($addPatronymic = false): string
+    {
+        $fullName = [$this->master->person->last_name, $this->master->person->first_name];
+        if($addPatronymic && isset($this->master->person->patronymic)) {
+            $fullName[] = $this->master->person->patronymic;
+        }
+        return implode(' ', $fullName);
+    }
+
+    // Метод для пополнения баланса
+    public function deposit($amount, $description = null, $createdAt = null)
+    {
+        $this->real_balance += $amount;
+        $this->save();
+
+        // Записываем транзакцию
+        $this->transactions()->create([
+            'amount' => $amount,
+            'type' => 'deposit',
+            'description' => $description,
+            'balance_after' => $this->real_balance + $this->bonus_balance,
+            'created_at' => $createdAt ?? now(),
+        ]);
+    }
+
+    // Метод для пополнения реальными деньгами и начисления бонусов
+    public function depositWithBonus($amount, $description = null, $createdAt = null)
+    {
+        // Пополнение реальными деньгами
+        $this->real_balance += $amount;
+        $this->save();
+
+        // Записываем транзакцию реального пополнения
+        $this->transactions()->create([
+            'amount' => $amount,
+            'type' => 'deposit',
+            'transaction_type' => 'real',
+            'description' => $description,
+            'balance_after' => $this->real_balance + $this->bonus_balance,
+            'created_at' => $createdAt ?? now(),
+        ]);
+
+        // Начисляем бонус, если сумма пополнения соответствует условиям
+        $bonusAmount = $this->calculateBonus($amount);
+
+        if ($bonusAmount > 0) {
+            $this->bonus_balance += $bonusAmount;
+            $this->save();
+
+            // Записываем транзакцию бонусного начисления
+            $this->transactions()->create([
+                'amount' => $bonusAmount,
+                'type' => 'deposit',
+                'transaction_type' => 'bonus',
+                'description' => 'Бонусное начисление',
+                'balance_after' => $this->real_balance + $this->bonus_balance,
+                'created_at' => $createdAt ?? now(),
+            ]);
+        }
+    }
+
+    // Метод для расчета бонусов
+    protected function calculateBonus($amount)
+    {
+        if ($amount >= 100) {
+            return $amount * 0.1; // 10% бонус
+        }
+        if ($amount >= 200) {
+            return $amount * 0.2; // 20% бонус
+        }
+        if ($amount >= 300) {
+            return $amount * 0.3; // 30% бонус
+        }
+        return 0; // Бонуса нет для меньших сумм
+    }
+
+    // Метод для списания баланса
+    public function withdraw($amount, $description = null, $createdAt = null)
+    {
+        if ($this->real_balance + $this->bonus_balance  < $amount) {
+            throw new \Exception("Недостаточно средств на балансе");
+        }
+
+        if ($this->real_balance >= $amount) {
+            $this->real_balance -= $amount;
+        } else {
+            $this->bonus_balance -= ($amount - $this->real_balance);
+            $this->real_balance = 0;
+        }
+
+        $this->save();
+
+        // Записываем транзакцию
+        $this->transactions()->create([
+            'amount' => -$amount,
+            'type' => 'withdrawal',
+            'description' => $description,
+            'balance_after' => $this->real_balance + $this->bonus_balance,
+            'created_at' => $createdAt ?? now(),
+        ]);
+    }
+
+    public function balances()
+    {
+        return $this->hasMany(UserBalance::class);
+    }
+
+    public function getBalance(string $type = null): UserBalance|float // todo REMOVE FLOAT
+    {
+        if(is_null($type)) { // TODO REMOVE
+            return $this->real_balance + $this->bonus_balance;
+        }
+
+        // Проверяем, есть ли баланс в загруженных отношениях (чтобы избежать запроса в БД)
+        $balance = $this->balances->where('balance_type', $type)->first();
+
+        if (!$balance) {
+            // Если баланса нет — создаем его
+            $balance = $this->balances()->create([
+                'balance_type' => $type,
+                'amount' => 0,
+                'currency' => 'BYN',
+                'status' => 'active',
+            ]);
+
+            // Добавляем в коллекцию загруженных балансов (чтобы избежать повторного запроса)
+            $this->setRelation('balances', $this->balances->push($balance));
+        }
+
+        return $balance;
+    }
 }

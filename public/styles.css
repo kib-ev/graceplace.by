@@ -1,0 +1,103 @@
+body {
+    background-color: #f2f4f7;
+}
+
+
+* {
+    touch-action: manipulation;
+}
+table#appointmentsList tr th {
+    background: #f3f3f3;
+}
+
+table tr.canceled td {
+    background: #ffe4e4;
+}
+
+a {
+    color: #333;
+}
+input {
+    color: #333;
+}
+
+.logo {
+    width: 20px;
+    height: 20px;
+    margin: 2px;
+}
+
+.self-added {
+    color: #4ab728;
+}
+#places {
+    display: flex;
+    gap: 3px;
+    margin-right: 5px;
+}
+.place {
+    min-width: 170px;
+}
+.place .image img {
+    border-radius: 4px;
+}
+
+.place .title {
+    height: 60px;
+    text-align: center;
+    border: 1px solid #c7c7c7;
+    margin: 2px 0px;
+    background: #a9a9a9;
+    color: #fff;
+    vertical-align: middle;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+}
+.place .time {
+    user-select: none;
+}
+.place .hour {
+    border: 1px solid #c7c7c7;
+    margin-bottom: 2px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+
+    white-space: nowrap;
+}
+.place .hour.busy {
+    background: #ffdede;
+}
+.place .hour.busy.break {
+    background: #ffebeb !important;
+}
+.place .hour.busy .info {
+    color: #e5b7b7;
+    float: right;
+    font-size: 0.9em;
+}
+.place .hour.busy.master {
+    background: #b5cfff;
+}
+.place .time.master .hour {
+    background: #b5cfff !important;
+}
+.place .time.master .hour .info,
+.place .hour.busy.master .info {
+    color: #95aedd;
+}
+.place .hour.free {
+    background: #e1fbe1;
+}
+
+.place .hour .add-app {
+    padding: 0px 5px;
+}
+
+.place .hour .add-app:hover {
+    color: gold;
+}

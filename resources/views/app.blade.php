@@ -6,6 +6,8 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
+    <meta http-equiv="Cache-Control" content="no-cache">
+
     <!-- META OG -->
 {{--    <meta property="og:title" content="Your Page Title" />--}}
 {{--    <meta property="og:description" content="Your Page Description" />--}}
@@ -53,7 +55,11 @@
         .self-added {
             color: #4ab728;
         }
-
+        #places {
+            display: flex;
+            gap: 3px;
+            margin-right: 5px;
+        }
         .place {
             min-width: 170px;
         }
@@ -120,9 +126,18 @@
         .place .hour .add-app:hover {
             color: gold;
         }
+
+        #appointmentsList .comments .comment .text {
+            background: #fbffc5;
+        }
+
+        #appointmentsList .comments .comment.cancellation_reason .text {
+            background: #f1aeb5 !important;
+        }
+
     </style>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
 
     <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
 
@@ -143,21 +158,15 @@
 
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
-
-
-    {{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
-                        <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
-                        <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
-                        <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
-
-                        <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
-
-
-                        <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
-
-                        <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
-
-                        <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
+{{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
+                    <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
+                    <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
+                    <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
+                    <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
+                    <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
+                    <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
+                    <a class="nav-link" href="{{ route('admin.permissions.index') }}">Разрешения</a>
+                    <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
                 </div>
             </div>
         @endif

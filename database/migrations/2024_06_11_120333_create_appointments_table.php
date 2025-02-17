@@ -20,6 +20,7 @@ return new class extends Migration
             $table->dateTime('start_at')->nullable();
             $table->integer('duration')->nullable(); // minutes
             $table->boolean('is_full_day')->default(0);
+            $table->boolean('is_created_by_user')->default(0);
             $table->text('description')->nullable();
             $table->decimal('price', 8, 2)->nullable();
             $table->timestamp('canceled_at')->nullable();

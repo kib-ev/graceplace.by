@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('storage_cells', function (Blueprint $table) {
             $table->renameColumn('name', 'number');
+            $table->string('secret')->nullable()->after('description');
         });
     }
 
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('storage_cells', function (Blueprint $table) {
             $table->renameColumn('number', 'name');
+            $table->dropColumn('secret');
         });
     }
 };

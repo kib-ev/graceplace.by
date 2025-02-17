@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('price_hour', 8, 2)->nullable();
             $table->text('image_path')->nullable();
             $table->integer('sort')->unsigned()->nullable();
+            $table->boolean('is_hidden')->default(false);
             $table->timestamps();
         });
     }

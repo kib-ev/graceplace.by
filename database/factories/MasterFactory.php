@@ -5,8 +5,6 @@ namespace Database\Factories;
 use App\Models\Master;
 use App\Models\Person;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\AppointmentService;
 use App\Traits\HasComments;
+use App\Traits\Payable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,7 @@ class Appointment extends Model
     use HasFactory;
     use SoftDeletes;
     use HasComments;
+    use Payable;
 
     protected $guarded = ['id'];
 
@@ -39,10 +41,10 @@ class Appointment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function master()
-    {
-        return $this->belongsTo(Master::class);
-    }
+//    public function master()
+//    {
+//        return $this->belongsTo(Master::class);
+//    }
 
     public function place()
     {
@@ -54,18 +56,20 @@ class Appointment extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function isSelfAdded(): bool
+    public function getEndAtAttribute(): Carbon
     {
-        if(isset($this->user) && isset($this->master)) {
-            return $this->user->phone == $this->master->getPhoneNumber();
-        } else {
-            return false;
-        }
+        return $this->start_at->addMinutes($this->duration);
+    }
+
+    public function isCreatedByUser()
+    {
+        return $this->is_created_by_user;
     }
 
     public function mergeWithClosest()
     {
-        $thisDayAppointments = Appointment::where('master_id', $this->master_id)
+        $thisDayAppointments = Appointment::where('user_id', $this->user_id)
+            ->whereNull('canceled_at')
             ->where('place_id', $this->place_id)
             ->whereDate('start_at', $this->start_at)
             ->where('id', '!=', $this->id)
@@ -87,19 +91,20 @@ class Appointment extends Model
         $appEndTime = Carbon::parse($appointment->start_at->clone()->addMinutes($appointment->duration));
 
         if ($startTime->between($appStartTime, $appEndTime) || $endTime->between($appStartTime, $appEndTime)) {
-
             $this->update([
                 'start_at' => $startTime->lessThan($appStartTime) ? $startTime : $appStartTime,
                 'duration' => $this->duration + $appointment->duration - $appEndTime->diffInMinutes($startTime)
             ]);
-
+            $appointment->comments()->update([
+                'model_id' => $this->id
+            ]);
             $appointment->delete();
         }
 
         // TODO MERGE DESCRIPTION IF NOT NULL
     }
 
-    public static function contains(Appointment $haystack, Appointment $needle)
+    public static function contains(Appointment $haystack, Appointment $needle): bool
     {
         $startTime = Carbon::parse($haystack->datstart_ate);
         $endTime = Carbon::parse($haystack->start_at->clone()->addMinutes($haystack->duration));
@@ -112,8 +117,12 @@ class Appointment extends Model
 
     public function isOverlay($masterId = null): bool
     {
+        if(isset($this->canceled_at)){
+            return false;
+        }
+
         $startTime = Carbon::parse($this->start_at);
-        $endTime = Carbon::parse($this->start_at->clone()->addMinutes($this->duration));
+        $endTime = Carbon::parse($this->end_at);
 
         $placeId = $this->place_id;
 
@@ -123,27 +132,41 @@ class Appointment extends Model
             $builder->where('master_id', $masterId);
         })->when(isset($this->id), function (Builder $builder) {
             $builder->where('id', '!=',  $this->id);
-        })->whereDate('start_at', $this->start_at)->get();
+        })->whereBetween('start_at', [$this->start_at->startOfDay(), $this->start_at->clone()->addMinutes($this->duration)->endOfDay()])->get();
 
         if(count($appointments) > 0 && $this->is_full_day || count($appointments->where('is_full_day'))) {
             return true;
         }
 
         foreach ($appointments as $appointment) {
-
             $appStartTime = Carbon::parse($appointment->start_at);
             $appEndTime = Carbon::parse($appointment->start_at->clone()->addMinutes($appointment->duration));
 
-            if ($startTime->between($appStartTime, $appEndTime, false) || $endTime->between($appStartTime, $appEndTime, false)) {
+            if($startTime->eq($appEndTime) || $endTime->eq($appStartTime)) {
+                continue;
+            }
+
+            if ($startTime->between($appStartTime, $appEndTime) || $endTime->between($appStartTime, $appEndTime)) {
+
                 return true;
             }
         }
-
         return false;
     }
 
     public function getExpectedPrice(): float
     {
         return (new AppointmentService())->calculateAppointmentCost($this);
+    }
+
+    public function canBeCancelledByUser()
+    {
+        $cancellationCutoff  = $this->user->getSetting('cancellation_cutoff', 24); // Получаем лимит времени отмены в часах
+
+        $now = now();
+        $appointmentStart = $this->start_at;
+
+        // Проверяем, превышает ли оставшееся время до начала записи лимит отмены
+        return $appointmentStart->diffInHours($now) >= $cancellationCutoff;
     }
 }

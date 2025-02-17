@@ -40,6 +40,16 @@
                     <textarea class="form-control"  name="description"  id="storageCellDescription" cols="30" rows="10">{{ isset($storageCell) ? $storageCell->description : '' }}</textarea>
                 </div>
 
+                <div class="form-group mb-2">
+                    <label for="storageCellSecret">Код</label>
+                    <input class="form-control" id="storageCellSecret" type="text" maxlength="3" name="secret" value="{{ isset($storageCell) ? $storageCell->secret : '' }}">
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="storageCellCost">Цена за 30 дней</label>
+                    <input class="form-control" id="storageCellCost" type="number" step="0.01" name="cost_per_month" value="{{ isset($storageCell) ? $storageCell->cost_per_month : '' }}" required>
+                </div>
+
                 <hr>
 
                 <div class="form-group">

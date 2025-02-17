@@ -1,61 +1,31 @@
-@extends('app')
+@extends('public.layouts.app')
 
 
 @section('content')
 
-    <div class="row mb-3 mt-3">
-        <div class="col">
-            @if(auth()->user())
-                Вы вошли как: <b>{{ auth()->user()->name }}</b> <a href="/logout">Выйти</a>
-            @else
-                <a href="{{ route('login') }}">Вход на сайт</a>
-            @endif
-        </div>
-    </div>
-
+    {{-- Select Date --}}
     <div class="row mb-3 mt-3">
         <div class="col">
             <form class="me-2" id="dateForm" action="" style="display: inline-block;">
-                <input type="date" name="date" value="{{ request('date') }}"  onchange="document.getElementById('dateForm').submit();">
+                <input type="date" name="date" value="{{ request('date') ?? $date ?? '' }}" onchange="document.getElementById('dateForm').submit();">
             </form>
-
-{{--            @if(auth()->id())--}}
-{{--                <div class="d-inline-block">{{ auth()->user()->name }}</div>--}}
-{{--            @endif--}}
         </div>
     </div>
 
 
-    @if(auth()->user())
-        <div class="row mb-3 mt-3">
-            <div class="col">
-                @php
-                    $master = \App\Services\AppointmentService::getMasterByUserId(auth()->id());
-                @endphp
-
-                @if(isset($master))
-                    @php
-                        $masterAppointments = $master->appointments()->where('start_at', '>=', now()->startOfDay())->get();
-                    @endphp
-                    @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->format('Y/m/d'); }) as $masterDate => $masterAppointmentByDate)
-                        @php
-                            $masterCarbonDate = \Carbon\Carbon::parse($masterDate);
-                        @endphp
-                        <a href="/?date={{ $masterCarbonDate->format('Y-m-d') }}" class="m-1">{{ $masterCarbonDate->format('d.m') }} ({{ count($masterAppointmentByDate) }})</a>
-                    @endforeach
-                @endif
-            </div>
-        </div>
-    @endif
-
+    {{-- Calendar --}}
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
         <div class="row mb-3" style="overflow-x: scroll;">
             <div class="col">
-                <div id="places" class="" style="display: flex; gap: 3px; margin-right: 5px;" class="overflow-scroll">
-                    @foreach(\App\Models\Place::all()->sortBy('name') as $place)
+                <div id="places" class="overflow-scroll">
+                    @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user(), function ($query) {
+                                $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
+                                $query->whereIn('id', $visibleWorkspaces);
+                        })->orderBy('sort')->get() as $place)
+
                         <div class="place">
                             <div class="image">
-                                <img style="width: 100%;" src="{{ $place->image_path }}">
+                                <img style="width: 100%;" src="{{ $place->image_path ?? 'https://placehold.co/200x125?text=фотограф+\nуже+в+пути' }}">
                             </div>
 
                             <div class="title" style="height: 60px; text-align: center;">
@@ -63,102 +33,69 @@
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-{{--                                @if(now()->isSameDay($date))--}}
-{{--                                    <s>&nbsp;{{ $place->price_hour }}&nbsp;</s>&nbsp;--}}
-{{--                                    {{ $place->price_hour / 2 }} руб. / час--}}
-{{--                                @else--}}
-{{--                                    {{ $place->price_hour }} руб. / час--}}
-{{--                                @endif--}}
-
                                 {{ $place->price_hour }} руб. / час
-
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-{{--                                @if(now()->isSameDay($date))--}}
-{{--                                    <s>&nbsp;{{ $place->price_hour * 8 }}&nbsp;</s>&nbsp;--}}
-{{--                                    {{ $place->price_hour * 8 / 2 }} руб. / день--}}
-{{--                                @else--}}
-{{--                                    {{ $place->price_hour * 8 }} руб. / день--}}
-{{--                                @endif--}}
-
                                 {{ $place->price_hour * 8 }} руб. / день
-
                             </div>
 
-                            @php
-                                $calendar = new \App\Services\AppointmentService();
-                                $calendar->loadAppointmentsByPlaceId($place->id , \Illuminate\Support\Carbon::parse($date));
-                            @endphp
+                            <div
+                                class="time {{ auth()->user() && $place->isFullDayBusy(\Carbon\Carbon::parse($date)) && $place->isFullDayBusy(\Carbon\Carbon::parse($date))->user_id == auth()->id() ? 'master' : '' }}">
 
-                            <div class="time">
-                                @foreach($calendar->getItems() as $item)
+                                @php
+                                    $calendar = new \App\Services\AppointmentService();
+                                    $calendar->loadAppointmentsByPlaceId($place->id , \Illuminate\Support\Carbon::parse($date));
+                                @endphp
 
-                                    <div class="hour {{ $item['status'] }} {{ (isset($item['user']) && (auth()->id() == $item['user']['id'])) ? 'master' : '' }}"
-                                          data-date="{{ $item['date'] ?? '' }}"
-                                          data-time="{{ $item['time'] ?? '' }}"
-                                          data-datetime="{{ $item['datetime'] ?? '' }}"
-                                          data-max_duration="{{ $item['max-duration'] ?? '' }}"
-                                          data-place_id="{{ $place->id }}">
+                                @for($i = 30; $i <= 16*60+30; $i+= \App\Services\AppointmentService::$defaultTimeStep)
+                                    @php
+                                        $nextTime = \Carbon\Carbon::parse($date)->startOfDay()->addMinutes(6*60+30)->addMinutes($i);
+                                        $appointment = $calendar->getAppointment($nextTime);
+                                    @endphp
 
-                                        <span>{{ $item['label'] ?? '' }}</span>
+                                    <div
+                                        class="hour {{ $calendar->isTimeFree($nextTime) ? 'free' : 'busy' }} {{ $calendar->isTimeBreak($nextTime) ? 'break' : '' }} {{ auth()->user() && $appointment && $appointment->user_id == auth()->id() ? 'master' : '' }}"
+                                        data-date="{{ $nextTime->format('Y-m-d') }}"
+                                        data-time="{{ $nextTime->format('H:i') }}"
+                                        data-datetime="{{ $nextTime->format('Y-m-d H:i') }}"
+                                        data-max_duration="{{ $calendar->getMinutesToNextAppointment($nextTime) ?: '' }}"
+                                        data-place_id="{{ $place->id }}">
 
-                                        @if(isset($item['appointment']))
-                                            @if(auth()->user() && isset($item['master']))
+
+                                        @if(isset($appointment) && auth()->user() && auth()->user()->hasRole(['admin']))
+                                            <a href="{{ route('admin.appointments.edit', $appointment) }}"
+                                               title="{{ \Carbon\CarbonInterval::minutes($appointment->duration)->forHumans() }}">
+                                                <span>{{ $nextTime->format('H:i') }} - {{ $nextTime->clone()->addMinutes(30)->format('H:i') }}</span>
+                                            </a>
+                                        @else
+                                            <span>{{ $nextTime->format('H:i') }} - {{ $nextTime->clone()->addMinutes(30)->format('H:i') }}</span>
+                                        @endif
+
+                                        @if(!$calendar->isTimeFree($nextTime))
+                                            @if($appointment && auth()->user())
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
 
-                                                    @if(auth()->user()->hasRole(['admin']))
-                                                        <a href="{{ route('admin.appointments.edit', $appointment) }}">{{ $item['master']['first_name'] }}</a>
+                                                    @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
+                                                        <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->full_name }}">
+                                                            {{ $appointment->user->first_name }}
+                                                        </a>
                                                     @else
-                                                        {{ $item['master']['first_name'] }}
+                                                        {{ $appointment->user->first_name }}
                                                     @endif
 
                                                 </span>
                                             @else
                                                 <span class="info">Занято</span>
                                             @endif
-                                        @elseif(auth()->id() && $item['status'] == 'free')
-                                            @if($item['max-duration'] != 30)
+                                        @elseif(auth()->id())
+                                            @if($calendar->getMinutesToNextAppointment($nextTime) != 30)
                                                 <span class="add-app js-add-app">+</span>
                                             @endif
-                                        @else
-                                            <span class="info">Занято</span>
                                         @endif
                                     </div>
-                                @endforeach
 
-
-{{--                                @for($i = 30; $i <= 16*60+30; $i+=30)--}}
-{{--                                    @php--}}
-{{--                                        $nextDate = \Carbon\Carbon::parse($date)->startOfDay()->addMinutes(6*60+30)->addMinutes($i);--}}
-{{--                                        $isAppointment = $place->isAppointment($nextDate);--}}
-
-{{--                                        $nextAppointment = $place->nextAppointment($nextDate);--}}
-{{--                                        $nextAppointmentToMinutes = $nextAppointment ? $nextAppointment->start_at->diffInMinutes($nextDate) : '';--}}
-{{--                                    @endphp--}}
-
-{{--                                    <div class="hour {{ $isAppointment || $place->isFullDayBusy($nextDate) ? 'busy' : 'free' }} {{ auth()->user() && $isAppointment && is_master($isAppointment->master_id) ? 'master' : '' }}"--}}
-{{--                                         data-date="{{ $nextDate->format('Y-m-d') }}"--}}
-{{--                                         data-time="{{ $nextDate->format('H:i') }}"--}}
-{{--                                         data-datetime="{{ $nextDate->format('Y-m-d H:i') }}"--}}
-{{--                                         data-max_duration="{{ $nextAppointmentToMinutes ?: '' }}"--}}
-{{--                                         data-place_id="{{ $place->id }}">--}}
-
-{{--                                        <span>{{ $nextDate->format('H:i') }} - {{ $nextDate->clone()->addMinutes(30)->format('H:i') }}</span>--}}
-
-{{--                                        @if($isAppointment || $place->isFullDayBusy($nextDate))--}}
-{{--                                            @if(auth()->user() && isset($isAppointment->master))--}}
-{{--                                                <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">{{ $isAppointment->master->person->first_name }}</span>--}}
-{{--                                            @else--}}
-{{--                                                <span class="info">Занято</span>--}}
-{{--                                            @endif--}}
-{{--                                        @elseif(auth()->id())--}}
-{{--                                            <span class="add-app js-add-app">+</span>--}}
-{{--                                        @endif--}}
-{{--                                    </div>--}}
-{{--                                @endfor--}}
-
-
+                                @endfor
                             </div>
                         </div>
                     @endforeach
@@ -173,10 +110,16 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col">
+             Оставляя запись на сайте вы соглашаетесь с условиями <a href="/public-offer">Публичной оферты</a>.
+        </div>
+    </div>
+
     <!-- Button to trigger modal -->
-{{--    <button type="button" class="btn btn-primary" id="modalBtn">--}}
-{{--        Launch Modal (Double Click)--}}
-{{--    </button>--}}
+    {{--    <button type="button" class="btn btn-primary" id="modalBtn">--}}
+    {{--        Launch Modal (Double Click)--}}
+    {{--    </button>--}}
 
     @if(auth()->id())
         <!-- Modal -->
@@ -208,26 +151,24 @@
 
                             @if(auth()->user() && auth()->user()->hasRole('admin'))
                                 <div class="form-group mb-2">
-                                    <label for="appointmentMaster">Мастер <span class="text-danger">*</span></label>
-                                        <select id="appointmentMaster" name="master_id" class="form-control" required>
-                                            <option value=""></option>
-                                            @foreach(\App\Models\Master::all()->sortBy('person.first_name') as $master)
-                                                <option value="{{ $master->id }}" @selected($master->id == (isset($appointment) ? $appointment->master_id : request('master_id')))>
-                                                    {{ $master->full_name }} | {{ $master->description }} | {{ $master->phone }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                    <label for="appointmentUser">Пользователь <span class="text-danger">*</span></label>
+                                    <select id="appointmentUser" name="user_id" class="form-control" required>
+                                        <option value=""></option>
+                                        @foreach(\App\Models\User::role('master')->orderBy('name')->with(['master.person'])->get() as $user)
+                                            <option value="{{ $user->id }}" @selected($user->id == (isset($appointment) ? $appointment->user_id : request('user_id')))>
+                                                {{ $user->master->full_name }} | {{ $user->master->description }} | {{ $user->master->phone }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                            @elseif(auth()->user() && \App\Services\AppointmentService::getMasterByUserId(auth()->id()))
-                                <input type="hidden" name="master_id" value="{{ \App\Services\AppointmentService::getMasterByUserId(auth()->id()) }}">
                             @endif
 
                             <div class="form-group mb-2">
-                                <label for="appointmentDuration">Продолжительность <span class="text-danger">*</span></label>
+                                <label for="appointmentDuration">Продолжительность (ч) <span class="text-danger">*</span></label>
 
                                 <select id="appointmentDurationOptions" style="display: none;">
                                     <option value=""></option>
-                                    @for($i = 60; $i <= 22*30; $i+=30)
+                                    @for($i = \App\Services\AppointmentService::$minAppointmentDuration; $i <= 26*30; $i+=\App\Services\AppointmentService::$defaultTimeStep)
                                         <option value="{{ $i }}" @selected(isset($appointment) ? $appointment->duration == $i : '')>
                                             {{ now()->startOfDay()->addMinutes($i)->format('H:i') }}
                                         </option>
@@ -262,6 +203,60 @@
 
         <script>
             $(document).ready(function () {
+
+                $('.js_cancel-appointment').on('click', function () {
+
+                    let info = $(this).closest('.appointment-info');
+                    let modal = $('#modalCancelAppointment');
+
+                    let id = info.find('.js_appointment-id').text();
+                    let date = info.find('.js_appointment-date').text();
+                    let time = info.find('.js_appointment-time').text();
+                    let place = info.find('.js_appointment-place').text();
+
+                    modal.find('.js_appointment-id').text(id);
+                    modal.find('.js_appointment-date').text(date);
+                    modal.find('.js_appointment-time').text(time);
+                    modal.find('.js_appointment-place').text(place);
+
+                    modal.modal('show');
+                });
+
+                $('#sendCancelAppointmentData').on('click', function () {
+                    let modal = $('#modalCancelAppointment');
+
+                    let appointmentId = $('#modalCancelAppointment').find('.js_appointment-id').text();
+                    let cancelReason = $('#modalCancelAppointment').find('.js_appointment-cancel-reason').val();
+
+                    $.ajax({
+                        url: '/appointments/' + appointmentId + '/cancel',  // URL для отправки запроса
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',  // CSRF-токен для защиты запроса
+                            cancellation_reason: cancelReason
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                alert('Запись успешно отменена.');
+                                // Обновляем интерфейс, можно скрыть запись или изменить её статус
+                                $('#appointment-' + appointmentId).remove();
+
+                                $('.js_app_' + appointmentId).remove();
+
+                                window.location.reload();
+
+                            } else {
+                                alert('Произошла ошибка: ' + response.message);
+                            }
+                        },
+                        error: function (xhr) {
+                            alert('Произошла ошибка. Попробуйте снова.');
+                        }
+                    });
+
+                    modal.modal('hide');
+                })
+
                 $('.time').each(function (el) {
                     $(this).on('dblclick', function () {
                         console.log(1);
@@ -292,20 +287,22 @@
 
                         let maxDuration = selectedHour.attr('data-max_duration');
                         $('#addAppointmentForm #appointmentDuration option').each(function () {
-                            if(parseInt(maxDuration) < parseInt($(this).attr('value'))) {
+                            if (parseInt(maxDuration) < parseInt($(this).attr('value'))) {
                                 $(this).remove();
                             }
                         });
 
                         $('#exampleModal').modal('show');
+                        $('#addAppointmentButton').prop('disabled', false);
                     })
                 });
 
 
                 $('#addAppointmentButton').on('click', function () {
+                    $(this).prop('disabled', true);
                     let form = $('#addAppointmentForm');
 
-                    if(checkRequiredFields(form)) {
+                    if (checkRequiredFields(form)) {
                         form.submit();
                     }
                 });
@@ -313,10 +310,10 @@
                 function checkRequiredFields(form) {
                     let needToFillCount = 0;
 
-                    form.find('[required]').each(function() {
-                        if($(this).val() == '') {
+                    form.find('[required]').each(function () {
+                        if ($(this).val() == '') {
                             $(this).css('border-color', 'red');
-                            needToFillCount +=1;
+                            needToFillCount += 1;
                         } else {
                             $(this).css('border-color', ' ');
                         }

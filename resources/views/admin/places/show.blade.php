@@ -46,14 +46,24 @@
         <div class="col">
             <table class="table table-bordered">
                 <tr>
+                    <th></th>
                     @for($i = 1; $i <=12; $i++)
                         <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2024')->format('M-Y') }}</td>
                     @endfor
                 </tr>
                 <tr>
+                    <th>Аренда руб</th>
                     @for($i = 1; $i <=12; $i++)
                         <td>
-                            {{ $place->appointments()->whereMonth('start_at', $i)->sum('price') }}
+                            {{ $place->appointments()->whereYear('start_at',2024)->whereMonth('start_at', $i)->sum('price') }}
+                        </td>
+                    @endfor
+                </tr>
+                <tr>
+                    <th>Часов аренды</th>
+                    @for($i = 1; $i <=12; $i++)
+                        <td>
+                            {{ $place->appointments()->whereYear('start_at',2024)->whereMonth('start_at', $i)->sum('duration') / 60 }}
                         </td>
                     @endfor
                 </tr>

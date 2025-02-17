@@ -6,13 +6,10 @@
         <div class="col">
             <h1>Logs</h1>
 
-
             <table class="table table-bordered">
-
-                @foreach(\App\Models\Appointment::withoutCanceled()->orderByDesc('created_at')->get()->groupBy(function ($a) {  return $a->created_at->format('Y/m/d'); }) as $groupDate => $appointmentsByDate)
-
+                @foreach(\App\Models\Appointment::withoutCanceled()->orderByDesc('created_at')->with(['user.master.person.phones', 'place'])->get()->groupBy(function ($a) {  return $a->created_at->format('Y/m/d'); }) as $groupDate => $appointmentsByDate)
                     <tr>
-                        <td colspan="7" style="background: #d7d5d2;"><b>{{ \Carbon\Carbon::parse($groupDate)->format('d.m.Y') }}</b></td>
+                        <td colspan="8" style="background: #d7d5d2;"><b>{{ \Carbon\Carbon::parse($groupDate)->format('d.m.Y') }}</b></td>
                     </tr>
 
                     @foreach($appointmentsByDate as $appointment)
@@ -29,17 +26,14 @@
 
                             </td>
                             <td>
-                                @if(isset($appointment->master))
-                                    <a href="{{ route('admin.masters.show', $appointment->master) }}">{{ $appointment->master->full_name }}</a>
+                                @if($appointment->user->master)
+                                    <a href="{{ route('admin.masters.show', $appointment->user->master) }}">{{ $appointment->user->master->full_name }}</a>
                                 @endif
 
-                                @php
-                                    $creator = \App\Models\User::find($appointment->user_id);
-                                @endphp
-
-                                @if(isset($appointment->master) && $creator)
-                                    <br>
-                                    <span style="font-size: 0.8em; color: #ccc; float: right; background-color: {{ $creator->hasRole('admin') ? '#fffc93' : '#fff' }};">{{ $creator->name }}</span>
+                                @if($appointment->is_created_by_user)
+                                    <span style="padding: 5px 10px; font-size: 0.8em; color: #ccc; float: right; background-color: #fff;">user</span>
+                                @else
+                                    <span style="padding: 5px 10px; font-size: 0.8em; color: #ccc; float: right; background-color: #fffc93;">admin</span>
                                 @endif
                             </td>
                             <td>
@@ -50,28 +44,14 @@
                                 {{ $appointment->start_at->addMinutes($appointment->duration)->format('H:i') }}
                             </td>
                             <td>
+                                {{ \Carbon\Carbon::parse($appointment->start_at)->diffAsCarbonInterval($appointment->created_at)->forHumans() }}
+                            </td>
+                            <td>
                                 {{ $appointment->place->name }}
                             </td>
                         </tr>
                     @endforeach
-
                 @endforeach
-{{--                <tr>--}}
-{{--                    @for($i = 1; $i <=12; $i++)--}}
-{{--                        <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2024')->format('M-Y') }}</td>--}}
-{{--                    @endfor--}}
-{{--                    <td><b>ВСЕГО</b></td>--}}
-{{--                </tr>--}}
-{{--                <tr>--}}
-{{--                    @for($i = 1; $i <=12; $i++)--}}
-{{--                        <td>--}}
-{{--                            {{ \App\Models\Appointment::whereMonth('date', $i)->sum('price') }}--}}
-{{--                        </td>--}}
-{{--                    @endfor--}}
-{{--                    <td>--}}
-{{--                        {{ \App\Models\Appointment::whereYear('date', '2024')->sum('price') }}--}}
-{{--                    </td>--}}
-{{--                </tr>--}}
             </table>
         </div>
     </div>

@@ -21,10 +21,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="patronymic">Отчество</label>
+                    <input id="patronymic" class="form-control" type="text" name="patronymic" autocomplete="off" value="{{ isset($master) ? $master->person->patronymic : '' }}">
+                </div>
+
+                <div class="form-group">
                     <label for="phone">Телефон</label>
                     <input id="phone" class="form-control" type="text" name="phone" value="{{ isset($master) ? $master->person->phones->first()?->number : '' }}">
                 </div>
-
 
                 <div class="form-group">
                     <label for="description">Описание</label>
@@ -46,26 +50,6 @@
                     <input id="direct" class="form-control" name="direct" value="{{ isset($master) ? $master->direct : '' }}">
                 </div>
 
-{{--                <div class="form-group">--}}
-{{--                    <label for="postTitle">Текст</label>--}}
-
-{{--                    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.0/classic/ckeditor.js"></script>--}}
-
-{{--                    <textarea id="editor" class="form-control" name="content">{{ $post->id ? $post->content : '' }}</textarea>--}}
-
-{{--                    <script>--}}
-{{--                        ClassicEditor--}}
-{{--                            .create( document.querySelector( '#editor' ) )--}}
-{{--                            .then( editor => {--}}
-{{--                                console.log( editor );--}}
-{{--                            } )--}}
-{{--                            .catch( error => {--}}
-{{--                                console.error( error );--}}
-{{--                            } );--}}
-{{--                    </script>--}}
-
-{{--                </div>--}}
-
                 <hr>
 
                 <div class="form-group">
@@ -78,8 +62,7 @@
 
             </form>
 
-
-            @if(isset($master) && $master->appointments->count() == 0)
+            @if(isset($master) && $master->user->appointments->count() == 0)
                 <form action="{{ route('admin.masters.destroy', $master) }}" method="post" style="float: right;">
                     @csrf
                     @method('delete')

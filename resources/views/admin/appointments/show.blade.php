@@ -12,13 +12,13 @@
                     <td>{{ $appointment->id }}</td>
                 </tr>
                 <tr>
-                    <td>{{ $appointment->master->full_name }}</td>
+                    <td>{{ $appointment->user->name }}</td>
                 </tr>
                 <tr>
-                    <td>{{ $master->person->birth_date }}</td>
+                    <td>{{ $appointment->user->master->person->birth_date }}</td>
                 </tr>
                 <tr>
-                    <td>{{ $master->person->phones->first()?->number }}</td>
+                    <td>{{ $appointment->user->master->person->phones->first()?->number }}</td>
                 </tr>
             </table>
         </div>

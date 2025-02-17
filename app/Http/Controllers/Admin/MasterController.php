@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Master;
 use App\Models\Person;
 use App\Models\Phone;
+use App\Models\Place;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class MasterController extends Controller
 {
@@ -17,8 +20,7 @@ class MasterController extends Controller
     {
         $search = $request->get('search');
 
-        $masters = \App\Models\Master::
-            when($search && is_numeric($search), function ($query) use ($search) {
+        $masters = \App\Models\Master::when($search && is_numeric($search), function ($query) use ($search) {
                 $query->where('direct', 'like', '%'. $search .'%')->orWhere('instagram', 'like', '%'. $search .'%');
             })
             ->when($search && !is_numeric($search), function ($query) use ($search) {
@@ -27,10 +29,6 @@ class MasterController extends Controller
                         ->orWhere('last_name', 'like',  '%'. $search .'%');
                 });
             })->get();
-
-//        $masters->filter(function ($master) use ($request) {
-//            return $master->
-//        });
 
         return view('admin.masters.index', compact('masters'));
     }
@@ -51,17 +49,39 @@ class MasterController extends Controller
         $person = Person::make();
         $person->fill($request->all())->save();
 
+        /* @var $user User */
+        $user = User::updateOrCreate([
+            'email' => Str::replace(['+'], '', $request->get('phone')). '@graceplace.by',
+            'phone' => $request->get('phone'),
+        ], [
+            'name' => 'temp',
+            'password' => ''
+        ]);
+
         $master = Master::create([
+            'user_id' => $user->id,
             'description' => $request->get('description'),
             'person_id' => $person->id,
             'instagram' => $request->get('instagram'),
             'direct' => $request->get('direct'),
         ]);
 
+        $user->update([
+            'name' => $master->full_name,
+            'password' => bcrypt('graceplace' . $master->id)
+        ]);
+
+        $user->assignRole('master');
+
         $phone = Phone::create([
             'number' => $request->get('phone'),
             'person_id' => $person->id,
         ]);
+
+        // DEFAULT SETTINGS
+        $placesId = Place::get()->pluck('id');
+        $user->setSetting('workspace_visibility', $placesId);
+        // END
 
         return redirect()->route('admin.masters.show', $master);
     }
@@ -90,12 +110,18 @@ class MasterController extends Controller
         $person = $master->person;
         $person->fill($request->all())->save();
 
-        $master->fill($request->all())->save();
-
         $phone = $person->phones->first();
         $phone->update([
             'number' => $request->get('phone')
         ]);
+
+        $master->user->update([
+            'phone' => $phone->number
+        ]);
+
+        $master->fill($request->all());
+        $master->update();
+
 
         return back();
 

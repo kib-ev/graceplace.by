@@ -13,20 +13,21 @@
 
             <hr>
 
-            <table id="appointmentsList" class="table table-bordered mb-5">
+            <table id="appointmentsList" class="table table-bordered mb-5 tr-td-bg">
                 @foreach($storageCells as $storageCell)
-                    <tr>
+                    <tr style="background: {{ $storageCell->bookings->whereNull('finished_at')->count() == 0 ? '#91c791' : '' }} !important;">
                         <td>{{ $storageCell->number }}</td>
-
                         <td>
                             <table class="table table-bordered">
-                                @foreach($storageCell->bookings as $storageBooking)
+                                @foreach($storageCell->bookings->whereNull('finished_at') as $storageBooking)
                                     <tr>
-                                        <td style="width: 10px; background: {{ now()->isBetween($storageBooking->start_at, $storageBooking->start_at->addDays($storageBooking->duration)->subDay()) ? 'green' : 'red' }} ">
-                                            {{ $storageBooking->user_id }}
+                                        <td style="text-align: center; width: 10px; background: {{ now()->isBetween($storageBooking->start_at, $storageBooking->start_at->addDays($storageBooking->duration)->subDay()) ? 'green' : 'red' }} ">
+
                                         </td>
                                         <td style="width: 200px;">
-                                            {{ $storageBooking->master?->full_name }}
+                                            @if($storageBooking->user->master)
+                                                <a href="{{ route('admin.masters.show', $storageBooking->user->master->id) }}">{{ $storageBooking->user->master->full_name }}</a>
+                                            @endif
                                         </td>
 
                                         <td>
@@ -39,16 +40,23 @@
                                         </td>
 
                                         <td>
+                                            {{ $storageCell->cost_per_month }}
+                                        </td>
+
+                                        <td style="width: 200px;">
                                             <form id="rentCreate" action="{{ route('admin.storage-bookings.update', $storageBooking) }}" method="post" autocomplete="off">
                                                 @csrf
                                                 @method('patch')
 
-
+                                                <input type="hidden" name="extend" value="1">
                                                 <input type="hidden" name="duration" value="{{ $storageBooking->duration + 30 }}">
 
-                                                <input type="submit" value="Продлить на 30 дней">
+                                                @if(\Carbon\Carbon::parse($storageBooking->start_at)->addDays($storageBooking->duration)->subDays(5)->lessThan(now()))
+                                                    <input class="btn btn-primary btn-sm" type="submit" value="Продлить на 30 дней">
+                                                @endif
 
                                             </form>
+
                                         </td>
 
                                         <td>
@@ -59,6 +67,8 @@
                                 @endforeach
                             </table>
                         </td>
+
+                        <td style="width: 100px;"><input style="width: 100%;" value="{{ $storageCell->secret }}" disabled></td>
 
                         <td style="color: #ccc; width: 200px;">{{ $storageCell->description }}</td>
 
@@ -97,11 +107,11 @@
                 </div>
 
                 <div class="form-group mb-2">
-                    <label for="masterId">Мастер</label>
-                    <select id="masterId" class="form-control" name="master_id" required>
+                    <label for="userId">Пользователь</label>
+                    <select id="userId" class="form-control" name="user_id" required>
                         <option value=""></option>
-                        @foreach(\App\Models\Master::all()->sortBy('full_name') as $master)
-                            <option value="{{ $master->id }}">{{ $master->full_name }}</option>
+                        @foreach(\App\Models\User::all()->sortBy('name') as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -114,7 +124,7 @@
                 <div class="form-group mb-2">
                     <label for="storageBookingDuration">Количество дней</label>
                     <select id="storageBookingDuration" class="form-control" name="duration" required>
-{{--                        <option value=""></option>--}}
+                        {{--                        <option value=""></option>--}}
                         <option value="30">30</option>
                     </select>
                 </div>

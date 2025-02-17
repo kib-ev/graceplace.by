@@ -17,7 +17,6 @@
                         <a class="btn btn-danger" href="{{ route('admin.masters.index') }}" >X</a>
                     @endif
                 </form>
-
             </div>
 
             <hr>
@@ -36,23 +35,24 @@
                     <td>Дата <br> регистрации</td>
                     <td>Записи</td>
                     <td>Последний <br> визит</td>
-
-
-                    <td></td>
+                    <td>Баланс</td>
                     <td></td>
                 </tr>
-                @foreach($masters/*->sortBy('person.first_name')*/ as $master)
+                @foreach($masters as $master)
                     <tr>
-                        <td style="width: 50px;">{{ $loop->index + 1 }}</td>
-{{--                        <td>--}}
-{{--                            <img src="{{ $master->image_path }}" style="width: 30px;">--}}
-{{--                        </td>--}}
+                        <td style="width: 50px; background: {{ $master->user }}">{{ $loop->index + 1 }}</td>
+
                         <td style="width: 300px;">
-                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->full_name }}</a>
-
-                            <span style="color: #ccc;">id: {{ $master->id }}</span>
-
-
+                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->user->getFullName(1) }}</a>
+                            @if(is_null($master->person->patronymic))
+                                <span style="color: red;">(отчество)</span>
+                            @endif
+{{--                            <br>--}}
+{{--                            <span style="color: #ccc;">{{ $master->user->name }}</span>--}}
+                            <br>
+                            <span style="color: #ccc;">master_id: {{ $master->id }}</span>
+                            <br>
+                            <span style="color: #ccc;">user_id: {{ $master->user_id }}</span>
                         </td>
 
                         <td style="width: 200px;">
@@ -81,11 +81,19 @@
 
                         <td>
                             {{ $master->created_at->format('d.m.Y') }}
+
+                            @isset($master->user->offer_accept_date)
+                                <br>
+                                <span style="background: greenyellow;">
+                                    {{ $master->user->offer_accept_date?->format('d.m.Y') }}
+                                </span>
+                            @endisset
+
                         </td>
 
                         <td style="white-space: nowrap;">
                             @php
-                                $appointments = \App\Models\Appointment::where('master_id', $master->id)->get();
+                                $appointments = \App\Models\Appointment::where('user_id', $master->user_id)->get();
                             @endphp
 
                             {{ $appointments->count() }} /
@@ -110,7 +118,7 @@
 
                         </td>
 
-                        <td>{{ $master->person->birth_date }}</td>
+                        <td>{{ (new \App\Services\PaymentService())->getUserBalance($master->user) }} / {{ $master->user->getBalance() }}</td>
 
                         <td><a href="{{ route('admin.masters.edit', $master) }}">edit</a></td>
                     </tr>

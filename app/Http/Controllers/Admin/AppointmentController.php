@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -13,7 +15,7 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        if(is_null($request->get('date_from')) || is_null($request->get('date_from'))) {
+        if (is_null($request->get('date_from')) || is_null($request->get('date_from'))) {
             $parameters = [
                 'date_from' => now()->format('Y-m-d'),
                 'date_to' => now()->addWeek()->endOfWeek()->format('Y-m-d'),
@@ -49,7 +51,7 @@ class AppointmentController extends Controller
             $query->whereDate('start_at', $request->get('date'));
         });
 
-        $appointments = $appointments->get();
+        $appointments = $appointments->with(['user.master.person', 'place'])->get();
 
         return view('admin.appointments.index', compact('appointments', 'dateFrom', 'dateTo'));
     }
@@ -72,12 +74,7 @@ class AppointmentController extends Controller
         $appointment->start_at = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
         $appointment->save();
 
-        if($appointment->id) {
-            if(auth()->id()) {
-                $appointment->update([
-                    'user_id' => auth()->id()
-                ]);
-            }
+        if ($appointment->id) {
             return redirect()->route('admin.appointments.edit', $appointment);
         } else {
             return back()->withErrors('Ошибка сохранения.');;
@@ -106,19 +103,19 @@ class AppointmentController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         // CANCEL
-        if($request->get('cancel') == 1) {
-            $appointment->update([
-                'canceled_at' => now()
-            ]);
-
+        if ($request->get('cancel') == 1) {
+            $reason = $request->get('cancellation_reason');
+            (new AppointmentService())->cancelAppointment(user: auth()->user(), appointment: $appointment, cancellationReason: $reason);
             return back();
         }
 
         // UPDATE
         $appointment->fill($request->all());
-        $appointment->start_at = Carbon::parse($request->get('date') . ' ' . $request->get('time'));
+        if($request->has('date') && $request->has('time')) {
+            $appointment->start_at = Carbon::parse(time: $request->get('date') . ' ' . $request->get('time'));
+        }
 
-        if($appointment->save()) {
+        if ($appointment->save()) {
             return back();
         } else {
             return back()->withErrors('Ошибка сохранения.');;
@@ -132,5 +129,22 @@ class AppointmentController extends Controller
     {
         $appointment->delete();
         return redirect()->route('admin.appointments.index');
+    }
+
+    public function payments(Appointment $appointment)
+    {
+        $appointment->load('paymentRequirements', 'payments');
+        return view('admin.appointments.payments', compact('appointment'));
+    }
+
+    public function mergeClosestAppointments(Request $request)
+    {
+        $date = $request->date;
+
+        $appointments = Appointment::whereDate('start_at', Carbon::parse($date))->whereNull('canceled_at')->get();
+
+        (new AppointmentService())->mergeAppointments($appointments);
+
+        return redirect()->route('admin.appointments.index', ['date_from'=> $date, 'date_to' => $date]);
     }
 }
