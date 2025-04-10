@@ -1,10 +1,33 @@
 @extends('app')
 
+@section('style')
+    <style>
+        .comments__list {
+            margin-top: 5px;
+        }
+        .comments__list .comments__item {
+            background: lightgoldenrodyellow;
+            padding: 15px 5px 1px;
+            border: 1px solid #e1da8e;
+            border-radius: 5px;
+            margin-bottom: 2px;
+        }
+
+        .comments__list .comments__item_date {
+            position: absolute;
+            font-size: 10px;
+            margin-top: -15px;
+            color: #333;
+        }
+
+
+    </style>
+@endsection
 
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Masters</h1>
+            <h1>Список мастеров</h1>
 
             <div class="form">
                 <form id="searchMaster" method="get" autocomplete="off">
@@ -23,6 +46,9 @@
             <a href="{{ route('admin.masters.create') }}" class="btn btn-primary">Создать</a>
             <hr>
 
+            <a href="?is_active=1">Активные</a>
+            <a href="?is_active=0">Не активные</a>
+
             <table class="table table-bordered mb-5">
                 <tr>
                     <td></td>
@@ -32,34 +58,39 @@
                     <td>Инста</td>
                     <td>Директ</td>
                     <td>Услуги</td>
+                    <td></td>
                     <td>Дата <br> регистрации</td>
                     <td>Записи</td>
                     <td>Последний <br> визит</td>
-                    <td>Баланс</td>
+{{--                    <td>Баланс</td>--}}
                     <td></td>
                 </tr>
                 @foreach($masters as $master)
                     <tr>
                         <td style="width: 50px; background: {{ $master->user }}">{{ $loop->index + 1 }}</td>
 
-                        <td style="width: 300px;">
-                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->user->getFullName(1) }}</a>
+                        <td style="width: 300px;" title="master_id: {{ $master->id }} | user_id: {{ $master->user_id }}">
+                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->person->full_name }}</a>
                             @if(is_null($master->person->patronymic))
                                 <span style="color: red;">(отчество)</span>
                             @endif
-{{--                            <br>--}}
-{{--                            <span style="color: #ccc;">{{ $master->user->name }}</span>--}}
-                            <br>
-                            <span style="color: #ccc;">master_id: {{ $master->id }}</span>
-                            <br>
-                            <span style="color: #ccc;">user_id: {{ $master->user_id }}</span>
+
+                            <div class="comments__list">
+                                @foreach($master->comments as $masterComment)
+                                    <div class="comments__item">
+                                        <span class="comments__item_date">
+                                            {{ $masterComment->created_at->format('d.m.Y') }}
+                                        </span>
+                                        {{ $masterComment->text }}
+                                    </div>
+                                @endforeach
+                            </div>
+
                         </td>
 
                         <td style="width: 200px;">
                             <ul style="list-style-type: none; margin-bottom: 0px; padding: 0px;">
-                                @foreach($master->person->phones as $phone)
-                                    <li>{{ $phone->number }}</li>
-                                @endforeach
+                                <li>{{ $master->user->phone }}</li>
                             </ul>
                         </td>
 
@@ -79,6 +110,8 @@
 
                         <td>{{ $master->description }}</td>
 
+                        <td title="ЕРИП" style="width: 10px; background: {{ $master->user->getSetting('payment_link.place') && $master->user->getSetting('payment_link.storage') ? '#84db9b' : 'none' }}">
+                        </td>
                         <td>
                             {{ $master->created_at->format('d.m.Y') }}
 
@@ -89,11 +122,24 @@
                                 </span>
                             @endisset
 
+
+{{--                            @if($master->user->getSetting('payment_link.place') || $master->user->getSetting('payment_link.storage'))--}}
+{{--                                <br>--}}
+{{--                            @endif--}}
+
+{{--                            @if($master->user->getSetting('payment_link.place'))--}}
+{{--                                <i class="fa fa-check"></i>--}}
+{{--                            @endif--}}
+
+{{--                            @if($master->user->getSetting('payment_link.storage'))--}}
+{{--                                <i class="fa fa-check"></i>--}}
+{{--                            @endif--}}
+
                         </td>
 
                         <td style="white-space: nowrap;">
                             @php
-                                $appointments = \App\Models\Appointment::where('user_id', $master->user_id)->get();
+                                $appointments = $master->user->appointments;
                             @endphp
 
                             {{ $appointments->count() }} /
@@ -118,7 +164,7 @@
 
                         </td>
 
-                        <td>{{ (new \App\Services\PaymentService())->getUserBalance($master->user) }} / {{ $master->user->getBalance() }}</td>
+{{--                        <td>{{ (new \App\Services\PaymentService())->getUserBalance($master->user) }} / {{ $master->user->getBalance() }}</td>--}}
 
                         <td><a href="{{ route('admin.masters.edit', $master) }}">edit</a></td>
                     </tr>

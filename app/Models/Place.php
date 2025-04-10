@@ -215,14 +215,14 @@ class Place extends Model
         return $availableTimes;
     }
 
-    public function getAverageProfitPerMonth($lastMonths = 3): string
+    public function getAverageProfitPerMonth($lastMonths = 3): float
     {
         $appointments = $this->appointments()
             ->whereNull('canceled_at')
             ->whereBetween('start_at', [now()->subDays($lastMonths  * 30), now()])
             ->get();
 
-        return number_format($appointments->sum(function ($a) { return $a->price; }) / $lastMonths, 2, '.');
+        return $appointments->sum(function ($a) { return $a->price; }) / $lastMonths;
     }
 
     public function getAverageRentHoursPerDay($lastMonths = 3): string

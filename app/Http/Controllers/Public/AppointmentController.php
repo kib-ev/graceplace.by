@@ -43,6 +43,13 @@ class AppointmentController extends Controller
             ], 403); // HTTP статус 403 (Forbidden)
         }
 
+        if (now()->addHours(24)->greaterThan($appointment->start_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Для отмены записи менее чем за 24 часа до начала производится через Direct'
+            ], 403); // HTTP статус 403 (Forbidden)
+        }
+
         $cancellationReason = $request->input('cancellation_reason');
 
         $result = (new AppointmentService())->cancelAppointment(auth()->user(), $appointment,  $cancellationReason);

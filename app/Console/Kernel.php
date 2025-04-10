@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Models\User;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -14,6 +15,17 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 //        $schedule->command('app:make-payments')->everyMinute();
+
+        $schedule->call(function () { // TODO TEMP
+            foreach (User::role('master')->with(['master.person'])->get() as $user) {
+                $fullName = implode(' ', [$user->master->person->last_name, $user->master->person->first_name]);
+                if ($user->name != $fullName) {
+                    $user->update([
+                        'name' => implode(' ', [$user->master->person->last_name, $user->master->person->first_name])
+                    ]);
+                }
+            }
+        })->everyMinute();
     }
 
     /**

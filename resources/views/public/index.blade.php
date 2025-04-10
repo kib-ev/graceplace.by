@@ -5,7 +5,7 @@
 
     {{-- Select Date --}}
     <div class="row mb-3 mt-3">
-        <div class="col">
+        <div class="col-12">
             <form class="me-2" id="dateForm" action="" style="display: inline-block;">
                 <input type="date" name="date" value="{{ request('date') ?? $date ?? '' }}" onchange="document.getElementById('dateForm').submit();">
             </form>
@@ -16,20 +16,20 @@
     {{-- Calendar --}}
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
         <div class="row mb-3" style="overflow-x: scroll;">
-            <div class="col">
+            <div class="col-12">
                 <div id="places" class="overflow-scroll">
                     @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user(), function ($query) {
                                 $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
                                 $query->whereIn('id', $visibleWorkspaces);
                         })->orderBy('sort')->get() as $place)
 
-                        <div class="place">
+                        <div class="place" style="width: 200px;">
                             <div class="image">
-                                <img style="width: 100%;" src="{{ $place->image_path ?? 'https://placehold.co/200x125?text=фотограф+\nуже+в+пути' }}">
+                                <img style="width: 100%;" src="{{ $place->image_path ?? 'https://placehold.co/200x125?text=фото' }}">
                             </div>
 
                             <div class="title" style="height: 60px; text-align: center;">
-                                {{ $place->name }}
+                                <a class="text-white" href="{{ route('public.places.show', $place) }}">{{ $place->name }}</a>
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
@@ -77,11 +77,11 @@
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
 
                                                     @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
-                                                        <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->full_name }}">
-                                                            {{ $appointment->user->first_name }}
+                                                        <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->person->full_name }}">
+                                                            {{ $appointment->user->master->person->first_name }}
                                                         </a>
                                                     @else
-                                                        {{ $appointment->user->first_name }}
+                                                        {{ $appointment->user->master->person->first_name }}
                                                     @endif
 
                                                 </span>
@@ -105,14 +105,88 @@
     @endif
 
     <div class="row">
-        <div class="col">
-            Запись производится через директ: <a href="https://ig.me/m/beautycoworkingminsk">Перейти в директ</a>
+
+    </div>
+
+    <div class="row mb-2">
+        <div class="col-12">
+{{--            <p>Запись производится через директ: <a href="https://ig.me/m/beautycoworkingminsk">Перейти в директ</a>.</p>--}}
+            <p class="mb-0">Оставляя запись на сайте вы соглашаетесь с условиями <a href="/public-offer">Публичной оферты</a>.</p>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
-             Оставляя запись на сайте вы соглашаетесь с условиями <a href="/public-offer">Публичной оферты</a>.
+
+    <div class="row mb-2">
+        <div class="col-12">
+
+            <div class="payment">
+                @if(auth()->user() && auth()->user()->getSetting('payment_link.place'))
+                    <a class="btn btn-lg btn-primary mb-3" target="_blank" href="{{ auth()->user()->getSetting('payment_link.place') }}" style="width: 300px;">Оплатить Аренду Места</a>
+
+                    <p class="d-inline-flex gap-1">
+                        <a class="" data-bs-toggle="collapse" href="#collapsePlace" role="button" aria-expanded="false" aria-controls="collapseExample">
+                            Еще...
+                        </a>
+                    </p>
+                    <div class="collapse" id="collapsePlace">
+                        <div class="card card-body">
+                            <h3>Оплата Аренды Места</h3>
+                            <hr>
+                            <img src="{{ qr_code(auth()->user()->getSetting('payment_link.place')) }}" style="width: 250px; height: 250px;">
+
+                            <hr>
+
+                            <ul style="list-style-type: decimal; margin-bottom: 0px; padding-left: 25px;">
+                                <li>Войти в Мобильный банк или Интернет-банк любого банка</li>
+                                <li>Выбрать платежи через ЕРИП</li>
+                                <li>В дереве ЕРИП выбрать “Сервис e-pos” (или через поиск по коду услуги <b>4440631</b>)</li>
+                                <li>Вести лицевой счет <b>{{ substr(auth()->user()->getSetting('payment_link.place'), 63, 14) }}</b> ( после второго тире буква i )</li>
+                                <li>Подтвердить оплату</li>
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+
+
+                <br>
+
+                @php
+                    $storageBookings = \App\Models\StorageBooking::whereNull('finished_at')->where('user_id', auth()->id())->get();
+                @endphp
+
+                @if(auth()->user() && auth()->user()->getSetting('payment_link.storage') && count($storageBookings))
+                    <a class="btn btn-lg btn-primary mb-3" target="_blank" href="{{ auth()->user()->getSetting('payment_link.storage') }}" style="width: 300px;">Оплатить Аренду Локера</a>
+
+                    <p class="d-inline-flex gap-1">
+                        <a class="" data-bs-toggle="collapse" href="#collapseStorage" role="button" aria-expanded="false" aria-controls="collapseExample">
+                            Еще...
+                        </a>
+                    </p>
+                    <div class="collapse" id="collapseStorage">
+                        <div class="card card-body">
+                            <h3>Оплата Аренды Локера</h3>
+                            <hr>
+                            <img src="{{ qr_code(auth()->user()->getSetting('payment_link.storage')) }}" style="width: 250px; height: 250px;">
+
+                            <hr>
+
+                            <ul style="list-style-type: decimal; margin-bottom: 0px; padding-left: 25px;">
+                                <li>Войти в Мобильный банк или Интернет-банк любого банка</li>
+                                <li>Выбрать платежи через ЕРИП</li>
+                                <li>В дереве ЕРИП выбрать “Сервис e-pos” (или через поиск по коду услуги <b>4440631</b>)</li>
+                                <li>Вести лицевой счет <b>{{ substr(auth()->user()->getSetting('payment_link.storage'), 63, 14) }}</b> ( после второго тире буква i )</li>
+                                <li>Подтвердить оплату</li>
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="social mt-3">
+                <a href="https://www.instagram.com/beautycoworkingminsk/" target="_blank" class="mb-3"><img style="width: 50px;" src="./images/instagram.png" alt="Instagram GracePlace.By Minsk"></a>
+                <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Написать в Direct</a>
+            </div>
+
         </div>
     </div>
 
@@ -152,14 +226,28 @@
                             @if(auth()->user() && auth()->user()->hasRole('admin'))
                                 <div class="form-group mb-2">
                                     <label for="appointmentUser">Пользователь <span class="text-danger">*</span></label>
+
+                                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+                                    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
+                                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
+
+
                                     <select id="appointmentUser" name="user_id" class="form-control" required>
                                         <option value=""></option>
-                                        @foreach(\App\Models\User::role('master')->orderBy('name')->with(['master.person'])->get() as $user)
+                                        @foreach(\App\Models\User::role('master')->with(['master.person'])->get()->sortBy('master.person.full_name') as $user)
                                             <option value="{{ $user->id }}" @selected($user->id == (isset($appointment) ? $appointment->user_id : request('user_id')))>
-                                                {{ $user->master->full_name }} | {{ $user->master->description }} | {{ $user->master->phone }}
+                                                {{ $user->master->person->last_name }} {{ $user->master->person->first_name }} | {{ $user->master->description }} | {{ $user->master->phone }}
                                             </option>
                                         @endforeach
                                     </select>
+
+                                    <script>
+                                        $(document).ready(function() {
+                                            $('#appointmentUser').selectize({
+                                                sortField: 'text'
+                                            });
+                                        });
+                                    </script>
                                 </div>
                             @endif
 

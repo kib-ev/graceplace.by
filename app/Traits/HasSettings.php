@@ -9,7 +9,7 @@ trait HasSettings
     // Получение значения настройки по ключу
     public function getSetting($key, $default = null)
     {
-        $setting = $this->settings()->where('key', $key)->first();
+        $setting = $this->settings->where('key', $key)->first();
         return $setting ? json_decode($setting->value, true) : $default;
     }
 

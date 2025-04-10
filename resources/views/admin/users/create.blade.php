@@ -4,7 +4,7 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Add Master</h1>
+            <h1>Add User</h1>
             <hr>
             <form action="{{ isset($user) ? route('admin.users.update', $user) : route('admin.users.store') }}" autocomplete="off" method="post">
                 @csrf

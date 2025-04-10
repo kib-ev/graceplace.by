@@ -43,21 +43,21 @@
                                             {{ $storageCell->cost_per_month }}
                                         </td>
 
-                                        <td style="width: 200px;">
-                                            <form id="rentCreate" action="{{ route('admin.storage-bookings.update', $storageBooking) }}" method="post" autocomplete="off">
-                                                @csrf
-                                                @method('patch')
+{{--                                        <td style="width: 200px;">--}}
+{{--                                            <form id="rentCreate" action="{{ route('admin.storage-bookings.update', $storageBooking) }}" method="post" autocomplete="off">--}}
+{{--                                                @csrf--}}
+{{--                                                @method('patch')--}}
 
-                                                <input type="hidden" name="extend" value="1">
-                                                <input type="hidden" name="duration" value="{{ $storageBooking->duration + 30 }}">
+{{--                                                <input type="hidden" name="extend" value="1">--}}
+{{--                                                <input type="hidden" name="duration" value="{{ $storageBooking->duration + 30 }}">--}}
 
-                                                @if(\Carbon\Carbon::parse($storageBooking->start_at)->addDays($storageBooking->duration)->subDays(5)->lessThan(now()))
-                                                    <input class="btn btn-primary btn-sm" type="submit" value="Продлить на 30 дней">
-                                                @endif
+{{--                                                @if(\Carbon\Carbon::parse($storageBooking->start_at)->addDays($storageBooking->duration)->subDays(5)->lessThan(now()))--}}
+{{--                                                    <input class="btn btn-primary btn-sm" type="submit" value="Продлить на 30 дней">--}}
+{{--                                                @endif--}}
 
-                                            </form>
+{{--                                            </form>--}}
 
-                                        </td>
+{{--                                        </td>--}}
 
                                         <td>
                                             <a href="{{ route('admin.storage-bookings.edit', $storageBooking) }}"><i class="fa fa-edit"></i></a>
@@ -95,6 +95,7 @@
                 @method('post')
 
                 <input type="hidden" name="model_class" value="{{ \App\Models\StorageCell::class }}">
+                <input type="hidden" name="duration" value="0">
 
                 <div class="form-group mb-2">
                     <label for="modelId">Ячейка</label>
@@ -110,8 +111,8 @@
                     <label for="userId">Пользователь</label>
                     <select id="userId" class="form-control" name="user_id" required>
                         <option value=""></option>
-                        @foreach(\App\Models\User::all()->sortBy('name') as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                        @foreach(\App\Models\User::with('master.person')->role('master')->get()->sortBy('master.person.full_name') as $selectUser)
+                            <option value="{{ $selectUser->id }}">{{ $selectUser->master->person->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -121,13 +122,12 @@
                     <input id="storageBookingStartAt" class="form-control" type="date" name="start_at" required>
                 </div>
 
-                <div class="form-group mb-2">
-                    <label for="storageBookingDuration">Количество дней</label>
-                    <select id="storageBookingDuration" class="form-control" name="duration" required>
-                        {{--                        <option value=""></option>--}}
-                        <option value="30">30</option>
-                    </select>
-                </div>
+{{--                <div class="form-group mb-2">--}}
+{{--                    <label for="storageBookingDuration">Количество дней</label>--}}
+{{--                    <select id="storageBookingDuration" class="form-control" name="duration" required>--}}
+{{--                        <option value="30">30</option>--}}
+{{--                    </select>--}}
+{{--                </div>--}}
 
                 <div class="form-group mb-2">
                     <button class="btn btn-primary" type="submit">Занять</button>

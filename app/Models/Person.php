@@ -20,4 +20,9 @@ class Person extends Model
     {
         return $this->hasOne(Master::class);
     }
+
+    public function getFullNameAttribute(): string
+    {
+        return implode(' ', [$this->last_name, $this->first_name, $this->patronymic]);
+    }
 }

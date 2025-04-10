@@ -37,6 +37,7 @@ input {
 }
 .place {
     min-width: 170px;
+    width: 170px;
 }
 .place .image img {
     border-radius: 4px;

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class GetOfferAccept
 {
-    public array $blackList = [3];
+    public array $blackList = [];
 
     protected array $except = [
         '/public-offer',

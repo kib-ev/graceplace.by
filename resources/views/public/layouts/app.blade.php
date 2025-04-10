@@ -175,7 +175,7 @@
 <div class="container">
 
     <div class="row mb-3 mt-3">
-        <div class="col">
+        <div class="col-12">
             @if(auth()->user())
                 Вы вошли как: <b title="ID: {{ auth()->id() }}">{{ auth()->user()->name }}</b> <a href="/logout">Выйти</a>
             @else
@@ -183,6 +183,8 @@
             @endif
         </div>
     </div>
+
+
 
     @if(auth()->user() && auth()->user()->hasRole('master') && auth()->user()->getBalance() > 0)
         <div class="row mb-3 mt-3">
@@ -218,58 +220,64 @@
 
                         @if($masterAppointments->count() > 0)
                             <table class="table table-sm table-bordered table-responsive mb-0">
+                                <tr>
+                                    <th class="bg-secondary text-white" colspan="3" >Дата и время</th>
+                                    <th class="bg-secondary text-white">Рабочее место</th>
+                                    <th class="bg-secondary text-white">Сумма</th>
+                                    <th class="bg-secondary text-white">Отмена</th>
+                                </tr>
                                 @foreach($masterAppointments->load('place')->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->isoFormat('D MMM'); }) as $masterDate => $masterAppointmentByDate)
 
                                     @foreach($masterAppointmentByDate as $nextAppointment)
-                                        <tr class="appointment-info {{ $masterAppointmentByDate->count() == 1 ? 'js_app_'.$nextAppointment->id : '' }}">
+                                        <tr data-index="{{ $loop->index }}" class="appointment-info {{ $masterAppointmentByDate->count() == 1 ? 'js_app_'.$nextAppointment->id : '' }}">
 
                                             @if($loop->index == 0)
-                                                <td style="white-space: nowrap; width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
+                                                <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
                                                     {{ $masterDate }}
                                                 </td>
-                                                <td style="white-space: nowrap; width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
+                                                <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
                                                     <span>{{ mb_strtoupper($nextAppointment->start_at->isoFormat('dd')) }}</span>
                                                 </td>
                                             @endif
 
-                                            <td class="js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
                                                 ID: <span class="js_appointment-id">{{ $nextAppointment->id }}</span>
                                             </td>
 
-                                            <td class="js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
                                                 <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
                                             </td>
 
-                                            <td class="js_app_{{ $nextAppointment->id }}" style="white-space: nowrap; width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
+                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
 
-                                            <span class="js_appointment-time">
-                                                @if($nextAppointment->is_full_day)
-                                                    Полный день
-                                                @else
-                                                    {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
-                                                @endif
-                                            </span>
+                                                <span class="js_appointment-time">
+                                                    @if($nextAppointment->is_full_day)
+                                                        Полный день
+                                                    @else
+                                                        {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
+                                                    @endif
+                                                </span>
 
                                             </td>
 
-                                            <td class="js_app_{{ $nextAppointment->id }}">
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }} text-nowrap">
                                                 <span class="js_appointment-place">{{ $nextAppointment->place->name }}</span>
                                             </td>
 
-                                            <td style="text-align: right;">
-                                                {{ (new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment) }} BYN
+                                            <td class="bg-white text-nowrap text-end">
+                                                {{ number_format((new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment), 2) }} BYN
                                             </td>
 
-
-                                            @if(auth()->user() && auth()->user()->can('cancel appointment'))
-                                                <td class="js_app_{{ $nextAppointment->id }}">
-                                                    {{--                                                    @if($nextAppointment->canBeCancelledByUser())--}}
-                                                    <a class="js_cancel-appointment" style="cursor: pointer;">
+                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}">
+                                                @if(auth()->user() && auth()->user()->can('cancel appointment') && $nextAppointment->canBeCancelledByUser())
+                                                    <a class="btn btn-sm btn-danger js_cancel-appointment" style="line-height: 13px;">
                                                         Отменить
                                                     </a>
-                                                    {{--                                                    @endif--}}
-                                                </td>
-                                            @endif
+                                                @else
+                                                    <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Через Direct</a>
+                                                @endif
+                                            </td>
+
 
                                         </tr>
 
@@ -277,12 +285,15 @@
                                 @endforeach
                             </table>
                         @else
-                            <table class="table table-sm table-bordered">
+                            <table class="table table-sm table-bordered mb-0">
                                 <tr>
                                     <td>У вас нет предстоящих записей.</td>
                                 </tr>
                             </table>
                         @endif
+
+                        <p class="mt-1 mb-0">Отмена записей менее чем за {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }} {{ trans_choice('час|часа|часов', \App\Models\Appointment::CANCELLATION_TIMEOUT) }}
+                            производится <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">через Direct</a>.</p>
 
                         <!-- Modal -->
                         <div class="modal fade" id="modalCancelAppointment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -346,26 +357,31 @@
                         <div class="card card-body overflow-scroll">
 
                             <table class="table table-sm table-bordered table-responsive mb-0">
-
+                                <tr>
+                                    <th class="bg-secondary text-white" colspan="2" >Дата и время</th>
+                                    <th class="bg-secondary text-white">Рабочее место</th>
+                                    <th class="bg-secondary text-white">Сумма</th>
+                                    <th class="bg-secondary text-white"></th>
+                                </tr>
                                 @foreach($masterEndedAppointments as $nextAppointment)
                                     <tr class="appointment-info">
 
 
-                                        <td style="white-space: nowrap; width: 1%;">
+                                        <td class="text-nowrap" style="width: 1%;">
                                             {{ $nextAppointment->start_at->format('d.m.Y') }}
                                         </td>
 
-                                        <td class="js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
                                             ID: <span class="js_appointment-id">{{ $nextAppointment->id }}</span>
                                         </td>
 
-                                        <td class="js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
                                             <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
                                         </td>
 
-                                        <td class="js_app_{{ $nextAppointment->id }}" style="white-space: nowrap; width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
 
-                                        <span class="js_appointment-time">
+                                        <span class="text-nowrap js_appointment-time">
                                             @if($nextAppointment->is_full_day)
                                                 Полный день
                                             @else
@@ -375,12 +391,12 @@
 
                                         </td>
 
-                                        <td class="js_app_{{ $nextAppointment->id }}">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}">
                                             <span class="js_appointment-place">{{ $nextAppointment->place->name }}</span>
                                         </td>
 
-                                        <td style="text-align: right;">
-                                            {{ (new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment) }} BYN
+                                        <td class="text-nowrap text-end">
+                                            {{ number_format((new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment), 2) }} BYN
                                         </td>
 
                                         <td>
@@ -392,14 +408,12 @@
                                 @endforeach
                             </table>
 
-
                         </div>
                     </div>
                 </div>
             </div>
         @endif
     @endif
-
 
 
     {{-- Storage Cell --}}
@@ -412,12 +426,12 @@
         @if(count($bookings))
             <div class="row mb-3 mt-3">
                 <div class="col">
-                    <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">
-                        Локер
-                        @if($bookings->first()->daysLeft() < 0)
-                            <span>(требуется оплата)</span>
-                        @endif
-                    </a>
+                    <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">Локер</a>
+
+                    @if($bookings->first()->daysLeft() <= 0)
+                        <span class="bg-danger text-white p-1 px-2"> <b>ПРОСРОЧЕНО: {{ abs($bookings->first()->daysLeft()) }} {{ trans_choice('день|дня|дней', $bookings->first()->daysLeft()) }}</b></span>
+                    @endif
+
                     <div class="collapse" id="collapseStorageCells">
                         <div class="card card-body">
 
@@ -431,22 +445,39 @@
                                     <tr>
                                         <td style="width: 1%; white-space: nowrap;">Статус</td>
                                         <td>
-                                            @if($bookings->first()->daysLeft() < 0)
-                                                <span style="color: red;">Просрочено</span>
+                                            @if($bookings->first()->daysLeft() <= 0)
+                                                <span style="color: red;">Требуется оплата</span>
                                             @else
                                                 <span style="color: green;">Оплачено</span>
                                             @endif
                                         </td>
                                     </tr>
 
-{{--                                    <tr>--}}
-{{--                                        <td style="width: 1%; white-space: nowrap;">Дата начала бронирования</td>--}}
-{{--                                        <td>{{ $booking->start_at->format('d-m-Y') }}</td>--}}
-{{--                                    </tr>--}}
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Дата начала</td>
+                                        <td>{{ $booking->start_at->format('d-m-Y') }}</td>
+                                    </tr>
 
                                     <tr>
-                                        <td style="width: 1%; white-space: nowrap;">Дата окончания бронирования</td>
-                                        <td>{{ $booking->start_at->addDays($booking->duration)->format('d-m-Y') }}</td>
+                                        <td style="width: 1%; white-space: nowrap;">Дата окончания</td>
+                                        <td>
+                                            {{ $booking->start_at->addDays($booking->duration)->format('d-m-Y') }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Осталось</td>
+                                        <td>
+                                            @php
+                                                $leftLockerDays = now()->diffInDays($booking->start_at->addDays($booking->duration), false);
+                                            @endphp
+
+{{--                                            @if($leftLockerDays > 0)--}}
+                                                {{ $leftLockerDays }} {{ trans_choice('день|дня|дней', $leftLockerDays) }}
+{{--                                            @else--}}
+{{--                                                0 дней--}}
+{{--                                            @endif--}}
+                                        </td>
                                     </tr>
 
                                     <tr>
@@ -456,6 +487,14 @@
                                         </td>
                                     </tr>
 
+                                    @if(isset($bookings->first()->cell->secret))
+                                        <tr>
+                                            <td style="width: 1%; white-space: nowrap;">Код</td>
+                                            <td>
+                                                {{ $bookings->first()->cell->secret }}
+                                            </td>
+                                        </tr>
+                                    @endif
 
                                 </table>
                             @endforeach

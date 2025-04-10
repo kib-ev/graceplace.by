@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -52,10 +53,12 @@ class RegisterController extends Controller
         $this->fillEmail($data);
 
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:255', 'unique:users'], // todo correct validation
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'patronymic' => ['required', 'string', 'max:255'],
+            'phone' => ['required',' phone:BY', 'unique:users'], // todo correct validation
+//            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+//            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
 
@@ -67,16 +70,23 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        $this->fillEmail($data);
+//        $user = User::create([
+//            'name' => implode(' ', [$data['last_name'], $data['first_name']]),
+//            'phone' => $data['phone'],
+//            'email' => $data['email'],
+//            'password' => Hash::make($data['password']),
+//        ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'phone' => $data['phone'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $master = (new UserService())->createUserMaster(
+            $data['phone'],
+            $data['first_name'],
+            $data['last_name'],
+            $data['patronymic'],
+            $data['description'],
+            $data['instagram']
+        );
 
-        return $user;
+        return $master->user;
     }
 
     /**

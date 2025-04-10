@@ -134,6 +134,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         $master = $user->master;
         return view('user.schedule', compact('master'));
     });
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 
     Route::get('/users', function () {
         return view('admin.users.index');
@@ -151,14 +152,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/permissions/cancel-appointment', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
 
     // E-POS
-    Route::get('/orders-epos', function () {
-
-        return view('admin.orders.index');
-    })->name('orders.index');
-
+    Route::get('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders-epos/create', [\App\Http\Controllers\Admin\OrderController::class, 'create'])->name('orders.create');
     Route::post('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'completeApiRequest'])->name('orders.store');
 
+    // BALANCES
+    Route::get('balances', [\App\Http\Controllers\BalanceController::class, 'index']);
 
+
+    // USER SETTINGS ADMIN
+    Route::post('/settings', function () {
+
+        $user = \App\Models\User::find(request('user_id'));
+        $user->setSetting(request('key'), request('value'));
+
+        return redirect()->back()->with('success', 'Настройки успешно сохранены');
+    })->name('update-settings');
 });
 
 Route::post('/test', function () {
@@ -175,13 +184,12 @@ Route::name('public.')->middleware(['auth'])->group(function () {
     Route::any('/appointments/{appointment}/cancel', [\App\Http\Controllers\Public\AppointmentController::class, 'cancelAppointment'])->name('appointments.cancel');
 
     Route::resource('places', \App\Http\Controllers\Public\PlaceController::class)->only('show');
-
 });
 
 
 Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
 
-    // SETTINGS
+    // USER SETTINGS
     Route::post('/settings', function () {
         $user = auth()->user();
 
@@ -228,7 +236,7 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
     });
 });
 
-Auth::routes(['register' => false]);
+Auth::routes();
 
 Route::get('/logout', function () {
     \Illuminate\Support\Facades\Auth::logout();

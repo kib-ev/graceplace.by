@@ -8,6 +8,7 @@ use App\Models\Person;
 use App\Models\Phone;
 use App\Models\Place;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -20,7 +21,12 @@ class MasterController extends Controller
     {
         $search = $request->get('search');
 
-        $masters = \App\Models\Master::when($search && is_numeric($search), function ($query) use ($search) {
+        $masters = \App\Models\Master::when($request->has('is_active'), function ($query) use ($request) {
+                $query->whereHas('user', function ($user) use ($request) {
+                    $user->where('is_active', $request->get('is_active'));
+                });
+            })
+            ->when($search && is_numeric($search), function ($query) use ($search) {
                 $query->where('direct', 'like', '%'. $search .'%')->orWhere('instagram', 'like', '%'. $search .'%');
             })
             ->when($search && !is_numeric($search), function ($query) use ($search) {
@@ -29,6 +35,8 @@ class MasterController extends Controller
                         ->orWhere('last_name', 'like',  '%'. $search .'%');
                 });
             })->get();
+
+        $masters->load(['comments', 'person', 'user.settings', 'user.appointments:id,user_id,start_at,canceled_at']);
 
         return view('admin.masters.index', compact('masters'));
     }
@@ -46,42 +54,14 @@ class MasterController extends Controller
      */
     public function store(Request $request)
     {
-        $person = Person::make();
-        $person->fill($request->all())->save();
-
-        /* @var $user User */
-        $user = User::updateOrCreate([
-            'email' => Str::replace(['+'], '', $request->get('phone')). '@graceplace.by',
-            'phone' => $request->get('phone'),
-        ], [
-            'name' => 'temp',
-            'password' => ''
-        ]);
-
-        $master = Master::create([
-            'user_id' => $user->id,
-            'description' => $request->get('description'),
-            'person_id' => $person->id,
-            'instagram' => $request->get('instagram'),
-            'direct' => $request->get('direct'),
-        ]);
-
-        $user->update([
-            'name' => $master->full_name,
-            'password' => bcrypt('graceplace' . $master->id)
-        ]);
-
-        $user->assignRole('master');
-
-        $phone = Phone::create([
-            'number' => $request->get('phone'),
-            'person_id' => $person->id,
-        ]);
-
-        // DEFAULT SETTINGS
-        $placesId = Place::get()->pluck('id');
-        $user->setSetting('workspace_visibility', $placesId);
-        // END
+        $master = (new UserService())->createUserMaster(
+                $request->phone,
+                $request->first_name,
+                $request->last_name,
+                $request->patronymic,
+                $request->description,
+                $request->instagram,
+                $request->direct);
 
         return redirect()->route('admin.masters.show', $master);
     }
@@ -122,6 +102,11 @@ class MasterController extends Controller
         $master->fill($request->all());
         $master->update();
 
+        if ($request->has('is_active')) {
+            $master->user->update([
+                'is_active' => $request->get('is_active') == 1
+            ]);
+        }
 
         return back();
 
@@ -133,8 +118,11 @@ class MasterController extends Controller
      */
     public function destroy(Master $master)
     {
-        if($master->appointments()->count() == 0) {
+        if ($master->user->appointments()->count() == 0) {
+            $master->person->phones()->delete();
+            $master->person->delete();
             $master->delete();
+            $master->user->delete();
         }
 
         return redirect()->route('admin.masters.index');

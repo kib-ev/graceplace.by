@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\User\Balance;
 use App\Traits\HasSettings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -41,11 +42,6 @@ class User extends Authenticatable
         'offer_accept_date' => 'datetime',
         'password' => 'hashed',
     ];
-
-    public function getFirstNameAttribute(): string
-    {
-        return explode(' ', $this->getAttribute('name'))[0];
-    }
 
     public function person()
     {
@@ -136,16 +132,19 @@ class User extends Authenticatable
     // Метод для расчета бонусов
     protected function calculateBonus($amount)
     {
+        $bonus = 0;
+
         if ($amount >= 100) {
-            return $amount * 0.1; // 10% бонус
+            $bonus = $amount * 0.1; // 10% бонус
         }
         if ($amount >= 200) {
-            return $amount * 0.2; // 20% бонус
+            $bonus = $amount * 0.2; // 20% бонус
         }
         if ($amount >= 300) {
-            return $amount * 0.3; // 30% бонус
+            $bonus = $amount * 0.3; // 30% бонус
         }
-        return 0; // Бонуса нет для меньших сумм
+
+        return $bonus; // Бонуса нет для меньших сумм
     }
 
     // Метод для списания баланса
@@ -176,10 +175,10 @@ class User extends Authenticatable
 
     public function balances()
     {
-        return $this->hasMany(UserBalance::class);
+        return $this->hasMany(Balance::class);
     }
 
-    public function getBalance(string $type = null): UserBalance|float // todo REMOVE FLOAT
+    public function getBalance(string $type = null): Balance|float // todo REMOVE FLOAT
     {
         if(is_null($type)) { // TODO REMOVE
             return $this->real_balance + $this->bonus_balance;

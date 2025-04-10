@@ -270,7 +270,7 @@ final class AppointmentService
     public function loadAppointmentsByPlaceId(int $placeId, Carbon $date): AppointmentService
     {
         $this->date = $date;
-        $appointments = \App\Models\Appointment::onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
+        $appointments = \App\Models\Appointment::with(['user.person', 'user.master'])->onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
         return $this->loadAppointments($appointments);
     }
 

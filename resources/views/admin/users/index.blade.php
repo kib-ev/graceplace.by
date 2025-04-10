@@ -46,6 +46,15 @@
                         <td style="background: {{ $user->balance > 0 ? '#cef1ce' : '#fff' }}; text-align: right;">
                             {{ $user->balance }}
                         </td>
+
+                        <td style="background: {{ $user->balance > 0 ? '#cef1ce' : '#fff' }}; text-align: right;">
+                            <form action="{{ route('admin.users.update', $user) }}" method="post" autocomplete="off">
+                                @method('patch')
+                                @csrf
+                                <input type="text" name="password" placeholder="new password">
+
+                            </form>
+                        </td>
                     </tr>
                 @endforeach
             </table>

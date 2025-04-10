@@ -97,7 +97,7 @@
                 {{--  TAB 1  --}}
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="actual{{ $i }}" role="tabpanel" aria-labelledby="profile-tab">
-                        <table id="appointmentsList1" class="table table-bordered mb-5">
+                        <table id="appointmentsList1" class="table table-bordered table-responsive mb-5">
 
                             @forelse($appointmentsToDay->whereNull('canceled_at') as $appointment)
 
@@ -125,6 +125,9 @@
                                         @else
 
                                         @endif
+                                    </td>
+
+                                    <td title="ЕРИП" style="width: 5px; padding: 2px; background: {{ $appointment->user->getSetting('payment_link.place') && $appointment->user->getSetting('payment_link.storage') ? '#4ab728' : '#ff2318' }}">
                                     </td>
 
                                     <td style="width: 190px;">
@@ -206,26 +209,26 @@
                                         <a href="{{ route('admin.appointments.edit', $appointment) }}"><i class="fa fa-edit"></i></a>
                                     </td>
 
-                                    <td style="width: 100px; white-space: nowrap; text-align: right; font-size: 0.9em;">
+{{--                                    <td style="width: 100px; white-space: nowrap; text-align: right; font-size: 0.9em;">--}}
 
-                                        <a style="text-decoration: none;" href="{{ route('admin.appointments.payments.show', $appointment) }}">
-                                            @if($appointment->paymentRequirements()->sum('amount_due'))
-                                                {{ $appointment->paymentRequirements()->sum('amount_due') }} BYN
-                                            @else
-                                                <span style="color: #c1bebe;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>
-                                            @endif
-
-
-                                            <br>
+{{--                                        <a style="text-decoration: none;" href="{{ route('admin.appointments.payments.show', $appointment) }}">--}}
+{{--                                            @if($appointment->paymentRequirements()->sum('amount_due'))--}}
+{{--                                                {{ $appointment->paymentRequirements()->sum('amount_due') }} BYN--}}
+{{--                                            @else--}}
+{{--                                                <span style="color: #c1bebe;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>--}}
+{{--                                            @endif--}}
 
 
-                                            @if($appointment->isPaid())
-                                                <i style="color: #5fdb64;" class="fa fa-check" aria-hidden="true"></i>
-                                            @else
-                                                <i style="color: #e7e7e7;" class="fa fa-check" aria-hidden="true"></i>
-                                            @endif
-                                        </a>
-                                    </td>
+{{--                                            <br>--}}
+
+
+{{--                                            @if($appointment->isPaid())--}}
+{{--                                                <i style="color: #5fdb64;" class="fa fa-check" aria-hidden="true"></i>--}}
+{{--                                            @else--}}
+{{--                                                <i style="color: #e7e7e7;" class="fa fa-check" aria-hidden="true"></i>--}}
+{{--                                            @endif--}}
+{{--                                        </a>--}}
+{{--                                    </td>--}}
 
 
                                 </tr>
@@ -239,6 +242,7 @@
                             <tr>
                                 <th></th>
                                 <th></th>
+                                <th style="padding: 0px; "></th>
                                 <th></th>
                                 <th></th>
                                 <th></th>
@@ -251,7 +255,7 @@
                                 </th>
 
                                 <th></th>
-                                <th></th>
+
                             </tr>
                         </table>
                     </div>

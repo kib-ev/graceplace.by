@@ -185,6 +185,60 @@
     <div class="row">
         <div class="col-6">
             @php
+                $startDate = \Carbon\Carbon::now()->subYear()->startOfYear()->startOfWeek();
+                $endDate = \Carbon\Carbon::now()->subYear()->endOfYear()->endOfWeek();
+            @endphp
+            <table class="table table-bordered">
+                <tr>
+                    <th></th>
+                    <th>
+                        Неделя
+                    </th>
+                    <th>
+                        Часов аренды
+                    </th>
+                    <th>
+                        Выручка
+                    </th>
+
+                </tr>
+                @for($date = $startDate->clone(), $index = 1; $date->lessThan($endDate); $date->addDays(7), $index++)
+                    <tr>
+                        <td style="background: {{ now()->gt($date) && now()->lt($date->clone()->addWeek()) ? '#a1ff9b' : 'none' }}; width: 1%;">
+                            {{ $index}}
+                        </td>
+                        <td>
+                            <a href="https://graceplace.by/admin/appointments?date_from={{ $date->format('Y-m-d') }}&date_to={{ $date->clone()->addDays(6)->format('Y-m-d') }}">
+                                {{ $date->format('Y-m-d') }} - {{ $date->clone()->addDays(6)->format('Y-m-d') }}
+                            </a>
+                        </td>
+                        <td>
+                            @php
+                                $totalWeekHours = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('duration') / 60;
+                                $maxWeekHours = 7 * 8 * 9;
+                            @endphp
+
+                            {{ number_format($totalWeekHours, 0) }}
+
+
+
+                            @if($totalWeekHours > 0)
+                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ 9*8*7 }}
+                            @endif
+
+                        </td>
+
+                        <td style="text-align: right;" title="{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->get()->sum(function ($a) {
+                                return $a->place->price_hour * $a->duration / 60;
+                            }) / 1.2, 0) }}">
+                            {{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('price'), 2) }}
+                        </td>
+                    </tr>
+                @endfor
+            </table>
+        </div>
+        <div class="col-6">
+            @php
                 $startDate = \Carbon\Carbon::now()->startOfYear()->startOfWeek();
                 $endDate = \Carbon\Carbon::now()->endOfYear()->endOfWeek();
             @endphp
@@ -200,6 +254,7 @@
                     <th>
                         Выручка
                     </th>
+
                 </tr>
                 @for($date = $startDate->clone(), $index = 1; $date->lessThan($endDate); $date->addDays(7), $index++)
                     <tr>
@@ -212,7 +267,19 @@
                             </a>
                         </td>
                         <td>
-                            {{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('duration') / 60, 0) }}
+                            @php
+                                $totalWeekHours = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('duration') / 60;
+                                $maxWeekHours = 7 * 8 * 9;
+                                @endphp
+
+                            {{ number_format($totalWeekHours, 0) }}
+
+
+
+                            @if($totalWeekHours > 0)
+                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ 9*8*7 }}
+                            @endif
+
                         </td>
 
                         <td style="text-align: right;" title="{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->get()->sum(function ($a) {

@@ -18,6 +18,23 @@ function short_day_name(\Carbon\Carbon $carbon, bool $uppercase = false): string
     return $uppercase ? mb_strtoupper($shortDayName) : $shortDayName;
 }
 
+// является ли переданное число четным
+function even($var): bool
+{
+    return !($var & 1);
+}
+
+function qr_code($link) {
+    $options = new \chillerlan\QRCode\QROptions(
+        [
+//            'eccLevel' => \chillerlan\QRCode\QRCode::ECC_L,
+//            'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
+            'version' => 6,
+        ]
+    );
+
+    return (new \chillerlan\QRCode\QRCode($options))->render($link);
+}
 
 function num2str($inn, $stripkop = false) {
     $nol = 'ноль';

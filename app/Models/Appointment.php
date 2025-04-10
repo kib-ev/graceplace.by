@@ -26,6 +26,8 @@ class Appointment extends Model
         'duration' => 'integer'
     ];
 
+    const CANCELLATION_TIMEOUT = 24; // hours
+
     public function scopeWithoutCanceled(\Illuminate\Database\Eloquent\Builder $builder)
     {
         return $builder->whereNull('canceled_at');
@@ -159,9 +161,9 @@ class Appointment extends Model
         return (new AppointmentService())->calculateAppointmentCost($this);
     }
 
-    public function canBeCancelledByUser()
+    public function canBeCancelledByUser(): bool
     {
-        $cancellationCutoff  = $this->user->getSetting('cancellation_cutoff', 24); // Получаем лимит времени отмены в часах
+        $cancellationCutoff  = $this->user->getSetting('cancellation_timeout', self::CANCELLATION_TIMEOUT); // Получаем лимит времени отмены в часах
 
         $now = now();
         $appointmentStart = $this->start_at;

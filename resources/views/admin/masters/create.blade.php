@@ -3,21 +3,24 @@
 
 @section('content')
     <div class="row">
-        <div class="col">
+        <div class="col-12">
             <h1>Add Master</h1>
             <hr>
+
+        </div>
+        <div class="col-8">
             <form action="{{ isset($master) ? route('admin.masters.update', $master) : route('admin.masters.store') }}" autocomplete="off" method="post">
                 @csrf
                 @method(isset($master) ? 'patch' : 'post')
 
                 <div class="form-group">
-                    <label for="firstName">Имя</label>
-                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($master) ? $master->person->first_name : '' }}">
+                    <label for="lastName">Фамилия</label>
+                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($master) ? $master->person->last_name : '' }}">
                 </div>
 
                 <div class="form-group">
-                    <label for="lastName">Фамилия</label>
-                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($master) ? $master->person->last_name : '' }}">
+                    <label for="firstName">Имя</label>
+                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($master) ? $master->person->first_name : '' }}">
                 </div>
 
                 <div class="form-group">
@@ -50,6 +53,16 @@
                     <input id="direct" class="form-control" name="direct" value="{{ isset($master) ? $master->direct : '' }}">
                 </div>
 
+                @if(isset($master))
+                    <div class="form-group">
+                        <label for="is_active">Активен</label>
+                        <select id="isActive" class="form-control" name="is_active" id="">
+                            <option @selected($master->user->is_active == 1) value="1">Да</option>
+                            <option @selected($master->user->is_active == 0) value="0">Нет</option>
+                        </select>
+                    </div>
+                @endif
+
                 <hr>
 
                 <div class="form-group">
@@ -71,5 +84,7 @@
             @endif
 
         </div>
+
+
     </div>
 @endsection

@@ -137,6 +137,8 @@
 
     </style>
 
+    @yield('style')
+
     <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
 
     <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
@@ -160,7 +162,7 @@
                 <div class="navbar-nav">
 {{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
                     <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
-                    <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
+                    <a class="nav-link" href="{{ route('admin.masters.index', ['is_active' => 1]) }}">Мастера</a>
                     <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
                     <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
                     <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>

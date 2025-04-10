@@ -14,7 +14,6 @@
 
                 <h5 class="card-title">Запись №{{ $appointment->id }}</h5>
 
-
                 <table class="table">
                     <tr>
                         <td><strong>Дата и время:</strong></td>
@@ -57,6 +56,7 @@
                         <td>{{ $appointment->user->appointments->sum(function ($a) { $a->paymentRequirements()->sum('amount_due'); }) }} BYN</td>
                     </tr>
                 </table>
+
             </div>
         </div>
 

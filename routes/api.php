@@ -15,6 +15,28 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+Route::get('/user/{directId}', function (Request $request, $directId) {
+
+    $master = \App\Models\Master::where('direct', 'like', "%{$directId}%")->orWhere('instagram', 'like', "%{$directId}%")->first();
+
+    if ($master) {
+        return [
+            'name' => implode(' ', [$master->person->last_name, $master->person->first_name, $master->person->patronymic]),
+            'link' => route('admin.masters.show', $master->id),
+            'status' => 'ok',
+            'phone' => $master->user->phone,
+            'direct_id' => $directId
+        ];
+    }
+
+    return [
+        'status' => null,
+        'direct_id' => $directId
+    ];
+
+});
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

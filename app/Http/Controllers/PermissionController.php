@@ -23,20 +23,20 @@ class PermissionController extends Controller
         $permissionName = 'cancel appointment';
 
         // Получаем всех мастеров
-        $masters = User::get();
+        $users = User::get();
 
         // Обрабатываем каждого мастера
-        foreach ($masters as $master) {
+        foreach ($users as $user) {
             // Если мастер выбран, проверяем, есть ли у него уже это разрешение
-            if ($request->has('master_' . $master->id)) {
-                if (!$master->can($permissionName)) {
+            if ($request->has('master_' . $user->id)) {
+                if (!$user->can($permissionName)) {
                     // Назначаем разрешение, если его нет
-                    $master->givePermissionTo($permissionName);
+                    $user->givePermissionTo($permissionName);
                 }
             } else {
                 // Если мастер не выбран, удаляем разрешение
-                if ($master->can($permissionName)) {
-                    $master->revokePermissionTo($permissionName);
+                if ($user->can($permissionName)) {
+                    $user->revokePermissionTo($permissionName);
                 }
             }
         }

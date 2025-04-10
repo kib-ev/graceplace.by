@@ -28,11 +28,22 @@
                         <td><a href="{{ route('admin.places.show', $place) }}">{{ $place->name }}</a></td>
                         <td>{{ $place->description }}</td>
                         <td class="text-end">{{ $place->price_hour }}</td>
-                        <td class="text-end">{{ $place->getAverageProfitPerMonth() }}</td>
+                        <td class="text-end">{{ number_format($place->getAverageProfitPerMonth(), 2) }}</td>
                         <td class="text-end">{{ $place->getAverageRentHoursPerDay() }}</td>
                         <td><a href="{{ route('admin.places.edit', $place) }}"><i class="fa fa-edit"></i></a></td>
                     </tr>
                 @endforeach
+
+                <tr>
+                    <th>-</th>
+                    <th class="text-end">-</th>
+                    <th>-</th>
+                    <th>-</th>
+                    <th class="text-end">-</th>
+                    <th class="text-end">{{ number_format($places->sum(function ($place) { return $place->getAverageProfitPerMonth(); }), 2) }}</th>
+                    <th class="text-end">{{ number_format($places->sum(function ($place) { return $place->getAverageRentHoursPerDay(); }) / count($places), 2) }}</th>
+                    <th>-</th>
+                </tr>
             </table>
 
             Сегодня: {{ now()->format('d.m.Y') }}
