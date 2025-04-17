@@ -172,8 +172,8 @@
 
                                         <div class="comments">
                                             @foreach($appointment->comments as $comment)
-                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-2">
-                                                    <div class="label" style="padding: 5px 5px 0px; font-size: 0.8em; color: #ccc;">
+                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-1">
+                                                    <div class="label" style="font-size: 0.8em; color: #ccc;">
                                                         {{ $comment->created_at->format('d.m.Y H:i') }} - {{ $comment->user->name }}
                                                     </div>
                                                     <div class="text" style="border: 1px solid #ccc; padding: 5px 10px;">
@@ -333,8 +333,8 @@
 
                                         <div class="comments">
                                             @foreach($appointment->comments as $comment)
-                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-2">
-                                                    <div class="label" style="padding: 5px 5px 0px; font-size: 0.8em; color: #ccc;">
+                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-1">
+                                                    <div class="label" style="font-size: 0.8em; color: #ccc;">
                                                         {{ $comment->created_at->format('d.m.Y H:i') }} - {{ $comment->user->name }}
                                                     </div>
                                                     <div class="text" style="border: 1px solid #ccc; padding: 5px 10px;">

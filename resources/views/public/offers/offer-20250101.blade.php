@@ -293,7 +293,7 @@
                         <p>УНП 192683473</p>
                         <p>Юридический и почтовый адрес: 220116, г. Минск, проспект Газеты Правда 20А, пом. 14;</p>
                         <p>Р/c BY47MTBK30120001093300072363 в ЗАО "МТБанк", код MTBKBY22;</p>
-                        <p>Тел.: +375(33)602-54-94, +375(29)535-28-36</p>
+                        <p>Тел.: +375(33)602-54-94</p>
                         <p>Email: <a href="mailto:info@graceplace.by">info@graceplace.by</a>.</p>
                         <p>Instagram: <a href="https://www.instagram.com/beautycoworkingminsk/">@beautycoworkingminsk</a>.</p>
 

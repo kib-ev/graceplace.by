@@ -1,6 +1,35 @@
 @extends('app')
 
 
+@section('style')
+<style>
+    .comments__list .comment__item {
+        margin-bottom: 10px;
+    }
+    .comments__list .comment__item .comment__top {
+        font-size: 0.8em;
+        line-height: 14px;
+    }
+    .comments__list .comment__item .comment__date {
+
+    }
+    .comments__list .comment__item .comment__text {
+        background: #e9ecef;
+        padding: 5px 10px;
+        border: 1px solid #dee2e6;
+
+    }
+    .comments__list .comment__item button[type=submit] {
+        border: none;
+        background: none;
+    }
+    .comments__list .comment__item .comment__text pre {
+        font: inherit;
+    }
+</style>
+@endsection
+
+
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -128,7 +157,7 @@
                         {{--                            <option value="{{  }}" >{{ $time->format('H:i') }}</option>--}}
                         {{--                        @endfor--}}
 
-                        @for($i = 30; $i <= 26*30; $i+=30)
+                        @for($i = 30; $i <= 36*30; $i+=30)
                             <option value="{{ $i }}" @selected(isset($appointment) ? $appointment->duration == $i : '')>
                                 {{ now()->startOfDay()->addMinutes($i)->format('H:i') }}
                             </option>
@@ -167,10 +196,10 @@
 
                 </div>
 
-                <div class="form-group mb-2">
-                    <label for="description">Описание</label>
-                    <textarea id="description" class="form-control" name="description">{{ isset($appointment) ? $appointment->description : '' }}</textarea>
-                </div>
+{{--                <div class="form-group mb-2">--}}
+{{--                    <label for="description">Описание</label>--}}
+{{--                    <textarea id="description" class="form-control" name="description">{{ isset($appointment) ? $appointment->description : '' }}</textarea>--}}
+{{--                </div>--}}
 
                 <div class="form-group mb-2">
                     <label for="price">Стоимость</label>
@@ -259,13 +288,58 @@
             @endif
 
 
+                @if(isset($appointment))
 
-            <h4 class="mt-5">Оставить комментарий</h4>
+                    <h4 class="mt-5">Комментарии ({{ count($appointment->comments) }})</h4>
 
-                <form action="{{ route('admin.comments.store') }}">
+                    <div class="comments__list">
+                        @foreach($appointment->comments as $comment)
+                            <div class="comment__item">
+                                <div class="comment__top d-flex justify-content-between">
+                                    <div class="comment__date">
+                                        {{ $comment->created_at->format('d.m.Y H:i') }}
+                                    </div>
+                                    <div class="comment__author">
+                                        {{ $comment->user->name }}
+                                    </div>
+                                    <div class="comment__delete">
+                                        <form action="{{ route('admin.comments.destroy', $comment) }}" method="post">
+                                            @csrf
+                                            @method('delete')
 
-                    <button type="submit">Добавить</button>
-                </form>
+                                            <button type="submit">[удалить]</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="comment__text"><pre class="mb-0">{!! $comment->text !!}</pre></div>
+
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <h4 class="mt-5">Оставить комментарий</h4>
+
+                    <form action="{{ route('admin.comments.store') }}" method="post">
+                        @csrf
+                        @method('post')
+
+                        <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                        <input type="hidden" name="model_class" value="{{ $appointment::class }}">
+                        <input type="hidden" name="model_id" value="{{ $appointment->id }}">
+                        <input type="hidden" name="type" value="admin">
+
+                        <textarea class="form-control mb-2" name="text"></textarea>
+                        <button type="submit">Добавить</button>
+                    </form>
+
+                @endif
+
+
+
+
+
+
+
         </div>
 
         <div class="col-4">

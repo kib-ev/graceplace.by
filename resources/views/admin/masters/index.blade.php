@@ -66,6 +66,7 @@
                     <td></td>
                 </tr>
                 @foreach($masters as $master)
+                    @if($master->user)
                     <tr>
                         <td style="width: 50px; background: {{ $master->user }}">{{ $loop->index + 1 }}</td>
 
@@ -168,6 +169,13 @@
 
                         <td><a href="{{ route('admin.masters.edit', $master) }}">edit</a></td>
                     </tr>
+                    @else
+                        <tr>
+                            <td colspan="11">
+                                {{ $master->full_name }}
+                            </td>
+                        </tr>
+                    @endif
                 @endforeach
             </table>
         </div>

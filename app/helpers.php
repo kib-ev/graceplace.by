@@ -36,6 +36,18 @@ function qr_code($link) {
     return (new \chillerlan\QRCode\QRCode($options))->render($link);
 }
 
+function direct_link($profileLink): ?string
+{
+    if(isset($profileLink)) {
+        $parts = explode('/', trim($profileLink,'/'));
+        if ($parts > 0) {
+            return 'https://ig.me/m/' . end($parts);
+        }
+    }
+
+    return null;
+}
+
 function num2str($inn, $stripkop = false) {
     $nol = 'ноль';
     $str[100]= array('','сто','двести','триста','четыреста','пятьсот','шестьсот', 'семьсот', 'восемьсот','девятьсот');

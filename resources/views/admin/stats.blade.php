@@ -274,10 +274,8 @@
 
                             {{ number_format($totalWeekHours, 0) }}
 
-
-
                             @if($totalWeekHours > 0)
-                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ 9*8*7 }}
+                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ $maxWeekHours }}
                             @endif
 
                         </td>
