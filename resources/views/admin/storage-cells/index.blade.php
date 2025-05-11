@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -59,8 +59,10 @@
 
 {{--                                        </td>--}}
 
-                                        <td>
-                                            <a href="{{ route('admin.storage-bookings.edit', $storageBooking) }}"><i class="fa fa-edit"></i></a>
+                                        <td style="width: 1%;">
+                                            <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $storageBooking) }}">
+                                                продление
+                                            </a>
                                         </td>
 
                                     </tr>
@@ -74,7 +76,7 @@
 
 
                         <td style="width: 1%;">
-                            <a href="{{ route('admin.storage-cells.edit', $storageCell) }}"><i class="fa fa-edit"></i></a>
+                            <a href="{{ route('admin.storage-cells.edit', $storageCell) }}"><i class="fa fa-gear"></i></a>
                         </td>
 
 

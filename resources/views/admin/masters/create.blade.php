@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -38,10 +38,10 @@
                     <textarea id="description" class="form-control" name="description">{{ isset($master) ? $master->description : '' }}</textarea>
                 </div>
 
-                <div class="form-group">
-                    <label for="imagePath">Ссылка на фото</label>
-                    <input id="imagePath" class="form-control" name="image_path" value="{{ isset($master) ? $master->image_path : '' }}">
-                </div>
+{{--                <div class="form-group">--}}
+{{--                    <label for="imagePath">Ссылка на фото</label>--}}
+{{--                    <input id="imagePath" class="form-control" name="image_path" value="{{ isset($master) ? $master->image_path : '' }}">--}}
+{{--                </div>--}}
 
                 <div class="form-group">
                     <label for="instagram">Инстаграм</label>

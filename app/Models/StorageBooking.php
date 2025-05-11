@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasComments;
 use App\Traits\Payable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,7 @@ class StorageBooking extends Model
     use HasFactory;
     use SoftDeletes;
     use Payable;
+    use HasComments;
 
     protected $guarded = ['id'];
 

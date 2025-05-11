@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 @php
     /** @var \App\Models\Appointment $appointment */

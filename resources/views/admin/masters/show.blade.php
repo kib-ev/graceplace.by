@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -7,12 +7,9 @@
             <h1>Мастер - {{ $master->person->last_name }} {{ $master->person->first_name }} {{ $master->person->patronymic }}</h1>
             <hr>
 
-            <table class="table table-bordered">
-                <tr style="font-size: 2em;">
-                    <td>Баланс: <span class="float-end">{{ $master->user->real_balance }}</span></td>
-                    <td>Бонусы: <span class="float-end">{{ $master->user->bonus_balance }}</span></td>
-                </tr>
-            </table>
+            @if($master->user->getDebtAmount() > 0)
+                <div class="bg-danger text-white p-3 mb-3" style="font-size: 1.4em;">Задолженность: {{ number_format($master->user->getDebtAmount(), 2) }} </div>
+            @endif
 
             <nav>
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -21,6 +18,10 @@
                     <button id="nav-stats-tab" data-bs-target="#nav-stats" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Статистика</button>
                     <button id="nav-comments-tab" data-bs-target="#nav-comments" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Комментарии ({{ $master->comments()->count() }})</button>
                     <button id="nav-payment-tab" data-bs-target="#nav-payment" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Ссылки ЕРИП ({{ !empty($master->user->getSetting('payment_link.place')) + !empty($master->user->getSetting('payment_link.storage'))  }})</button>
+
+                    @if(count($master->user->storageBookings))
+                        <button id="nav-storage-tab" data-bs-target="#nav-storage" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Локер ({{ count($master->user->storageBookings) }})</button>
+                    @endif
                 </div>
             </nav>
             <div class="tab-content" id="nav-tabContent">
@@ -28,9 +29,7 @@
                     <div class="tab bg-light p-3">
                         <table class="table table-bordered">
                             <tr>
-                                <td>id: {{ $master->id }}
-
-                                </td>
+                                <td>id: {{ $master->id }}</td>
                             </tr>
                             <tr>
                                 <td>user_id: {{ \App\Services\AppointmentService::getUserByMasterId($master->id)?->id }}</td>
@@ -252,6 +251,8 @@
                         </table>
                     </div>
                 </div>
+
+
                 <div id="nav-comments" class="tab-pane fade" role="tabpanel" tabindex="0">
                     <div class="tab bg-light p-3">
                         <div class="comments">
@@ -259,12 +260,43 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="tab-pane fade" id="nav-appointments" role="tabpanel" tabindex="0">
                     <div class="tab bg-light p-3">
                         <a class="btn btn-primary me-3 mb-3" href="https://graceplace.by/admin/appointments/create?master_id={{ $master->id }}">Добавить запись</a>
                         @include('admin.appointments.includes.table', ['appointments' => $master->user->appointments])
                     </div>
                 </div>
+
+                @if(count($master->user->storageBookings))
+                    <div id="nav-storage" class="tab-pane fade" role="tabpanel" tabindex="0">
+                        <div class="tab bg-light p-3">
+                            <div class="storageBookings">
+                                <table class="table table-bordered">
+                                    @foreach($master->user->storageBookings as $storageBooking)
+                                        <tr>
+                                            <td><a href="{{ route('admin.storage-bookings.edit', $storageBooking) }}">{{ $storageBooking->cell->number }}</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Осталось дней: {{ $storageBooking->daysLeft() }}</td>
+                                        </tr>
+                                        <tr>
+                                           <td>
+                                               <div class="comments">
+                                                   @include('admin.comments.includes.widget', ['model' => $storageBooking, 'title' => 'Комментарий', 'type' => 'admin'])
+                                               </div>
+                                           </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Код: {{ $storageBooking->cell->secret }}</td>
+                                        </tr>
+                                    @endforeach
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
         </div>

@@ -135,6 +135,32 @@
             background: #f1aeb5 !important;
         }
 
+         .comments__list {
+             margin-top: 5px;
+         }
+        .comments__list .comment__item {
+            background: lightgoldenrodyellow;
+            padding: 5px 5px 1px;
+            border: 1px solid #e1da8e;
+            border-radius: 5px;
+            margin-bottom: 2px;
+        }
+
+        .comments__list .comment__date {
+            font-size: 10px;
+            color: #333;
+        }
+        .comments__list .comment__author {
+            font-size: 10px;
+            color: #333;
+        }
+        .comments__list .comment__delete button[type=submit]{
+            font-size: 10px;
+            border: none;
+            background-color: inherit;
+        }
+
+
     </style>
 
     @yield('style')
@@ -154,23 +180,7 @@
 
 
         @if(auth()->user() && auth()->user()->hasRole('admin'))
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <div class="navbar-nav">
-{{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
-                    <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
-                    <a class="nav-link" href="{{ route('admin.masters.index', ['is_active' => 1]) }}">Мастера</a>
-                    <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
-                    <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
-                    <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
-                    <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
-                    <a class="nav-link" href="{{ route('admin.permissions.index') }}">Разрешения</a>
-                    <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
-                </div>
-            </div>
+            @include('admin.layouts.includes.menu')
         @endif
 
     </div>

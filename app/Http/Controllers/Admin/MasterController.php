@@ -9,6 +9,7 @@ use App\Models\Phone;
 use App\Models\Place;
 use App\Models\User;
 use App\Services\UserService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -21,22 +22,29 @@ class MasterController extends Controller
     {
         $search = $request->get('search');
 
-        $masters = \App\Models\Master::when($request->has('is_active'), function ($query) use ($request) {
-                $query->whereHas('user', function ($user) use ($request) {
+        $masters = \App\Models\Master::when($request->has('is_active'), function (Builder $masters) use ($request) {
+            $masters->whereHas('user', function (Builder $user) use ($request) {
                     $user->where('is_active', $request->get('is_active'));
                 });
             })
-            ->when($search && is_numeric($search), function ($query) use ($search) {
+            ->when($search && is_numeric($search), function (Builder $query) use ($search) {
                 $query->where('direct', 'like', '%'. $search .'%')->orWhere('instagram', 'like', '%'. $search .'%');
             })
-            ->when($search && !is_numeric($search), function ($query) use ($search) {
-                $query->whereHas('person', function ($query) use ($search) {
+            ->when($search && !is_numeric($search), function (Builder $query) use ($search) {
+                $query->whereHas('person', function (Builder $query) use ($search) {
                     $query->where('first_name', 'like',  '%'. $search .'%')
                         ->orWhere('last_name', 'like',  '%'. $search .'%');
                 });
+            })
+            // TAGS
+            ->when($request->has('tag'), function (Builder $query) use ($request) {
+                $query->whereHas('comments', function ($query) use ($request) {
+                    $tag = $request->get('tag');
+                    $query->where('text', 'like', "%#{$tag}%");
+                });
             })->get();
 
-        $masters->load(['comments', 'person', 'user.settings', 'user.appointments:id,user_id,start_at,canceled_at']);
+        $masters->load(['comments.user', 'person', 'user.settings', 'user.appointments.place']);
 
         return view('admin.masters.index', compact('masters'));
     }

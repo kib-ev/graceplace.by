@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -42,6 +42,9 @@
                         <td style="width: 50px;">{{ $loop->index + 1 }}</td>
                         <td>
                             {{ $user->name }}
+                        </td>
+                        <td>
+                            {{ $user->phone }}
                         </td>
                         <td style="background: {{ $user->balance > 0 ? '#cef1ce' : '#fff' }}; text-align: right;">
                             {{ $user->balance }}

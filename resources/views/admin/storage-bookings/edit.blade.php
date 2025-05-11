@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -34,7 +34,7 @@
     </div>
 
     <div class="row">
-        <div class="col-6">
+        <div class="col-4">
             <form action="{{ isset($storageBooking) ? route('admin.storage-bookings.update', $storageBooking) : route('admin.storage-bookings.store') }}" method="post"
                   autocomplete="off">
                 @csrf
@@ -110,7 +110,7 @@
             @endif
         </div>
 
-        <div class="col-6">
+        <div class="col-4">
             <form id="rentCreate" action="{{ route('admin.storage-bookings.update', $storageBooking) }}" method="post" autocomplete="off">
                 @csrf
                 @method('patch')
@@ -138,5 +138,15 @@
 
             </form>
         </div>
+
+        @if(isset($storageBooking))
+            <div class="col-4">
+                Комментарии
+
+                <div class="comments">
+                    @include('admin.comments.includes.widget', ['model' => $storageBooking, 'title' => 'Комментарии', 'type' => 'admin'])
+                </div>
+            </div>
+        @endif
     </div>
 @endsection

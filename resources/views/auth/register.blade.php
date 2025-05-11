@@ -1,4 +1,5 @@
-@extends('app')
+@extends('admin.layouts.app')
+
 
 @section('content')
 <div class="container">
@@ -103,7 +104,7 @@
 
                             <div class="col-md-6">
                                 <textarea id="description" type="description"
-                                          placeholder="Укажите все оказываемые вами услуги"
+                                          placeholder="Перечистите все оказываемые вами услуги"
                                           class="form-control @error('description') is-invalid @enderror"
                                           name="description" required>{{ old('description') }}</textarea>
 

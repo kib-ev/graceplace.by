@@ -1,4 +1,4 @@
-@extends('app')
+@extends('admin.layouts.app')
 
 
 @section('content')
@@ -88,9 +88,6 @@
                         <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#cancel{{ $i }}" type="button" role="tab" aria-controls="home" aria-selected="false">Отмененные ({{ $appointmentsToDay->whereNotNull('canceled_at')->count() }})</button>
                     </li>
 
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#payment{{ $i }}" type="button" role="tab" aria-controls="home" aria-selected="false">Оплаты</button>
-                    </li>
                 </ul>
 
 
@@ -136,19 +133,22 @@
                                                 <a href="{{ route('admin.masters.show', $appointment->user->master) }}">
                                                     {{ $appointment->user->name }}
                                                 </a>
+
+                                                @if($appointment->user->appointments->first()->start_at->format('Y-m-d') == $nextDate->format('Y-m-d'))
+                                                    <span class="text-bg-warning p-2">1</span>
+                                                @endif
+
                                             </div>
                                         @else
                                             <div class="flex-fill" style="display:flex; justify-content: space-between;">
                                                 {{ $appointment->user->name }}
                                             </div>
                                         @endif
-{{--                                            <span style="color: #ccc;">{{ $appointment->user->master->person->first_name }}</span>--}}
-                                        <span style="color: #ccc; font-size: 0.8em;">{{ preg_replace('/\D/', '', $appointment->user->master->direct) }}</span>
                                     </td>
 
-                                    <td style="width: 1%; text-align: right;">
-                                        {{ number_format($appointment->user->getBalance(), 2) }}
-                                    </td>
+                                    @php
+
+                                    @endphp
 
                                     <td style="width: 140px;">
                                         {{ $appointment->user->phone }}
@@ -187,7 +187,7 @@
                                                 @if($appointment->canceled_at < $appointment->start_at)
                                                     <span style="font-size: 0.9em; color: #ccc;">От отмены до начала записи: <br> {{ \Carbon\Carbon::parse($appointment->canceled_at)->diffAsCarbonInterval($appointment->start_at)->forHumans() }}</span>
                                                 @else
-                                                    <span style="font-size: 0.9em; color: #ccc;">Отмена после окончания записи</span>
+                                                    <span style="font-size: 0.9em; color: #ccc;">Отмена после начала записи</span>
                                                 @endif
                                             @endif
                                         </div>
@@ -243,7 +243,6 @@
                                 <th></th>
                                 <th></th>
                                 <th style="padding: 0px; "></th>
-                                <th></th>
                                 <th></th>
                                 <th></th>
                                 <th></th>
@@ -307,10 +306,6 @@
                                         @endif
                                     </td>
 
-                                    <td style="width: 1%; text-align: right;">
-                                        {{ number_format($appointment->user->getBalance(), 2) }}
-                                    </td>
-
                                     <td style="width: 140px;">
                                         {{ $appointment->user->phone }}
                                     </td>
@@ -348,7 +343,7 @@
                                                 @if($appointment->canceled_at < $appointment->start_at)
                                                     <span style="font-size: 0.9em; color: #ccc;">От отмены до начала записи: <br> {{ \Carbon\Carbon::parse($appointment->canceled_at)->diffAsCarbonInterval($appointment->start_at)->forHumans() }}</span>
                                                 @else
-                                                    <span style="font-size: 0.9em; color: #ccc;">Отмена после окончания записи</span>
+                                                    <span style="font-size: 0.9em; color: #ccc;">Отмена после начала записи</span>
                                                 @endif
                                             @endif
                                         </div>
@@ -377,81 +372,6 @@
 
 
                         </table>
-                    </div>
-                </div>
-
-
-                {{--  TAB 3  --}}
-
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade" id="payment{{ $i }}" role="tabpanel" aria-labelledby="profile-tab">
-
-                        <div class="row">
-                            <div class="col-8">
-                                <table id="payments" class="table table-bordered mb-5">
-
-                                    @forelse($appointmentsToDay->whereNull('canceled_at')->groupBy('user_id') as $userAppointments)
-
-                                        <tr>
-                                            <td>
-                                                {{ $userAppointments->first()->user->phone }}
-                                                {{ $userAppointments->first()->user->master->person->last_name }}
-                                                {{ $userAppointments->first()->user->master->person->first_name }}
-                                            </td>
-
-                                            <td>
-                                                <a target="_blank" href="{{ $userAppointments->first()->user->master->direct }}">direct</a>
-                                            </td>
-
-                                            <td>
-                                                <table class="table table-bordered table-sm">
-                                                    @foreach($userAppointments as $userAppointment)
-                                                        <tr>
-                                                            <td>{{ $userAppointment->start_at->format('H:i') }} - {{ $userAppointment->end_at->format('H:i') }}</td>
-                                                            <td style="white-space: nowrap; width: 100px; text-align: right;">{{ number_format($userAppointment->price, 2, '.') }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </table>
-                                            </td>
-
-                                            <td style="white-space: nowrap; width: 100px; text-align: right;">
-                                                {{ number_format($userAppointments->sum(function ($a) { return $a->price; }), 2, '.') }}
-                                            </td>
-                                        </tr>
-
-
-
-                                    @empty
-                                        <tr>
-                                            <td colspan="10">Нет записей</td>
-                                        </tr>
-                                    @endforelse
-
-
-                                </table>
-                            </div>
-                            <div class="col-4">
-                                <table class="table table-bordered mb-5">
-
-                                    @php
-                                        $payments = \App\Models\Payment::where('payable_type', \App\Models\Appointment::class)->whereIn('payable_id', $appointmentsToDay->whereNull('canceled_at')->pluck('id'))->get();
-                                    @endphp
-
-
-                                    @foreach($payments->groupBy('payment_method') as $paymentsGroup)
-                                        <tr>
-                                            <td>
-                                                {{ $paymentsGroup->first()->payment_method }}
-                                            </td>
-                                            <td style="white-space: nowrap; width: 100px; text-align: right;">
-                                                {{ number_format($paymentsGroup->sum(function ($p) { return $p->amount; }), 2, '.') }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </table>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 

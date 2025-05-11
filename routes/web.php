@@ -65,6 +65,94 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->to('/admin/appointments');
     });
 
+    Route::get('appointments-stats', function () {
+        $stats = DB::table('appointments as a')
+            ->select(
+                'a.place_id',
+                DB::raw('HOUR(DATE_ADD(a.start_at, INTERVAL n.n HOUR)) as hour_of_day'),
+                DB::raw('COUNT(*) as total_appointments')
+            )
+            ->join(DB::raw('
+        (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6
+         UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10) n
+    '), DB::raw('n.n'), '<=', DB::raw('FLOOR(a.duration / 60)'))
+            ->whereNull('a.canceled_at')
+            ->groupBy('a.place_id', DB::raw('hour_of_day'))
+            ->orderBy('a.place_id')
+            ->orderBy('hour_of_day')
+            ->get();
+       return view('admin.appointments_stats', compact('stats'));
+    });
+
+    Route::get('appointments-chart', function (Request $request) {
+        $startDate = $request->input('start_date', now()->startOfYear()->toDateString());
+        $endDate = $request->input('end_date', now()->toDateString());
+
+        $stats = DB::table('appointments as a')
+            ->select(
+                'a.place_id',
+                DB::raw('HOUR(DATE_ADD(a.start_at, INTERVAL n.n HOUR)) as hour_of_day'),
+                DB::raw('COUNT(*) as total_appointments')
+            )
+            ->join(DB::raw('
+            (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+             UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6
+             UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10) n
+        '), DB::raw('n.n'), '<=', DB::raw('FLOOR(a.duration / 60)'))
+            ->whereNull('a.canceled_at')
+            ->whereBetween('a.start_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->groupBy('a.place_id', DB::raw('hour_of_day'))
+            ->orderBy('a.place_id')
+            ->orderBy('hour_of_day')
+            ->get();
+
+        // Преобразуем данные для графика
+        $chartData = [];
+        foreach ($stats as $stat) {
+            $chartData[$stat->place_id][$stat->hour_of_day] = $stat->total_appointments;
+        }
+
+        return view('admin.appointments_chart', compact('chartData'));
+    });
+
+
+    Route::get('/appointments/cancel-stats', function (Request $request) {
+        $startDate = $request->input('start_date', now()->startOfYear()->toDateString());
+        $endDate = $request->input('end_date', now()->toDateString());
+
+        $stats = DB::table('appointments as a')
+            ->join('places as p', 'a.place_id', '=', 'p.id')
+            ->select(
+                'a.place_id',
+                DB::raw('COUNT(CASE
+            WHEN a.canceled_at IS NOT NULL
+                 AND (TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 2 OR a.canceled_at > a.start_at)
+            THEN 1 END) as canceled_under_2h'),
+                DB::raw('COUNT(CASE
+            WHEN a.canceled_at IS NOT NULL
+                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) >= 2
+                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24
+            THEN 1 END) as canceled_under_24h'),
+                DB::raw('SUM(CASE
+            WHEN a.canceled_at IS NOT NULL
+                 AND (TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 2 OR a.canceled_at > a.start_at)
+            THEN (a.duration / 60) * p.price_hour ELSE 0 END) as potential_fee_100'),
+                DB::raw('SUM(CASE
+            WHEN a.canceled_at IS NOT NULL
+                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) >= 2
+                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24
+            THEN (a.duration / 60) * p.price_hour * 0.5 ELSE 0 END) as potential_fee_50')
+            )
+            ->whereNotNull('a.canceled_at')
+            ->whereBetween('a.start_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->groupBy('a.place_id')
+            ->get();
+
+
+        return view('admin.appointments_cancel_stats', compact('stats', 'startDate', 'endDate'));
+    });
+
     Route::get('/appointments/merge-closest', [\App\Http\Controllers\Admin\AppointmentController::class, 'mergeClosestAppointments'])
         ->name('appointments.merge-closest');
 
@@ -272,3 +360,36 @@ Route::post('/public-offer/accept', function () {
 Route::get('/test', function () {
     return view('test');
 });
+
+use App\Http\Controllers\TicketController;
+
+
+
+// Роуты для пользователей (мастеров)
+Route::prefix('user')
+    ->middleware(['auth']) // или другая роль по твоей системе
+    ->name('user.tickets.')
+    ->group(function () {
+        Route::get('tickets', [TicketController::class, 'index'])->name('index');
+        Route::get('tickets/create', [TicketController::class, 'create'])->name('create');
+        Route::post('tickets', [TicketController::class, 'store'])->name('store');
+        Route::get('tickets/{ticket}', [TicketController::class, 'show'])->name('show');
+        Route::get('tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('edit');
+        Route::put('tickets/{ticket}', [TicketController::class, 'update'])->name('update');
+        Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
+    });
+
+// Роуты для админки
+Route::prefix('admin')
+    ->middleware(['auth'])
+    ->name('admin.tickets.')
+    ->group(function () {
+        Route::get('tickets', [TicketController::class, 'index'])->name('index');
+        Route::get('tickets/create', [TicketController::class, 'create'])->name('create');
+        Route::post('tickets', [TicketController::class, 'store'])->name('store');
+        Route::get('tickets/{ticket}', [TicketController::class, 'show'])->name('show');
+        Route::get('tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('edit');
+        Route::put('tickets/{ticket}', [TicketController::class, 'update'])->name('update');
+        Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
+    });
+

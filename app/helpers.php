@@ -18,6 +18,35 @@ function short_day_name(\Carbon\Carbon $carbon, bool $uppercase = false): string
     return $uppercase ? mb_strtoupper($shortDayName) : $shortDayName;
 }
 
+function do_tag_linkable($text)
+{
+    if (!is_null($text) && str_contains($text, '#')) {
+        $regexp = '/(#)([a-zA-Zа-яА-Я0-9]+)/u';
+
+        // Получаем текущие параметры запроса
+        $currentParams = request()->query();
+
+        $text = preg_replace_callback($regexp, function ($matches) use ($currentParams) {
+            // Обновляем параметры, добавляя новый tag
+            $params = array_merge($currentParams, ['tag' => $matches[2]]);
+            $queryString = http_build_query($params);
+            $url = request()->url() . '?' . $queryString;
+
+            return '<a style="color: #7c7c37;" href="' . $url . '">' . $matches[0] . '</a>';
+        }, $text);
+
+        $text = str_replace("\r\n", "<br>", $text);
+    }
+    return $text;
+}
+
+function string_to_color($string) {
+    // Хешируем строку в md5, берём первые 6 символов как HEX цвет
+    $hash = md5($string);
+    return '#' . substr($hash, 0, 6);
+}
+
+
 // является ли переданное число четным
 function even($var): bool
 {

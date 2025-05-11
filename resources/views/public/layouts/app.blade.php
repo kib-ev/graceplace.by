@@ -148,25 +148,8 @@
 
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> GracePlace</a>
 
-
         @if(auth()->user() && auth()->user()->hasRole('admin'))
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <div class="navbar-nav">
-{{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
-                    <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
-                    <a class="nav-link" href="{{ route('admin.masters.index') }}">Мастера</a>
-                    <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
-                    <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
-                    <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
-                    <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
-                    <a class="nav-link" href="{{ route('admin.permissions.index') }}">Разрешения</a>
-                    <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
-                </div>
-            </div>
+            @include('admin.layouts.includes.menu')
         @endif
 
     </div>
@@ -178,6 +161,11 @@
         <div class="col-12">
             @if(auth()->user())
                 Вы вошли как: <b title="ID: {{ auth()->id() }}">{{ auth()->user()->name }}</b> <a href="/logout">Выйти</a>
+
+                @if(auth()->user()->hasRole(['admin']))
+                    <br>(админ)
+                @endif
+
             @else
                 <a href="{{ route('login') }}">Вход на сайт</a>
             @endif
@@ -436,6 +424,10 @@
                         <div class="card card-body">
 
                             @foreach($bookings as $booking)
+                                @if($loop->index > 0)
+                                    <div class="mt-4"></div>
+                                @endif
+
                                 <table class="table table-bordered table-sm mb-0">
                                     <tr>
                                         <td>Номер ячейки</td>
@@ -495,6 +487,7 @@
                                             </td>
                                         </tr>
                                     @endif
+
 
                                 </table>
                             @endforeach

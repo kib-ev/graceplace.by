@@ -63,6 +63,11 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class);
     }
 
+    public function storageBookings()
+    {
+        return $this->hasMany(StorageBooking::class);
+    }
+
     public function transactions()
     {
         return $this->hasMany(UserTransaction::class);
@@ -201,5 +206,15 @@ class User extends Authenticatable
         }
 
         return $balance;
+    }
+
+    public function getDebtAmount()
+    {
+        return $this->appointments->where('start_at', '<=', now()->startOfDay())
+            ->whereNull('price')
+            ->whereNull('canceled_at')
+            ->sum(function (Appointment $appointment) {
+                return $appointment->getExpectedPrice();
+            });
     }
 }

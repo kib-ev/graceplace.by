@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Appointment;
 use App\Services\AppointmentService;
 use App\Services\PaymentService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class AppointmentObserver
@@ -21,6 +22,11 @@ class AppointmentObserver
     {
 //        $paymentService = app(PaymentService::class);
 //        $paymentService->createPaymentRequirement($appointment, $appointment->getExpectedPrice());
+
+        // MERGE CLOSEST APPOINTMENTS ------------------------------------
+        $appointments = Appointment::whereDate('start_at', $appointment->start_at)->whereNull('canceled_at')->get();
+        (new AppointmentService())->mergeAppointments($appointments);
+        // END -----------------------------------------------------------
     }
 
     public function updating(Appointment $appointment): bool

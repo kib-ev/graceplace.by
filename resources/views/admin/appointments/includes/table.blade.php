@@ -107,7 +107,7 @@
                                         @if($appointment->canceled_at < $appointment->start_at)
                                             <span style="font-size: 0.9em; color: #ccc;">От отмены до начала записи: <br> {{ \Carbon\Carbon::parse($appointment->canceled_at)->diffAsCarbonInterval($appointment->start_at)->forHumans() }}</span>
                                         @else
-                                            <span style="font-size: 0.9em; color: #ccc;">Отмена после окончания записи</span>
+                                            <span style="font-size: 0.9em; color: #ccc;">Отмена после начала записи</span>
                                         @endif
                                     @endif
                                 </div>

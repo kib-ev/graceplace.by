@@ -1,28 +1,5 @@
-@extends('app')
+@extends('admin.layouts.app')
 
-@section('style')
-    <style>
-        .comments__list {
-            margin-top: 5px;
-        }
-        .comments__list .comments__item {
-            background: lightgoldenrodyellow;
-            padding: 15px 5px 1px;
-            border: 1px solid #e1da8e;
-            border-radius: 5px;
-            margin-bottom: 2px;
-        }
-
-        .comments__list .comments__item_date {
-            position: absolute;
-            font-size: 10px;
-            margin-top: -15px;
-            color: #333;
-        }
-
-
-    </style>
-@endsection
 
 @section('content')
     <div class="row">
@@ -51,10 +28,10 @@
 
             <table class="table table-bordered mb-5">
                 <tr>
-                    <td></td>
+                    <td style="width: 50px;"></td>
 {{--                    <td></td>--}}
-                    <td>Имя мастера</td>
-                    <td>Телефон</td>
+                    <td style="width: 440px;">Имя мастера</td>
+                    <td style="width: 140px;">Телефон</td>
                     <td>Инста</td>
                     <td>Директ</td>
                     <td>Услуги</td>
@@ -68,28 +45,38 @@
                 @foreach($masters as $master)
                     @if($master->user)
                     <tr>
-                        <td style="width: 50px; background: {{ $master->user }}">{{ $loop->index + 1 }}</td>
+                        <td>{{ $loop->index + 1 }}</td>
 
-                        <td style="width: 300px;" title="master_id: {{ $master->id }} | user_id: {{ $master->user_id }}">
+                        <td title="master_id: {{ $master->id }} | user_id: {{ $master->user_id }}">
                             <a href="{{ route('admin.masters.show', $master) }}">{{ $master->person->full_name }}</a>
                             @if(is_null($master->person->patronymic))
                                 <span style="color: red;">(отчество)</span>
                             @endif
 
-                            <div class="comments__list">
-                                @foreach($master->comments as $masterComment)
-                                    <div class="comments__item">
-                                        <span class="comments__item_date">
-                                            {{ $masterComment->created_at->format('d.m.Y') }}
-                                        </span>
-                                        {{ $masterComment->text }}
-                                    </div>
-                                @endforeach
-                            </div>
+
+                            @if($master->user->getDebtAmount() > 0)
+                                <div class="bg-danger text-white p-2">Задолженность: {{ number_format($master->user->getDebtAmount(), 2) }} </div>
+                            @endif
+
+
+
+                            @include('admin.comments.includes.widget', ['model' => $master, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
+
+
+{{--                            <div class="comments__list">--}}
+{{--                                @foreach($master->comments as $masterComment)--}}
+{{--                                    <div class="comments__item">--}}
+{{--                                        <span class="comments__item_date">--}}
+{{--                                            {{ $masterComment->created_at->format('d.m.Y') }}--}}
+{{--                                        </span>--}}
+{{--                                        {!! do_tag_linkable($masterComment->text) !!}--}}
+{{--                                    </div>--}}
+{{--                                @endforeach--}}
+{{--                            </div>--}}
 
                         </td>
 
-                        <td style="width: 200px;">
+                        <td>
                             <ul style="list-style-type: none; margin-bottom: 0px; padding: 0px;">
                                 <li>{{ $master->user->phone }}</li>
                             </ul>
