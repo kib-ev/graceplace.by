@@ -121,36 +121,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         $startDate = $request->input('start_date', now()->startOfYear()->toDateString());
         $endDate = $request->input('end_date', now()->toDateString());
 
-        $stats = DB::table('appointments as a')
+        $losses = DB::table('appointments as a')
             ->join('places as p', 'a.place_id', '=', 'p.id')
             ->select(
                 'a.place_id',
-                DB::raw('COUNT(CASE
-            WHEN a.canceled_at IS NOT NULL
-                 AND (TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 2 OR a.canceled_at > a.start_at)
-            THEN 1 END) as canceled_under_2h'),
-                DB::raw('COUNT(CASE
-            WHEN a.canceled_at IS NOT NULL
-                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) >= 2
-                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24
-            THEN 1 END) as canceled_under_24h'),
-                DB::raw('SUM(CASE
-            WHEN a.canceled_at IS NOT NULL
-                 AND (TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 2 OR a.canceled_at > a.start_at)
-            THEN (a.duration / 60) * p.price_hour ELSE 0 END) as potential_fee_100'),
-                DB::raw('SUM(CASE
-            WHEN a.canceled_at IS NOT NULL
-                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) >= 2
-                 AND TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24
-            THEN (a.duration / 60) * p.price_hour * 0.5 ELSE 0 END) as potential_fee_50')
+                'p.name as place_name',
+                DB::raw('COUNT(*) as cancellations_count'),
+                DB::raw('SUM(CEIL(a.duration / 60) * p.price_hour * 0.5) as potential_loss')
             )
             ->whereNotNull('a.canceled_at')
-            ->whereBetween('a.start_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->groupBy('a.place_id')
+            ->whereRaw('TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24')
+            ->whereBetween('a.canceled_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->groupBy('a.place_id', 'p.name')
             ->get();
 
-
-        return view('admin.appointments_cancel_stats', compact('stats', 'startDate', 'endDate'));
+        return view('admin.appointments_cancel_stats', compact('losses', 'startDate', 'endDate'));
     });
 
     Route::get('/appointments/merge-closest', [\App\Http\Controllers\Admin\AppointmentController::class, 'mergeClosestAppointments'])
@@ -272,7 +257,14 @@ Route::name('public.')->middleware(['auth'])->group(function () {
     Route::any('/appointments/{appointment}/cancel', [\App\Http\Controllers\Public\AppointmentController::class, 'cancelAppointment'])->name('appointments.cancel');
 
     Route::resource('places', \App\Http\Controllers\Public\PlaceController::class)->only('show');
+
 });
+
+// Страница мастера для клиентов
+Route::get('/book/{master}', [\App\Http\Controllers\Public\BookingController::class, 'show'])->name('booking.show');
+
+// Обработка бронирования
+Route::post('/book/{master}/reserve', [\App\Http\Controllers\Public\BookingController::class, 'reserve'])->name('booking.reserve');
 
 
 Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {

@@ -51,9 +51,17 @@
             <div class="col-6 mb-3">
                 <a href="{{ route('admin.masters.show', $appointment->user->master->id) }}">{{ $appointment->user->name }}</a>
             </div>
+
             <div class="col-6 mb-3">
-                <a href="{{ route('admin.appointments.payments.show', $appointment) }}">Оплата</a>
+                Дата и время создания {{ $appointment->created_at->format('d.m.Y H:i') }}
+                <br>
+                @if($appointment->isCreatedByUser())
+                    Автор: Мастер
+                @else
+                    Автор: Админ
+                @endif
             </div>
+
         @endif
 
         <hr>

@@ -6,9 +6,9 @@
         <div class="col">
             <h1>Статистика</h1>
 
-            <hr>
-            <a href="{{ route('admin.places.create') }}" class="btn btn-primary">Создать</a>
-            <hr>
+            <a href="/admin/appointments/cancel-stats">Статистика отмен</a>
+            <a href="/admin/appointments-chart">График загрузки по часам</a>
+            <a href="/admin/appointments-stats">Тепловая карта загрузки</a>
 
             @php
                 $appointments = \App\Models\Appointment::all() // ALL!!

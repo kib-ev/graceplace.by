@@ -209,7 +209,7 @@
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('price') }}
+                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('price') }}
                                     </td>
                                 @endfor
                             </tr>
@@ -217,7 +217,7 @@
                                 <td><b>Часов аренды</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
+                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
                                     </td>
                                 @endfor
                             </tr>
@@ -236,7 +236,7 @@
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('price') }}
+                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('price') }}
                                     </td>
                                 @endfor
                             </tr>
@@ -244,11 +244,36 @@
                                 <td><b>Часов аренды</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
+                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
                                     </td>
                                 @endfor
                             </tr>
                         </table>
+
+                        <br>
+                        <table class="table table-bordered">
+
+                            <tr>
+                                <td></td>
+                                @for($i = 1; $i <=12; $i++)
+                                    <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2025')->format('M-Y') }}</td>
+                                @endfor
+                            </tr>
+
+
+                            @foreach($master->user->appointments->unique('place_id') as $uniqueAppointment)
+                                <tr>
+                                    <th>{{ $uniqueAppointment->place->name }}</th>
+                                    @for($i = 1; $i <=12; $i++)
+                                        <td>
+                                            {{ $master->user->appointments()->where('place_id', $uniqueAppointment->place_id)->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60  }}
+                                        </td>
+                                    @endfor
+                                </tr>
+                            @endforeach
+
+                        </table>
+
                     </div>
                 </div>
 
