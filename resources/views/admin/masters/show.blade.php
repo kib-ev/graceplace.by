@@ -263,10 +263,18 @@
 
                             @foreach($master->user->appointments->unique('place_id') as $uniqueAppointment)
                                 <tr>
-                                    <th>{{ $uniqueAppointment->place->name }}</th>
+                                    <th rowspan="2">{{ $uniqueAppointment->place->name }}</th>
                                     @for($i = 1; $i <=12; $i++)
                                         <td>
                                             {{ $master->user->appointments()->where('place_id', $uniqueAppointment->place_id)->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60  }}
+                                        </td>
+                                    @endfor
+
+                                </tr>
+                                <tr>
+                                    @for($i = 1; $i <=12; $i++)
+                                        <td>
+                                            {{ $master->user->appointments()->where('place_id', $uniqueAppointment->place_id)->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('price') }}
                                         </td>
                                     @endfor
                                 </tr>
