@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->decimal('price_hour', 8, 2)->nullable();
+            $table->decimal('price_per_hour')->nullable();
             $table->text('image_path')->nullable();
             $table->integer('sort')->unsigned()->nullable();
             $table->boolean('is_hidden')->default(false);

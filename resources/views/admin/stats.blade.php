@@ -1,5 +1,12 @@
 @extends('admin.layouts.app')
 
+@section('style')
+    <style>
+        .current-week td {
+            background: #d3ffde;
+        }
+    </style>
+@endsection
 
 @section('content')
     <div class="row">
@@ -10,57 +17,44 @@
             <a href="/admin/appointments-chart">График загрузки по часам</a>
             <a href="/admin/appointments-stats">Тепловая карта загрузки</a>
 
-            @php
-                $appointments = \App\Models\Appointment::all() // ALL!!
-            @endphp
-
             <table class="table table-bordered">
-
                 <tr>
                     <td style="width: 50%;">Количество рабочих мест</td>
-                    <td>{{ \App\Models\Place::count() }}</td>
+                    <td>{{ $placesCount }}</td>
                 </tr>
-
                 <tr>
                     <td>Мастеров в базе</td>
-                    <td>{{ \App\Models\Master::count() }}</td>
+                    <td>{{ $mastersCount }}</td>
                 </tr>
-
                 <tr>
                     <td>Записей / Посещений / Отмен</td>
                     <td>
-                        {{ $appointments->count() }} /
-                        {{ $appointments->whereNull('canceled_at')->count() }} /
-                        {{ $appointments->whereNotNull('canceled_at')->count() }}
+                        {{ $appointmentsStats->total }} /
+                        {{ $appointmentsStats->visited }} /
+                        {{ $appointmentsStats->canceled }}
                     </td>
                 </tr>
-
                 <tr>
                     <td>Записей через ЛК</td>
                     <td>
-                        {{ $selfAddedCount = $appointments->sum(function ($item) { return $item->isCreatedByUser() ? 1 : 0; }) }}
-
-                        @if($appointments->count() > 0)
-                            ({{ round($selfAddedCount / $appointments->count() * 100, 1) }} %)
+                        {{ $appointmentsStats->self_added }}
+                        @if($appointmentsStats->total > 0)
+                            ({{ round($appointmentsStats->self_added / $appointmentsStats->total * 100, 1) }} %)
                         @endif
                     </td>
                 </tr>
-
                 <tr>
                     <td>Часов аренды</td>
-                    <td>{{ \App\Models\Appointment::whereNull('canceled_at')->sum('duration') / 60 }}</td>
+                    <td>{{ $appointmentsStats->total_duration / 60 }}</td>
                 </tr>
-
                 <tr>
                     <td>Средний чек</td>
-                    <td>{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->sum('price') / (\App\Models\Appointment::whereNull('canceled_at')->count()), 2) }}</td>
+                    <td>{{ $appointmentsStats->visited ? number_format($appointmentsStats->total_price / $appointmentsStats->visited, 2) : 0 }}</td>
                 </tr>
-
                 <tr>
                     <td>Средняя стоимость часа</td>
-                    <td>{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->sum('price') / (\App\Models\Appointment::whereNull('canceled_at')->sum('duration') / 60), 2) }}</td>
+                    <td>{{ $appointmentsStats->total_duration ? number_format($appointmentsStats->total_price / ($appointmentsStats->total_duration / 60), 2) : 0 }}</td>
                 </tr>
-
             </table>
 
             2024
@@ -74,51 +68,34 @@
                 </tr>
                 <tr>
                     <td>Выручка</td>
+                    @php $total2024 = 0; @endphp
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereMonth('start_at', $i)->whereYear('start_at','2024')->sum('price') }}
-                        </td>
+                        <td>{{ $monthlyStats2024[$i]->revenue ?? 0 }}</td>
+                        @php $total2024 += $monthlyStats2024[$i]->revenue ?? 0; @endphp
                     @endfor
-                    <td>
-                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at', '2024')->whereYear('start_at','2024')->sum('price') }}
-                    </td>
+                    <td>{{ $total2024 }}</td>
                 </tr>
-
                 <tr>
                     <td>Часы аренды</td>
+                    @php $hours2024 = 0; @endphp
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereMonth('start_at', $i)->whereYear('start_at','2024')->sum('duration') / 60 }}
-                        </td>
+                        <td>{{ ($monthlyStats2024[$i]->hours ?? 0) / 60 }}</td>
+                        @php $hours2024 += $monthlyStats2024[$i]->hours ?? 0; @endphp
                     @endfor
-                    <td>
-                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at', '2024')->whereYear('start_at','2024')->sum('duration') / 60 }}
-                    </td>
+                    <td>{{ $hours2024 / 60 }}</td>
                 </tr>
-
                 <tr>
                     <td>Мастера</td>
                     @for($i = 1; $i <=12; $i++)
-                        @php
-                            $dateStart = \Carbon\Carbon::parse('2024-' . $i . '-01');
-                            $dateEnd = $dateStart->clone()->endOfMonth();
-
-                            $newMasters = \App\Models\Master::whereBetween('created_at', [$dateStart, $dateEnd])->count();
-                            $periodMasters = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$dateStart, $dateEnd])->distinct('user_id')->count();
-                        @endphp
                         <td>
-                            @if($newMasters)
-                            {{ '+' . $newMasters }} /
+                            @if(($newMasters2024[$i]->count ?? 0) > 0)
+                                +{{ $newMasters2024[$i]->count }} /
                             @endif
-
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$dateStart, $dateEnd])->distinct('user_id')->count() }}
+                            {{ $uniqueMasters2024[$i]->count ?? 0 }}
                         </td>
                     @endfor
-                    <td>
-{{--                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at', '2024')->whereYear('start_at','2024')->sum('price') }}--}}
-                    </td>
+                    <td></td>
                 </tr>
-
             </table>
 
             2025
@@ -132,161 +109,84 @@
                 </tr>
                 <tr>
                     <td>Выручка</td>
+                    @php $total2025 = 0; @endphp
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereMonth('start_at', $i)->whereYear('start_at','2025')->sum('price') }}
-                        </td>
+                        <td>{{ $monthlyStats2025[$i]->revenue ?? 0 }}</td>
+                        @php $total2025 += $monthlyStats2025[$i]->revenue ?? 0; @endphp
                     @endfor
-                    <td>
-                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at', '2025')->sum('price') }}
-                    </td>
+                    <td>{{ $total2025 }}</td>
                 </tr>
-
                 <tr>
                     <td>Часы аренды</td>
+                    @php $hours2025 = 0; @endphp
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereMonth('start_at', $i)->whereYear('start_at','2025')->sum('duration') / 60 }}
-                        </td>
+                        <td>{{ ($monthlyStats2025[$i]->hours ?? 0) / 60 }}</td>
+                        @php $hours2025 += $monthlyStats2025[$i]->hours ?? 0; @endphp
                     @endfor
-                    <td>
-                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at','2025')->sum('duration') / 60 }}
-                    </td>
+                    <td>{{ $hours2025 / 60 }}</td>
                 </tr>
-
                 <tr>
                     <td>Мастера</td>
                     @for($i = 1; $i <=12; $i++)
-                        @php
-                            $dateStart = \Carbon\Carbon::parse('2025-' . $i . '-01');
-                            $dateEnd = $dateStart->clone()->endOfMonth();
-
-                            $newMasters = \App\Models\Master::whereBetween('created_at', [$dateStart, $dateEnd])->count();
-                            $periodMasters = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$dateStart, $dateEnd])->distinct('user_id')->count();
-                        @endphp
                         <td>
-                            @if($newMasters)
-                                {{ '+' . $newMasters }} /
+                            @if(($newMasters2025[$i]->count ?? 0) > 0)
+                                +{{ $newMasters2025[$i]->count }} /
                             @endif
-
-                            {{ \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$dateStart, $dateEnd])->distinct('user_id')->count() }}
+                            {{ $uniqueMasters2025[$i]->count ?? 0 }}
                         </td>
                     @endfor
-                    <td>
-                        {{--                        {{ \App\Models\Appointment::whereNull('canceled_at')->whereYear('start_at', '2024')->whereYear('start_at','2024')->sum('price') }}--}}
-                    </td>
+                    <td></td>
                 </tr>
-
             </table>
         </div>
     </div>
 
-
     <div class="row">
         <div class="col-6">
-            @php
-                $startDate = \Carbon\Carbon::now()->subYear()->startOfYear()->startOfWeek();
-                $endDate = \Carbon\Carbon::now()->subYear()->endOfYear()->endOfWeek();
-            @endphp
             <table class="table table-bordered">
                 <tr>
                     <th></th>
-                    <th>
-                        Неделя
-                    </th>
-                    <th>
-                        Часов аренды
-                    </th>
-                    <th>
-                        Выручка
-                    </th>
-
+                    <th>Неделя</th>
+                    <th>Часов аренды</th>
+                    <th>Выручка</th>
                 </tr>
-                @for($date = $startDate->clone(), $index = 1; $date->lessThan($endDate); $date->addDays(7), $index++)
+                @foreach($weeklyStatsPrev as $index => $week)
                     <tr>
-                        <td style="background: {{ now()->gt($date) && now()->lt($date->clone()->addWeek()) ? '#a1ff9b' : 'none' }}; width: 1%;">
-                            {{ $index}}
-                        </td>
+                        <td>{{ $index+1 }}</td>
                         <td>
-                            <a href="https://graceplace.by/admin/appointments?date_from={{ $date->format('Y-m-d') }}&date_to={{ $date->clone()->addDays(6)->format('Y-m-d') }}">
-                                {{ $date->format('Y-m-d') }} - {{ $date->clone()->addDays(6)->format('Y-m-d') }}
+                            <a href="https://graceplace.by/admin/appointments?date_from={{ $week['week_start'] }}&date_to={{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}">
+                                {{ $week['week_start'] }} - {{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}
                             </a>
                         </td>
-                        <td>
-                            @php
-                                $totalWeekHours = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('duration') / 60;
-                                $maxWeekHours = 7 * 8 * 9;
-                            @endphp
-
-                            {{ number_format($totalWeekHours, 0) }}
-
-
-
-                            @if($totalWeekHours > 0)
-                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ 9*8*7 }}
-                            @endif
-
-                        </td>
-
-                        <td style="text-align: right;" title="{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->get()->sum(function ($a) {
-                                return $a->place->price_hour * $a->duration / 60;
-                            }) / 1.2, 0) }}">
-                            {{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('price'), 2) }}
-                        </td>
+                        <td>{{ number_format($week['hours'] / 60, 0) }}</td>
+                        <td style="text-align: right;">{{ number_format($week['revenue'], 2) }}</td>
                     </tr>
-                @endfor
+                @endforeach
             </table>
         </div>
         <div class="col-6">
-            @php
-                $startDate = \Carbon\Carbon::now()->startOfYear()->startOfWeek();
-                $endDate = \Carbon\Carbon::now()->endOfYear()->endOfWeek();
-            @endphp
             <table class="table table-bordered">
                 <tr>
                     <th></th>
-                    <th>
-                        Неделя
-                    </th>
-                    <th>
-                        Часов аренды
-                    </th>
-                    <th>
-                        Выручка
-                    </th>
-
+                    <th>Неделя</th>
+                    <th>Часов аренды</th>
+                    <th>Выручка</th>
                 </tr>
-                @for($date = $startDate->clone(), $index = 1; $date->lessThan($endDate); $date->addDays(7), $index++)
-                    <tr>
-                        <td style="background: {{ now()->gt($date) && now()->lt($date->clone()->addWeek()) ? '#a1ff9b' : 'none' }}; width: 1%;">
-                            {{ $index}}
-                        </td>
+                @foreach($weeklyStatsCurr as $index => $week)
+                    @php
+                        $isCurrentWeek = (\Carbon\Carbon::now()->format('oW') == $week['yearweek']);
+                    @endphp
+                    <tr class="{{ $isCurrentWeek ? 'current-week' : '' }}">
+                        <td>{{ $index+1 }}</td>
                         <td>
-                            <a href="https://graceplace.by/admin/appointments?date_from={{ $date->format('Y-m-d') }}&date_to={{ $date->clone()->addDays(6)->format('Y-m-d') }}">
-                                {{ $date->format('Y-m-d') }} - {{ $date->clone()->addDays(6)->format('Y-m-d') }}
+                            <a href="https://graceplace.by/admin/appointments?date_from={{ $week['week_start'] }}&date_to={{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}">
+                                {{ $week['week_start'] }} - {{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}
                             </a>
                         </td>
-                        <td>
-                            @php
-                                $totalWeekHours = \App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('duration') / 60;
-                                $maxWeekHours = 7 * 8 * 9;
-                                @endphp
-
-                            {{ number_format($totalWeekHours, 0) }}
-
-                            @if($totalWeekHours > 0)
-                                / {{ number_format($totalWeekHours / $maxWeekHours * 100, 0) }} % / {{ $maxWeekHours }}
-                            @endif
-
-                        </td>
-
-                        <td style="text-align: right;" title="{{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->get()->sum(function ($a) {
-                                return $a->place->price_hour * $a->duration / 60;
-                            }) / 1.2, 0) }}">
-                            {{ number_format(\App\Models\Appointment::whereNull('canceled_at')->whereBetween('start_at', [$date, $date->clone()->addDays(7)])->sum('price'), 2) }}
-                        </td>
+                        <td>{{ number_format($week['hours'] / 60, 0) }}</td>
+                        <td style="text-align: right;">{{ number_format($week['revenue'], 2) }}</td>
                     </tr>
-                @endfor
+                @endforeach
             </table>
         </div>
     </div>

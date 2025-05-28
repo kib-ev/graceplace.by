@@ -33,11 +33,11 @@
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-                                {{ $place->price_hour }} руб. / час
+                                {{ $place->price_per_hour }} руб. / час
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-                                {{ $place->price_hour * 8 }} руб. / день
+                                {{ $place->price_per_hour * 8 }} руб. / день
                             </div>
 
                             <div
@@ -75,15 +75,13 @@
                                         @if(!$calendar->isTimeFree($nextTime))
                                             @if($appointment && auth()->user())
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
-
                                                     @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
                                                         <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->person->full_name }}">
-                                                            {{ $appointment->user->master->person->first_name }}
+                                                            {{ $appointment->user?->master?->person?->first_name }}
                                                         </a>
                                                     @else
-                                                        {{ $appointment->user->master->person->first_name }}
+                                                        {{ $appointment->user?->master?->person?->first_name }}
                                                     @endif
-
                                                 </span>
                                             @else
                                                 <span class="info">Занято</span>
@@ -139,7 +137,7 @@
                             <ul style="list-style-type: decimal; margin-bottom: 0px; padding-left: 25px;">
                                 <li>Войти в Мобильный банк или Интернет-банк любого банка</li>
                                 <li>Выбрать платежи через ЕРИП</li>
-                                <li>В дереве ЕРИП выбрать “Сервис e-pos” (или через поиск по коду услуги <b>4440631</b>)</li>
+                                <li>В дереве ЕРИП выбрать "Сервис e-pos" (или через поиск по коду услуги <b>4440631</b>)</li>
                                 <li>Вести лицевой счет <b>{{ substr(auth()->user()->getSetting('payment_link.place'), 63, 14) }}</b> ( после второго тире буква i )</li>
                                 <li>Подтвердить оплату</li>
                             </ul>
@@ -173,7 +171,7 @@
                             <ul style="list-style-type: decimal; margin-bottom: 0px; padding-left: 25px;">
                                 <li>Войти в Мобильный банк или Интернет-банк любого банка</li>
                                 <li>Выбрать платежи через ЕРИП</li>
-                                <li>В дереве ЕРИП выбрать “Сервис e-pos” (или через поиск по коду услуги <b>4440631</b>)</li>
+                                <li>В дереве ЕРИП выбрать "Сервис e-pos" (или через поиск по коду услуги <b>4440631</b>)</li>
                                 <li>Вести лицевой счет <b>{{ substr(auth()->user()->getSetting('payment_link.storage'), 63, 14) }}</b> ( после второго тире буква i )</li>
                                 <li>Подтвердить оплату</li>
                             </ul>

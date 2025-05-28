@@ -12,6 +12,7 @@
         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Разрешения</a>
+        <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
         <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
     </div>
 </div>

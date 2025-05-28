@@ -74,7 +74,7 @@ class Place extends Model
 
     public function getHourlyCost()
     {
-        return $this->price_hour;
+        return $this->price_per_hour;
     }
 
     // Метод для проверки доступности рабочего места на конкретную дату

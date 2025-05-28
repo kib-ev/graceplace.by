@@ -22,7 +22,7 @@
 
                 <div class="form-group mb-2">
                     <label for="priceHour">Цена за час</label>
-                    <input id="priceHour" class="form-control" type="number" step="0.01" min="0" name="price_hour" value="{{ isset($place) ? $place->price_hour : '' }}" autocomplete="off">
+                    <input id="priceHour" class="form-control" type="number" step="0.01" min="0" name="price_per_hour" value="{{ isset($place) ? $place->price_per_hour : '' }}" autocomplete="off">
                 </div>
 
                 <div class="form-group mb-2">

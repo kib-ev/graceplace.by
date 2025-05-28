@@ -127,7 +127,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
                 'a.place_id',
                 'p.name as place_name',
                 DB::raw('COUNT(*) as cancellations_count'),
-                DB::raw('SUM(CEIL(a.duration / 60) * p.price_hour * 0.5) as potential_loss')
+                DB::raw('SUM(CEIL(a.duration / 60) * p.price_per_hour * 0.5) as potential_loss')
             )
             ->whereNotNull('a.canceled_at')
             ->whereRaw('TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24')
@@ -180,9 +180,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // OTHER
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');
 
-    Route::get('stats', function () {
-        return view('admin.stats');
-    });
+    Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index']);
 
     // MASTERS
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
@@ -241,6 +239,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
         return redirect()->back()->with('success', 'Настройки успешно сохранены');
     })->name('update-settings');
+
+    Route::get('/api', function() {
+        return view('admin.api');
+    })->name('api');
 });
 
 Route::post('/test', function () {

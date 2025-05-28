@@ -23,7 +23,7 @@
                         <td>{{ $loop->index + 1 }}</td>
                         <td><a href="{{ route('admin.storage-bookings.show', $rent) }}">id: {{ $booking->id }}</a></td>
                         <td>{{ $booking->description }}</td>
-                        <td>{{ $booking->price_hour }}</td>
+                        <td>{{ $booking->price_per_hour }}</td>
                         <td><a href="{{ route('admin.storage-bookings.edit', $booking) }}">edit</a></td>
                     </tr>
                 @endforeach

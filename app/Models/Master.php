@@ -31,7 +31,7 @@ class Master extends Model
 
     public function getFullNameAttribute(): string
     {
-        return $this->person->first_name . ($this->person->last_name ? ' ' . $this->person->last_name : '');
+        return $this->person?->first_name . ($this->person?->last_name ? ' ' . $this->person?->last_name : '');
     }
 
     public function getPhoneAttribute(): string

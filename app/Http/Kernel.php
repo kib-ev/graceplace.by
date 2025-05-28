@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         // Другие middleware...
         'admin' => \App\Http\Middleware\CheckAdminRole::class,
         'check.cancellation' => \App\Http\Middleware\CheckCancellationCutoff::class,
+        'api_token' => \App\Http\Middleware\ApiTokenMiddleware::class,
     ];
 }

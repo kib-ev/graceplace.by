@@ -3,6 +3,7 @@
 use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AppointmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,4 +93,13 @@ Route::get('/places', function (Request $request) {
         'data' => $response
     ]);
 
+});
+
+Route::middleware(['api_token'])->group(function() {
+    Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::get('/places/{place}/free-slots', [AppointmentController::class, 'freeSlots']);
+    Route::get('/places/free-slots', [AppointmentController::class, 'freeSlots']);
+    Route::get('/places-list', [AppointmentController::class, 'placesList']);
+    Route::get('/places-list-with-slots', [AppointmentController::class, 'placesListWithSlots']);
+    Route::get('/masters-list', [AppointmentController::class, 'mastersList']);
 });
