@@ -9,6 +9,7 @@
         "chillerlan/php-qrcode": "^5.0",
         "doctrine/dbal": "^3.9",
         "guzzlehttp/guzzle": "^7.2",
+        "ladumor/laravel-pwa": "^0.0.5",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",

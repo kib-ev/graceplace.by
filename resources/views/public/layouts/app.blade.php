@@ -139,7 +139,15 @@
     <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
 
-    @if(in_array(request()->path(), ['/', '/login', 'register']))
+    <!-- Scripts -->
+    {{--    @vite(['resources/sass/app.scss', 'resources/js/app.js'])--}}
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#1a202c">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192x192.png') }}">
+    <link rel="manifest" href="{{ asset('/manifest.json') }}?v={{ filemtime(public_path('manifest.json')) }}">
+
+@if(in_array(request()->path(), ['/', '/login', 'register']))
         <!-- Meta Pixel Code -->
         <script>
             !function(f,b,e,v,n,t,s)
@@ -351,7 +359,7 @@
 
 
         @php
-            $masterEndedAppointments = auth()->user()->appointments()->whereNull('canceled_at')->where('start_at', '<', now())->where('start_at', '>=', '2025-01-01 00:00')->where('start_at', '>=', now()->subDays(30))->get();
+            $masterEndedAppointments = auth()->user()->appointments()->where('price', '>', 0)->whereNull('canceled_at')->where('start_at', '<', now())->where('start_at', '>=', '2025-01-01 00:00')->where('start_at', '>=', now()->subDays(30))->get();
         @endphp
 
         @if(count($masterEndedAppointments) > 0)
@@ -372,7 +380,6 @@
                                 </tr>
                                 @foreach($masterEndedAppointments as $nextAppointment)
                                     <tr class="appointment-info">
-
 
                                         <td class="text-nowrap" style="width: 1%;">
                                             {{ $nextAppointment->start_at->format('d.m.Y') }}
@@ -559,6 +566,15 @@
         </div>
     </div>
 </footer>
+
+<script src="{{ asset('/sw.js') }}"></script>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js?v={{ filemtime(public_path("sw.js")) }}')
+            .then(() => console.log("Service Worker registered"))
+            .catch(e => console.error("SW registration failed", e));
+    }
+</script>
 
 </body>
 </html>

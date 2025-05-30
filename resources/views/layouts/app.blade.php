@@ -15,6 +15,11 @@
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#1a202c">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192x192.png') }}">
+    <link rel="manifest" href="{{ asset('/manifest.json') }}">
 </head>
 <body>
     <div id="app">
@@ -76,5 +81,14 @@
             @yield('content')
         </main>
     </div>
+
+    <!-- PWA Service Worker -->
+    <script src="{{ asset('/sw.js') }}"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .catch(e => console.error('SW registration failed', e));
+    }
+    </script>
 </body>
 </html>
