@@ -2,22 +2,108 @@
 
 
 @section('content')
-
     {{-- Select Date --}}
-    <div class="row mb-3 mt-3">
+    <div class="row mb-2 mt-2">
         <div class="col-12">
             <form class="me-2" id="dateForm" action="" style="display: inline-block;">
-                <input type="date" name="date" value="{{ request('date') ?? $date ?? '' }}" onchange="document.getElementById('dateForm').submit();">
+                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
             </form>
         </div>
     </div>
+
+    <style>
+        .bg-default {
+            background-color: #E5E7EB;
+        }
+        .bg-weekend {
+            background-color: #d5d6d9;
+        }
+        .bg-selected {
+            background-color: #3F8CFF !important;
+            color: white;
+        }
+    </style>
+
+    <form class="mb-2" id="dateForm" action="">
+        <div class="d-flex overflow-auto" id="dateCarousel"></div>
+        <input type="hidden" name="date" id="selectedDate">
+    </form>
+
+    <script>
+        const dateCarousel = document.getElementById('dateCarousel');
+        const selectedDateInput = document.getElementById('selectedDate');
+
+        const monthShort = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
+            'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+
+        const today = new Date();
+        const maxDate = new Date();
+        maxDate.setMonth(maxDate.getMonth() + 3);
+
+        // Берём дату из параметра URL (если есть)
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedDateFromURL = urlParams.get('date');
+        let selectedDate = selectedDateFromURL ? new Date(selectedDateFromURL) : today;
+
+        let currentDate = new Date(today);
+
+        while (currentDate <= maxDate) {
+            const dayNumber = currentDate.getDate();
+            const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
+            const monthName = monthShort[currentDate.getMonth()];
+            const dateValue = currentDate.toISOString().split('T')[0];
+
+            const card = document.createElement('div');
+            card.className = 'card me-1 text-center p-1';
+            card.style.minWidth = '50px';
+            card.style.lineHeight = '20px';
+            card.style.cursor = 'pointer';
+            card.innerHTML = `
+          <div><strong>${dayNumber}</strong></div>
+          <div style="text-transform: uppercase;">${dayOfWeek}</div>
+          <div style="text-transform: lowercase;">${monthName}</div>
+        `;
+            card.dataset.date = dateValue;
+
+            // Выходные
+            const day = currentDate.getDay(); // 0 = вс, 6 = сб
+            if (day === 0 || day === 6) {
+                card.classList.add('bg-weekend');
+            } else {
+                card.classList.add('bg-default');
+            }
+
+            card.addEventListener('click', () => {
+                document.querySelectorAll('#dateCarousel .card').forEach(c => c.classList.remove('bg-selected', 'text-white'));
+                card.classList.add('bg-selected', 'text-white');
+                selectedDateInput.value = dateValue;
+                window.location.href = '/?date=' + dateValue;
+            });
+
+            // Подсвечиваем выбранную дату
+            if (currentDate.toDateString() === selectedDate.toDateString()) {
+                card.classList.add('bg-selected', 'text-white');
+                selectedDateInput.value = dateValue;
+                card.id = 'activeCard'; // добавляем id для scroll
+            }
+
+            dateCarousel.appendChild(card);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Скроллим активную карточку в центр области видимости
+        const activeCard = document.getElementById('activeCard');
+        if (activeCard) {
+            activeCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+        }
+    </script>
 
 
     {{-- Calendar --}}
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
         <div class="row mb-3" style="overflow-x: scroll;">
             <div class="col-12">
-                <div id="places" class="overflow-scroll">
+                <div id="places" class="overflow-scroll table-drag-scroll">
                     @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user(), function ($query) {
                                 $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
                                 $query->whereIn('id', $visibleWorkspaces);
@@ -40,8 +126,7 @@
                                 {{ $place->price_per_hour * 8 }} руб. / день
                             </div>
 
-                            <div
-                                class="time {{ auth()->user() && $place->isFullDayBusy(\Carbon\Carbon::parse($date)) && $place->isFullDayBusy(\Carbon\Carbon::parse($date))->user_id == auth()->id() ? 'master' : '' }}">
+                            <div class="time">
 
                                 @php
                                     $calendar = new \App\Services\AppointmentService();
@@ -87,7 +172,7 @@
                                                 <span class="info">Занято</span>
                                             @endif
                                         @elseif(auth()->id())
-                                            @if($calendar->getMinutesToNextAppointment($nextTime) != 30)
+                                            @if(auth()->user()->can('add appointment') && $calendar->getMinutesToNextAppointment($nextTime) != 30)
                                                 <span class="add-app js-add-app">+</span>
                                             @endif
                                         @endif
@@ -101,10 +186,6 @@
             </div>
         </div>
     @endif
-
-    <div class="row">
-
-    </div>
 
     <div class="row mb-2">
         <div class="col-12">

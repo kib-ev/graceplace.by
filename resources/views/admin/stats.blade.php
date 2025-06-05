@@ -158,7 +158,7 @@
                                 {{ $week['week_start'] }} - {{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}
                             </a>
                         </td>
-                        <td>{{ number_format($week['hours'] / 60, 0) }}</td>
+                        <td>{{ number_format($week['hours'] / 60, 0) }} / {{ number_format($week['hours'] / (60 * 7 * 8 * 9) * 100, 0) }} % / {{ 7 * 8 * 9 }}</td>
                         <td style="text-align: right;">{{ number_format($week['revenue'], 2) }}</td>
                     </tr>
                 @endforeach
@@ -183,7 +183,7 @@
                                 {{ $week['week_start'] }} - {{ \Carbon\Carbon::parse($week['week_start'])->addDays(6)->format('Y-m-d') }}
                             </a>
                         </td>
-                        <td>{{ number_format($week['hours'] / 60, 0) }}</td>
+                        <td>{{ number_format($week['hours'] / 60, 0) }} / {{ number_format($week['hours'] / (60 * 7 * 8 * 9) * 100, 0) }} % / {{ 7 * 8 * 9 }}</td>
                         <td style="text-align: right;">{{ number_format($week['revenue'], 2) }}</td>
                     </tr>
                 @endforeach

@@ -50,7 +50,7 @@
     </div>
 @endsection
 
-@section('script')
+@section('scripts')
 <script>
 function apiUrl(path) {
     return window.location.origin + '/api' + path;
@@ -89,4 +89,4 @@ document.getElementById('btn-masters-list').onclick = async function() {
     document.getElementById('result-masters-list').textContent = await res.text();
 };
 </script>
-@endsection 
+@endsection

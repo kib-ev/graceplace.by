@@ -14,12 +14,10 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable();
-            $table->foreignId('master_id')->nullable();
             $table->foreignId('place_id')->nullable();
             $table->foreignId('client_id')->nullable();
-            $table->dateTime('start_at')->nullable();
-            $table->integer('duration')->nullable(); // minutes
-            $table->boolean('is_full_day')->default(0);
+            $table->dateTime('start_at');
+            $table->integer('duration')->unsigned()->default(60); // minutes
             $table->boolean('is_created_by_user')->default(0);
             $table->text('description')->nullable();
             $table->decimal('price', 8, 2)->nullable();

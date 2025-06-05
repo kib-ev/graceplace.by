@@ -37,8 +37,12 @@ Route::get('/schedule', function () {
     return view('public/index', compact('date'));
 });
 
-Route::get('/', function () {
-    $date = request('date');
+Route::get('/', function (Request $request) {
+    $request->validate([
+        'date'  => 'date',
+    ]);
+
+    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
 
     if(is_null($date)) {
         return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
@@ -220,7 +224,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // PERMISSIONS
     Route::get('/permissions', [\App\Http\Controllers\PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/permissions/cancel-appointment', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
+    Route::post('/permissions/update-all', [\App\Http\Controllers\PermissionController::class, 'updateAll'])->name('permissions.update-all');
+    Route::post('/permissions/{user}/update', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
 
     // E-POS
     Route::get('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
@@ -233,9 +238,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // USER SETTINGS ADMIN
     Route::post('/settings', function () {
-
         $user = \App\Models\User::find(request('user_id'));
-        $user->setSetting(request('key'), request('value'));
+
+        if (!$user) {
+            return redirect()->back()->withErrors('Пользователь не найден');
+        }
+
+        // Сохраняем оба значения
+        $user->setSetting('payment_link.place', request('payment_link_place'));
+        $user->setSetting('payment_link.storage', request('payment_link_storage'));
 
         return redirect()->back()->with('success', 'Настройки успешно сохранены');
     })->name('update-settings');

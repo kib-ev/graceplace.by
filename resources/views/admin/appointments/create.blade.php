@@ -16,7 +16,7 @@
     .comments__list .comment__item .comment__text {
         background: #e9ecef;
         padding: 5px 10px;
-        border: 1px solid #dee2e6;
+        border: 1px solid #dee2e6;`
 
     }
     .comments__list .comment__item button[type=submit] {
@@ -125,17 +125,6 @@
                 <div class="form-group mb-2">
                     <label for="time">Время</label>
 
-                    {{--                    <div class="float-end">--}}
-                    {{--                        <input type="hidden" name="is_full_day" value="0">--}}
-                    {{--                        <input id="fullDay" class="form-check-input" type="checkbox" name="is_full_day" value="1" {{ isset($appointment) && $appointment->is_full_day ? 'checked' : '' }}>--}}
-                    {{--                        <label class="form-check-label" for="fullDay" style="user-select: none;">--}}
-                    {{--                            Полный день--}}
-                    {{--                        </label>--}}
-                    {{--                    </div>--}}
-
-                    {{--                    <input name="time" type="hidden" value="09:00">--}}
-                    {{--                    <input name="duration" type="hidden" value="480">--}}
-
                     <select class="form-control" name="time">
                         <option value=""></option>
                         @for($timeStart = now()->startOfDay(); $timeStart < now()->endOfDay(); $timeStart->addMinutes(30))
@@ -143,48 +132,19 @@
                                 value="{{ $timeStart->format('H:i') }}" @selected($timeStart->format('H:i') == $appointment?->start_at?->format('H:i'))>{{ $timeStart->format('H:i') }}</option>
                         @endfor
                     </select>
-                    {{--                    @if(isset($appointment))--}}
-                    {{--                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ $appointment->start_at->format('H:i') }}" {{ $appointment->is_full_day ? 'disabled' : '' }} required>--}}
-                    {{--                    @else--}}
-                    {{--                        <input id="time" type="time" class="form-control" name="time" step="1800" value="{{ (request('date') ? \Carbon\Carbon::parse(request('date'))->format('Y-m-d 09:00') : now()->addDay()->floorHour(1)->format('Y-m-d H:i')) }}" required>--}}
-                    {{--                    @endif--}}
                 </div>
-
-                {{--                <div class="form-group">--}}
-                {{--                    <input id="datetime" type="checkbox" class="form-check" value="">--}}
-                {{--                    <label for="datetime">Полный день</label>--}}
-                {{--                </div>--}}
 
                 <div class="form-group mb-2">
                     <label for="duration">Продолжительность (ч)</label>
 
-                    <select id="duration" name="duration" class="form-control" {{ isset($appointment) && $appointment->is_full_day ? 'disabled' : '' }} required>
+                    <select id="duration" name="duration" class="form-control" required>
                         <option value=""></option>
-
-                        {{--                        @for($step = 30, $time = now()->startOfDay()->addMinutes($step); $time->lessThan(now()->startOfDay()->addMinutes(21*$step)); $newT$time->addMinutes($step))--}}
-                        {{--                            <option value="{{  }}" >{{ $time->format('H:i') }}</option>--}}
-                        {{--                        @endfor--}}
-
                         @for($i = 30; $i <= 36*30; $i+=30)
                             <option value="{{ $i }}" @selected(isset($appointment) ? $appointment->duration == $i : '')>
                                 {{ now()->startOfDay()->addMinutes($i)->format('H:i') }}
                             </option>
                         @endfor
-
-                        {{--                        <option value="30" @selected(isset($appointment) ? $appointment->duration == 30 : '')>0:30</option>--}}
-                        {{--                        <option value="60" @selected(isset($appointment) ? $appointment->duration == 60 : '')>1:00</option>--}}
-                        {{--                        <option value="90" @selected(isset($appointment) ? $appointment->duration == 90 : '')>1:30</option>--}}
-                        {{--                        <option value="120" @selected(isset($appointment) ? $appointment->duration == 120 : '')>2:00</option>--}}
-                        {{--                        <option value="150" @selected(isset($appointment) ? $appointment->duration == 150 : '')>2:30</option>--}}
-                        {{--                        <option value="180" @selected(isset($appointment) ? $appointment->duration == 180 : '')>3:00</option>--}}
-                        {{--                        <option value="210" @selected(isset($appointment) ? $appointment->duration == 210 : '')>3:30</option>--}}
-                        {{--                        <option value="240" @selected(isset($appointment) ? $appointment->duration == 240 : '')>4:00</option>--}}
-                        {{--                        <option value="270" @selected(isset($appointment) ? $appointment->duration == 270 : '')>4:30</option>--}}
-                        {{--                        <option value="300" @selected(isset($appointment) ? $appointment->duration == 300 : '')>5:00</option>--}}
-                        {{--                        <option value="330" @selected(isset($appointment) ? $appointment->duration == 330 : '')>5:30</option>--}}
-                        {{--                        <option value="360" @selected(isset($appointment) ? $appointment->duration == 360 : '')>6:00</option>--}}
                     </select>
-
 
                     <script>
                         $(document).ready(function () {
@@ -200,14 +160,7 @@
                             });
                         });
                     </script>
-
-
                 </div>
-
-{{--                <div class="form-group mb-2">--}}
-{{--                    <label for="description">Описание</label>--}}
-{{--                    <textarea id="description" class="form-control" name="description">{{ isset($appointment) ? $appointment->description : '' }}</textarea>--}}
-{{--                </div>--}}
 
                 <div class="form-group mb-2">
                     <label for="price">Стоимость</label>
@@ -215,26 +168,6 @@
                            value="{{ isset($appointment) ? $appointment->price : '' }}"
                            placeholder="Расчетная: {{ isset($appointment) ? $appointment->getExpectedPrice() : '' }} BYN" disabled>
                 </div>
-
-                {{--                <div class="form-group">--}}
-                {{--                    <label for="postTitle">Текст</label>--}}
-
-                {{--                    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.0/classic/ckeditor.js"></script>--}}
-
-                {{--                    <textarea id="editor" class="form-control" name="content" autocomplete="off">{{ $post->id ? $post->content : '' }}</textarea>--}}
-
-                {{--                    <script>--}}
-                {{--                        ClassicEditor--}}
-                {{--                            .create( document.querySelector( '#editor' ) )--}}
-                {{--                            .then( editor => {--}}
-                {{--                                console.log( editor );--}}
-                {{--                            } )--}}
-                {{--                            .catch( error => {--}}
-                {{--                                console.error( error );--}}
-                {{--                            } );--}}
-                {{--                    </script>--}}
-
-                {{--                </div>--}}
 
                 <hr>
 

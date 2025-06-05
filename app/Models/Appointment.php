@@ -67,20 +67,20 @@ class Appointment extends Model
     {
         return $this->is_created_by_user;
     }
-
-    public function mergeWithClosest()
-    {
-        $thisDayAppointments = Appointment::where('user_id', $this->user_id)
-            ->whereNull('canceled_at')
-            ->where('place_id', $this->place_id)
-            ->whereDate('start_at', $this->start_at)
-            ->where('id', '!=', $this->id)
-            ->get();
-
-        foreach ($thisDayAppointments as $thisDayAppointment) {
-            $this->mergeAppointment($thisDayAppointment);
-        }
-    }
+//
+//    public function mergeWithClosest()
+//    {
+//        $thisDayAppointments = Appointment::where('user_id', $this->user_id)
+//            ->whereNull('canceled_at')
+//            ->where('place_id', $this->place_id)
+//            ->whereDate('start_at', $this->start_at)
+//            ->where('id', '!=', $this->id)
+//            ->get();
+//
+//        foreach ($thisDayAppointments as $thisDayAppointment) {
+//            $this->mergeAppointment($thisDayAppointment);
+//        }
+//    }
 
     public function mergeAppointment(Appointment $appointment)
     {
@@ -135,10 +135,6 @@ class Appointment extends Model
         })->when(isset($this->id), function (Builder $builder) {
             $builder->where('id', '!=',  $this->id);
         })->whereBetween('start_at', [$this->start_at->startOfDay(), $this->start_at->clone()->addMinutes($this->duration)->endOfDay()])->get();
-
-        if(count($appointments) > 0 && $this->is_full_day || count($appointments->where('is_full_day'))) {
-            return true;
-        }
 
         foreach ($appointments as $appointment) {
             $appStartTime = Carbon::parse($appointment->start_at);

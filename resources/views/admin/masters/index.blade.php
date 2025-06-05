@@ -1,6 +1,5 @@
 @extends('admin.layouts.app')
 
-
 @section('content')
     <div class="row">
         <div class="col">
@@ -29,7 +28,6 @@
             <table class="table table-bordered mb-5">
                 <tr>
                     <td style="width: 50px;"></td>
-{{--                    <td></td>--}}
                     <td style="width: 440px;">Имя мастера</td>
                     <td style="width: 140px;">Телефон</td>
                     <td>Инста</td>
@@ -39,7 +37,6 @@
                     <td>Дата <br> регистрации</td>
                     <td>Записи</td>
                     <td>Последний <br> визит</td>
-{{--                    <td>Баланс</td>--}}
                     <td></td>
                 </tr>
                 @foreach($masters as $master)
@@ -53,27 +50,11 @@
                                 <span style="color: red;">(отчество)</span>
                             @endif
 
-
                             @if($master->user->getDebtAmount() > 0)
                                 <div class="bg-danger text-white p-2">Задолженность: {{ number_format($master->user->getDebtAmount(), 2) }} </div>
                             @endif
 
-
-
                             @include('admin.comments.includes.widget', ['model' => $master, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
-
-
-{{--                            <div class="comments__list">--}}
-{{--                                @foreach($master->comments as $masterComment)--}}
-{{--                                    <div class="comments__item">--}}
-{{--                                        <span class="comments__item_date">--}}
-{{--                                            {{ $masterComment->created_at->format('d.m.Y') }}--}}
-{{--                                        </span>--}}
-{{--                                        {!! do_tag_linkable($masterComment->text) !!}--}}
-{{--                                    </div>--}}
-{{--                                @endforeach--}}
-{{--                            </div>--}}
-
                         </td>
 
                         <td>
@@ -110,19 +91,6 @@
                                 </span>
                             @endisset
 
-
-{{--                            @if($master->user->getSetting('payment_link.place') || $master->user->getSetting('payment_link.storage'))--}}
-{{--                                <br>--}}
-{{--                            @endif--}}
-
-{{--                            @if($master->user->getSetting('payment_link.place'))--}}
-{{--                                <i class="fa fa-check"></i>--}}
-{{--                            @endif--}}
-
-{{--                            @if($master->user->getSetting('payment_link.storage'))--}}
-{{--                                <i class="fa fa-check"></i>--}}
-{{--                            @endif--}}
-
                         </td>
 
                         <td style="white-space: nowrap;">
@@ -130,10 +98,19 @@
                                 $appointments = $master->user->appointments;
                             @endphp
 
-                            {{ $appointments->count() }} /
-                            {{ $appointments->whereNull('canceled_at')->count() }} /
-                            {{ $appointments->whereNotNull('canceled_at')->count() }}
+                            {{ $totalCount = $appointments->count() }} /
+                            {{ $visitCount = $appointments->whereNull('canceled_at')->count() }} /
+                            {{ $cancelCount = $appointments->whereNotNull('canceled_at')->count() }}
 
+                            <br>
+                            @if($totalCount > 10)
+                                @php
+                                    $lateCancelCount = $master->user->getLateCancellationCount();
+                                    $visitPercent = $lateCancelCount / $totalCount * 100;
+                                @endphp
+                                <span class="{{ $lateCancelCount > 10 ? 'bg-danger text-white' : '' }}">{{ number_format($lateCancelCount) }} %</span>
+                            @endif
+                            <br>
                         </td>
 
                         <td style="white-space: nowrap;">
@@ -148,11 +125,7 @@
                             @else
                                 <span style="color: orangered;">нет</span>
                             @endif
-
-
                         </td>
-
-{{--                        <td>{{ (new \App\Services\PaymentService())->getUserBalance($master->user) }} / {{ $master->user->getBalance() }}</td>--}}
 
                         <td><a href="{{ route('admin.masters.edit', $master) }}">edit</a></td>
                     </tr>

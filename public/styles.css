@@ -1,7 +1,11 @@
 body {
-    background-color: #f2f4f7;
+    background-color: #f2f4f7 !important;
+    /*font-family: 'system-ui', sans-serif;*/
+    /*font-family: "Inter", sans-serif;*/
+    font-optical-sizing: auto;
+    /*font-weight: <weight>;*/
+    font-style: normal;
 }
-
 
 * {
     touch-action: manipulation;
@@ -36,8 +40,8 @@ input {
     margin-right: 5px;
 }
 .place {
-    min-width: 170px;
-    width: 170px;
+    min-width: 185px;
+
 }
 .place .image img {
     border-radius: 4px;
@@ -59,16 +63,28 @@ input {
 .place .time {
     user-select: none;
 }
+/*.place .hour {*/
+/*    border: 1px solid #c7c7c7;*/
+/*    margin-bottom: -1px;*/
+/*    padding: 2px 5px;*/
+/*    cursor: pointer;*/
+/*    display: flex;*/
+/*    justify-content: space-between;*/
+/*    white-space: nowrap;*/
+/*}*/
 .place .hour {
+    user-select: none;
     border: 1px solid #c7c7c7;
-    margin-bottom: 2px;
-    padding: 1px 5px;
-    border-radius: 4px;
+    margin-bottom: 0px;
+    padding: 2px 5px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
-
     white-space: nowrap;
+    border-bottom: 0px !important;
+}
+.place .hour:last-of-type {
+    border-bottom: 1px solid #c7c7c7 !important;
 }
 .place .hour.busy {
     background: #ffdede;
@@ -92,7 +108,7 @@ input {
     color: #95aedd;
 }
 .place .hour.free {
-    background: #e1fbe1;
+    background: #D1FAE5;
 }
 
 .place .hour .add-app {
@@ -101,4 +117,12 @@ input {
 
 .place .hour .add-app:hover {
     color: gold;
+}
+
+#appointmentsList .comments .comment .text {
+    background: #fbffc5;
+}
+
+#appointmentsList .comments .comment.cancellation_reason .text {
+    background: #f1aeb5 !important;
 }

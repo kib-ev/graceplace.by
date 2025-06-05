@@ -14,133 +14,18 @@
     <meta property="og:image" content="{{ asset('/images/logo.jpg') }}" />
 {{--    <meta property="og:url" content="Link to Your Page" />--}}
 
-    <title>GracePlace Minsk</title>
+    <title>Grace Place Minsk</title>
 
-
+    <!-- Styles -->
     <link href="{{ asset('/build/assets/app-D-sv12UV.css') }}" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <style>
-
-        body {
-            background-color: #f2f4f7 !important;
-        }
-
-
-        * {
-            touch-action: manipulation;
-        }
-        table#appointmentsList tr th {
-            background: #f3f3f3;
-        }
-
-        table tr.canceled td {
-            background: #ffe4e4;
-        }
-
-        a {
-            color: #333;
-        }
-        input {
-            color: #333;
-        }
-
-        .logo {
-            width: 20px;
-            height: 20px;
-            margin: 2px;
-        }
-
-        .self-added {
-            color: #4ab728;
-        }
-        #places {
-            display: flex;
-            gap: 3px;
-            margin-right: 5px;
-        }
-        .place {
-            min-width: 170px;
-        }
-        .place .image img {
-            border-radius: 4px;
-        }
-
-        .place .title {
-            height: 60px;
-            text-align: center;
-            border: 1px solid #c7c7c7;
-            margin: 2px 0px;
-            background: #a9a9a9;
-            color: #fff;
-            vertical-align: middle;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 4px;
-        }
-        .place .time {
-            user-select: none;
-        }
-        .place .hour {
-            border: 1px solid #c7c7c7;
-            margin-bottom: 2px;
-            padding: 1px 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-
-            white-space: nowrap;
-        }
-        .place .hour.busy {
-            background: #ffdede;
-        }
-        .place .hour.busy.break {
-            background: #ffebeb !important;
-        }
-        .place .hour.busy .info {
-            color: #e5b7b7;
-            float: right;
-            font-size: 0.9em;
-        }
-        .place .hour.busy.master {
-            background: #b5cfff;
-        }
-        .place .time.master .hour {
-            background: #b5cfff !important;
-        }
-        .place .time.master .hour .info,
-        .place .hour.busy.master .info {
-            color: #95aedd;
-        }
-        .place .hour.free {
-            background: #e1fbe1;
-        }
-
-        .place .hour .add-app {
-            padding: 0px 5px;
-        }
-
-        .place .hour .add-app:hover {
-            color: gold;
-        }
-
-        #appointmentsList .comments .comment .text {
-            background: #fbffc5;
-        }
-
-        #appointmentsList .comments .comment.cancellation_reason .text {
-            background: #f1aeb5 !important;
-        }
-    </style>
-
-    <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('styles.css') }}?{{ filemtime(public_path('styles.css')) }}">
 
     <!-- Scripts -->
     {{--    @vite(['resources/sass/app.scss', 'resources/js/app.js'])--}}
+
+    <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('/build/assets/app-BkDPDVeP.js') }}"></script>
 
     <!-- PWA -->
     <meta name="theme-color" content="#1a202c">
@@ -173,7 +58,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
 
-        <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> GracePlace</a>
+        <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="Grace Place Logo"> Grace Place</a>
 
         @if(auth()->user() && auth()->user()->hasRole('admin'))
             @include('admin.layouts.includes.menu')
@@ -248,7 +133,7 @@
 
                                             @if($loop->index == 0)
                                                 <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
-                                                    {{ $masterDate }}
+                                                    <a href="/?date={{ $nextAppointment->start_at->format('Y-m-d') }}">{{ $masterDate }}</a>
                                                 </td>
                                                 <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
                                                     <span>{{ mb_strtoupper($nextAppointment->start_at->isoFormat('dd')) }}</span>
@@ -263,14 +148,10 @@
                                                 <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
                                             </td>
 
-                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
+                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
 
                                                 <span class="js_appointment-time">
-                                                    @if($nextAppointment->is_full_day)
-                                                        Полный день
-                                                    @else
-                                                        {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
-                                                    @endif
+                                                    {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
                                                 </span>
 
                                             </td>
@@ -393,14 +274,10 @@
                                             <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
                                         </td>
 
-                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;background: {{ $nextAppointment->is_full_day ? '#e0f9d8' : 'none' }};">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
 
                                         <span class="text-nowrap js_appointment-time">
-                                            @if($nextAppointment->is_full_day)
-                                                Полный день
-                                            @else
-                                                {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
-                                            @endif
+                                            {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
                                         </span>
 
                                         </td>
@@ -442,8 +319,10 @@
                 <div class="col">
                     <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">Локер</a>
 
-                    @if($bookings->first()->daysLeft() <= 0)
+                    @if($bookings->first()->daysLeft() < 0)
                         <span class="bg-danger text-white p-1 px-2"> <b>ПРОСРОЧЕНО: {{ abs($bookings->first()->daysLeft()) }} {{ trans_choice('день|дня|дней', $bookings->first()->daysLeft()) }}</b></span>
+                    @elseif($bookings->first()->daysLeft() <= 3)
+                        <span class="bg-warning text-white p-1 px-2"> <b>ОСТАЛОСЬ: {{ abs($bookings->first()->daysLeft()) }} {{ trans_choice('день|дня|дней', $bookings->first()->daysLeft()) }}</b></span>
                     @endif
 
                     <div class="collapse" id="collapseStorageCells">

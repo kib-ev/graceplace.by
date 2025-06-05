@@ -17,26 +17,63 @@ class PermissionController extends Controller
         return view('admin.permissions.index', compact('users', 'permissionName'));
     }
 
-    // Обновление прав мастеров
-    public function update(Request $request)
+    public function update(Request $request, User $user)
     {
-        $permissionName = 'cancel appointment';
+            $userId = $user->id;
 
-        // Получаем всех мастеров
-        $users = User::get();
-
-        // Обрабатываем каждого мастера
-        foreach ($users as $user) {
-            // Если мастер выбран, проверяем, есть ли у него уже это разрешение
-            if ($request->has('master_' . $user->id)) {
-                if (!$user->can($permissionName)) {
-                    // Назначаем разрешение, если его нет
-                    $user->givePermissionTo($permissionName);
+            // Проверяем "cancel appointment"
+            if ($request->has("cancel_$userId")) {
+                if (!$user->can('cancel appointment')) {
+                    $user->givePermissionTo('cancel appointment');
                 }
             } else {
-                // Если мастер не выбран, удаляем разрешение
-                if ($user->can($permissionName)) {
-                    $user->revokePermissionTo($permissionName);
+                if ($user->can('cancel appointment')) {
+                    $user->revokePermissionTo('cancel appointment');
+                }
+            }
+
+            // Проверяем "add appointment"
+            if ($request->has("add_$userId")) {
+                if (!$user->can('add appointment')) {
+                    $user->givePermissionTo('add appointment');
+                }
+            } else {
+                if ($user->can('add appointment')) {
+                    $user->revokePermissionTo('add appointment');
+                }
+            }
+
+        return redirect()->back()->with('success', 'Права мастеров обновлены');
+    }
+
+    // Обновление прав мастеров
+    public function updateAll(Request $request)
+    {
+        // Получаем всех мастеров
+        $users = User::all();
+
+        foreach ($users as $user) {
+            $userId = $user->id;
+
+            // Проверяем "cancel appointment"
+            if ($request->has("cancel_$userId")) {
+                if (!$user->can('cancel appointment')) {
+                    $user->givePermissionTo('cancel appointment');
+                }
+            } else {
+                if ($user->can('cancel appointment')) {
+                    $user->revokePermissionTo('cancel appointment');
+                }
+            }
+
+            // Проверяем "add appointment"
+            if ($request->has("add_$userId")) {
+                if (!$user->can('add appointment')) {
+                    $user->givePermissionTo('add appointment');
+                }
+            } else {
+                if ($user->can('add appointment')) {
+                    $user->revokePermissionTo('add appointment');
                 }
             }
         }

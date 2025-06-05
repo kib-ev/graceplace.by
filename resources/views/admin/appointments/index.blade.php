@@ -101,14 +101,7 @@
                                 <tr class="{{ !is_null($appointment->canceled_at) ? 'canceled' : '' }}">
                                     <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
 
-                                        @if($appointment->is_full_day)
-                                            Полный день
-                                        @else
-                                            @if(isset($appointment->start_at))
-                                                {{ $appointment->start_at?->format('H:i') }} -
-                                                {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
-                                            @endif
-                                        @endif
+                                        {{ $appointment->start_at->format('H:i') }} - {{ $appointment->end_at->format('H:i') }}
 
                                         <br>
 
@@ -270,15 +263,8 @@
 
                                 <tr class="{{ !is_null($appointment->canceled_at) ? 'canceled' : '' }}">
                                     <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
-
-                                        @if($appointment->is_full_day)
-                                            Полный день
-                                        @else
-                                            @if(isset($appointment->start_at))
-                                                {{ $appointment->start_at?->format('H:i') }} -
-                                                {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
-                                            @endif
-                                        @endif
+                                        {{ $appointment->start_at?->format('H:i') }} -
+                                        {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
 
                                         <br>
 

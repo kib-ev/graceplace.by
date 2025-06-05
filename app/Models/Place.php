@@ -29,7 +29,7 @@ class Place extends Model
         $isAppointment = null;
 
         foreach($this->appointments()->whereNull('canceled_at')->whereDay('start_at', $date)->get() as $appointment) {
-            if($date->greaterThanOrEqualTo($appointment->start_at) && $date->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
+            if($date->greaterThanOrEqualTo($appointment->start_at) && $date->lessThan($appointment->end_at)) {
                 $isAppointment = $appointment;
             }
         }
@@ -61,15 +61,6 @@ class Place extends Model
         }
 
         return null;
-    }
-
-    public function isFullDayBusy(Carbon $date): Appointment|null
-    {
-        return $this->appointments()
-            ->whereNull('canceled_at')
-            ->whereDate('start_at', $date)
-            ->where('is_full_day', 1)
-            ->first();
     }
 
     public function getHourlyCost()

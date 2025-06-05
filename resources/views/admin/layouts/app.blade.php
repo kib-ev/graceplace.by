@@ -198,7 +198,7 @@
     </div>
 </footer>
 
-@yield('script')
+@yield('scripts')
 
 </body>
 </html>

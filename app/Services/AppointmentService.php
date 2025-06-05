@@ -88,10 +88,6 @@ final class AppointmentService
         }
 
         $appointments->each(function ($appointment) use (&$result, $datetime) {
-            if($appointment->is_full_day) {
-                $result = false;
-            }
-
             $breakTime = $this->getBreakTime($appointment);
 
             if ($datetime->greaterThanOrEqualTo($appointment->start_at->subMinutes($breakTime))
@@ -117,10 +113,6 @@ final class AppointmentService
         }
 
         $appointments->each(function ($appointment) use (&$result, $datetime) {
-            if ($appointment->is_full_day) {
-                $result = false;
-            }
-
             if($datetime->greaterThanOrEqualTo($appointment->start_at) && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
                 $result = false;
             }
@@ -138,10 +130,6 @@ final class AppointmentService
         }
 
         $appointments->each(function ($appointment) use (&$result, $datetime) {
-            if ($appointment->is_full_day) {
-                $result = true;
-            }
-
             if($datetime->greaterThanOrEqualTo($appointment->start_at) && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
                 $result = true;
             }
@@ -207,10 +195,6 @@ final class AppointmentService
     {
         $isAppointment = null;
 
-        if($this->hasFullDayAppointment($datetime)) {
-            return $this->hasFullDayAppointment($datetime);
-        }
-
         foreach($this->appointments as $appointment) {
             if($datetime->greaterThanOrEqualTo($appointment->start_at) && $datetime->lessThan($appointment->start_at->addMinutes($appointment->duration))) {
                 $isAppointment = $appointment;
@@ -224,42 +208,6 @@ final class AppointmentService
     {
         return $this->appointments?->count();
     }
-
-    public function hasFullDayAppointment(Carbon $datetime): Appointment|null
-    {
-        $result = null;
-
-        $this->appointments->each(function ($appointment) use (&$result, $datetime) {
-            if($appointment->is_full_day) {
-                $result = $appointment;
-            }
-        });
-
-        return $result;
-    }
-
-//    public static function getMasterByUserId(int $userId): Master|null
-//    {
-//        if(auth()->id() == 1) return null;
-//
-//        $master = Cache::remember('user_'.$userId.'_master', 60*60, function () use ($userId) {
-//            $user = User::find($userId);
-//
-//            if ($user) {
-//                $person = Person::whereHas('phones', function ($query) use ($user) {
-//                    $query->where('number', $user->phone);
-//                })->first();
-//
-//                return $person?->master;
-//            }
-//
-//            return null;
-//        });
-//
-////        Log::info($userId.'_'.$master?->id);
-//
-//        return $master ?? null ;
-//    }
 
     public static function getUserByMasterId(int $masterId): User|null
     {
@@ -338,13 +286,11 @@ final class AppointmentService
         // Рассчитываем длительность аренды в часах
         $durationInMinutes = $start->diffInMinutes($end);
 
+        // Аренда на день (более 8 часов)
         if ($durationInMinutes >= 8 * 60) {
-            // Аренда на целый день
-            $appointment->is_full_day = true;
             $amount = $appointment->place->getHourlyCost() * 8; // Стоимость аренды на 8 часов
         } else {
             // Обычная почасовая аренда
-            $appointment->is_full_day = false;
             $amount = $appointment->place->getHourlyCost() * $durationInMinutes / 60;
         }
 
@@ -419,7 +365,7 @@ final class AppointmentService
         return $result;
     }
 
-    public function mergeAppointments(Collection $appointments)
+    public function mergeAppointments(Collection $appointments, $interval = 0)
     {
         $appointmentsCollection = collect($appointments)->whereNull('canceled_at')->sortBy('start_at');
 

@@ -13,19 +13,18 @@ class AppointmentController extends Controller
 {
     public function store(Request $request)
     {
+        if (!auth()->user()->can('add appointment')) {
+            return back()->withErrors('У вас нет прав на добавление записи.');
+        }
         $appointment = new Appointment();
         $appointment->fill($request->all());
         $appointment->start_at = Carbon::parse($request->get('datetime'));
-
         $appointment->user_id = $request->get('user_id') ?? auth()->id();
         $appointment->is_created_by_user = !auth()->user()->hasRole('admin');
-
         $appointment->save();
-
         if($appointment->id && $request->get('comment')) {
             $appointment->addComment(Auth::user(), $request->get('comment'), BOOKING_ADD_COMMENT);
         }
-
         if($appointment->id) {
             return back();
         } else {

@@ -39,7 +39,7 @@
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
-                                {{ $appointment->start_at->format('d.m.Y') }}
+                                <a target="_blank" href="/?date={{ $appointment->start_at->format('Y-m-d') }}">{{ $appointment->start_at->format('d.m.Y') }}</a>
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
@@ -47,12 +47,8 @@
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
-                                @if($appointment->is_full_day)
-                                    Полный день
-                                @elseif(isset($appointment->start_at))
-                                    {{ $appointment->start_at->format('H:i') }} -
-                                    {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
-                                @endif
+                                {{ $appointment->start_at->format('H:i') }} -
+                                {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
                             </td>
 
                             <td style="width: 1%; min-width: 30px;">
@@ -111,7 +107,6 @@
                                         @endif
                                     @endif
                                 </div>
-
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap;">

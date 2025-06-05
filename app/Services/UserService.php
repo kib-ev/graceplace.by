@@ -45,6 +45,7 @@ final class UserService
         // PERMISSION
         $user->assignRole('master');
         $user->givePermissionTo('cancel appointment');
+        $user->givePermissionTo('add appointment');
 
         $phone = Phone::create([
             'number' => $phone,

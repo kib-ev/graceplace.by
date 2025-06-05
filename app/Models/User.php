@@ -217,4 +217,14 @@ class User extends Authenticatable
                 return $appointment->getExpectedPrice();
             });
     }
+
+    public function getLateCancellationCount()
+    {
+        return Appointment::where('user_id', $this->id)
+            ->whereNotNull('canceled_at')
+            ->where(function ($query) {
+                $query->whereRaw('TIMESTAMPDIFF(HOUR, canceled_at, start_at) < 24')
+                    ->orWhereColumn('canceled_at', '>=', 'start_at');
+            })->count();
+    }
 }
