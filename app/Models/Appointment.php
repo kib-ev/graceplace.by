@@ -27,6 +27,8 @@ class Appointment extends Model
     ];
 
     const CANCELLATION_TIMEOUT = 24; // hours
+    const BOOKING_ADD_COMMENT = 'booking_add';
+    const BOOKING_CANCEL_COMMENT = 'booking_cancel';
 
     public function scopeWithoutCanceled(\Illuminate\Database\Eloquent\Builder $builder)
     {
@@ -159,7 +161,12 @@ class Appointment extends Model
 
     public function canBeCancelledByUser(): bool
     {
-        $cancellationCutoff  = $this->user->getSetting('cancellation_timeout', self::CANCELLATION_TIMEOUT); // Получаем лимит времени отмены в часах
+        // Если пользователь администратор, разрешаем отменять любые записи
+        if (auth()->check() && auth()->user()->hasRole('admin')) {
+            return true;
+        }
+
+        $cancellationCutoff = $this->user->getSetting('cancellation_timeout', self::CANCELLATION_TIMEOUT); // Получаем лимит времени отмены в часах
 
         $now = now();
         $appointmentStart = $this->start_at;

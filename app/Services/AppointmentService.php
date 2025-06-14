@@ -13,7 +13,8 @@ final class AppointmentService
 {
     public static int $defaultTimeStep = 30; // for appointment and duration
     public static int $defaultBreakTime = 30;
-    public static int $minAppointmentDuration = 60;
+    public static int $minAppointmentDuration = 60; // for masters
+    public static int $adminMinAppointmentDuration = 30; // for admins
 
     protected Collection|null $appointments = null;
     protected Carbon|null $date = null;
@@ -297,16 +298,27 @@ final class AppointmentService
         return $amount;
     }
 
-    public function cancelAppointment(User $user, Appointment $appointment, string $cancellationReason = null): bool
+    public function cancelAppointment(User $user, Appointment $appointment, ?string $cancellationReason = null): bool
     {
-        $appointment->canceled_at = now();
-        $appointment->save();
-
-        if ($cancellationReason) {
-            $appointment->addComment($user, $cancellationReason, BOOKING_CANCEL_COMMENT);
+        // Проверяем, может ли пользователь отменить запись
+        if (!$appointment->canBeCancelledByUser() && !$user->hasRole('admin')) {
+            throw new \Exception('Вы не можете отменить эту запись. Свяжитесь с администратором.');
         }
 
-        return isset($appointment->canceled_at);
+        try {
+            $appointment->canceled_at = now();
+            $appointment->save();
+
+            // Добавляем комментарий с причиной отмены
+            if ($cancellationReason) {
+                $appointment->addComment($user, $cancellationReason, Appointment::BOOKING_CANCEL_COMMENT);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error canceling appointment: ' . $e->getMessage());
+            throw new \Exception('Произошла ошибка при отмене записи.');
+        }
     }
 
     public function payForAppointment(Appointment $appointment, bool $useBalance = true): void
@@ -367,37 +379,69 @@ final class AppointmentService
 
     public function mergeAppointments(Collection $appointments, $interval = 0)
     {
-        $appointmentsCollection = collect($appointments)->whereNull('canceled_at')->sortBy('start_at');
+        try {
+            $appointmentsCollection = collect($appointments)->whereNull('canceled_at')->sortBy('start_at');
 
-        // GROUP BY USER ID AND PLACE ID
-        foreach ($appointmentsCollection->groupBy(function ($appointment) {
-            return 'user_id_' . $appointment->user_id . '_place_id_' . $appointment->place_id;
-        }) as $groupUserAppointments) {
+            // GROUP BY USER ID AND PLACE ID
+            foreach ($appointmentsCollection->groupBy(function ($appointment) {
+                return 'user_id_' . $appointment->user_id . '_place_id_' . $appointment->place_id;
+            }) as $groupUserAppointments) {
 
-            // FIND CLOSEST APPOINTMENTS
-            $groupUserAppointments->each(function ($appointment1) use ($groupUserAppointments) {
-                $groupUserAppointments->where('id','!=', $appointment1->id)->each(function ($appointment2) use ($appointment1, $groupUserAppointments) {
+                // FIND CLOSEST APPOINTMENTS
+                $groupUserAppointments->each(function ($appointment1) use ($groupUserAppointments) {
+                    $groupUserAppointments->where('id','!=', $appointment1->id)->each(function ($appointment2) use ($appointment1, $groupUserAppointments) {
 
-                    // MERGE AND DELETE
-                    if($appointment1->end_at == $appointment2->start_at) {
-                        $newDuration = $appointment1->duration + $appointment2->duration;
-                        $newPrice = (isset($appointment1->price) || isset($appointment2->price)) ? $appointment1->price + $appointment2->price : null;
-                        $appointment2->comments()->update([
-                            'model_id' => $appointment1->id
-                        ]);
-                        $appointment2->delete();
-                        $appointment1->update([
-                            'duration' => $newDuration,
-                            'price' => $newPrice,
-                        ]);
-                    }
+                        // MERGE AND DELETE
+                        if($appointment1->end_at == $appointment2->start_at) {
+                            $newDuration = $appointment1->duration + $appointment2->duration;
+                            $newPrice = (isset($appointment1->price) || isset($appointment2->price)) ? $appointment1->price + $appointment2->price : null;
+                            $appointment2->comments()->update([
+                                'model_id' => $appointment1->id
+                            ]);
+                            $appointment2->delete();
+                            $appointment1->update([
+                                'duration' => $newDuration,
+                                'price' => $newPrice,
+                            ]);
+                        }
+                    });
                 });
-            });
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error merging appointments: ' . $e->getMessage());
+            throw new \Exception('Не удалось объединить записи. Пожалуйста, попробуйте еще раз.');
         }
     }
 
-    public function isTimeSlotAvailable($id, Carbon $startAt, Carbon $endAt): bool
+    public function isTimeSlotAvailable($placeId, Carbon $startAt, Carbon $endAt): bool
     {
-        return true;
+        try {
+            // Проверяем, нет ли других записей в это время
+            $overlappingAppointments = Appointment::where('place_id', $placeId)
+                ->whereNull('canceled_at')
+                ->where(function($query) use ($startAt, $endAt) {
+                    $query->where(function($q) use ($startAt, $endAt) {
+                        // Проверяем пересечение интервалов
+                        $q->where('start_at', '<', $endAt)
+                          ->where(function($q) use ($startAt) {
+                              $q->whereRaw('DATE_ADD(start_at, INTERVAL duration MINUTE) > ?', [$startAt]);
+                          });
+                    });
+                })
+                ->count();
+
+            return $overlappingAppointments === 0;
+        } catch (\Exception $e) {
+            \Log::error('Error checking time slot availability: ' . $e->getMessage());
+            throw new \Exception('Не удалось проверить доступность временного слота. Пожалуйста, попробуйте еще раз.');
+        }
+    }
+
+    public function getMinDuration(): int
+    {
+        if (auth()->check() && auth()->user()->hasRole('admin')) {
+            return self::$adminMinAppointmentDuration;
+        }
+        return self::$minAppointmentDuration;
     }
 }

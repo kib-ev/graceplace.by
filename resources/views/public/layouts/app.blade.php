@@ -227,7 +227,7 @@
 
                                         <div class="form-group">
                                             <label for="">Укажите, пожалуйста, причину отмены:</label>
-                                            <textarea class="form-control js_appointment-cancel-reason" required></textarea>
+                                            <textarea class="form-control js_appointment-cancel-reason"></textarea>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
@@ -237,6 +237,44 @@
                                 </div>
                             </div>
                         </div>
+
+                        <script>
+                            $(document).ready(function() {
+                                // Обработчик нажатия на кнопку отмены записи
+                                $('#sendCancelAppointmentData').on('click', function() {
+                                    const button = $(this);
+                                    const modal = $('#modalCancelAppointment');
+                                    const appointmentId = modal.find('.js_appointment-id').text();
+                                    const reason = modal.find('.js_appointment-cancel-reason').val();
+
+                                    button.prop('disabled', true);
+                                    button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отмена...');
+
+                                    $.ajax({
+                                        url: '/user/appointments/' + appointmentId + '/cancel',
+                                        method: 'POST',
+                                        data: {
+                                            _token: '{{ csrf_token() }}',
+                                            cancellation_reason: reason
+                                        },
+                                        success: function(response) {
+                                            if (response.success) {
+                                                window.location.reload();
+                                            } else {
+                                                alert(response.message || 'Произошла ошибка при отмене записи');
+                                                button.prop('disabled', false);
+                                                button.html('Да, отменить');
+                                            }
+                                        },
+                                        error: function(xhr) {
+                                            alert(xhr.responseJSON?.message || 'Произошла ошибка при отмене записи');
+                                            button.prop('disabled', false);
+                                            button.html('Да, отменить');
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>

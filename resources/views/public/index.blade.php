@@ -26,6 +26,120 @@
             background-color: #3F8CFF !important;
             color: white;
         }
+        .time-slot.selecting {
+            background-color: rgba(40, 167, 69, 0.5);
+            color: white;
+        }
+        .time-slot.deselecting {
+            background-color: rgba(220, 53, 69, 0.5);
+            color: white;
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            width: 100%;
+            min-height: calc(1.5em + 0.75rem + 2px);
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single {
+            padding-right: 2.25rem;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding: 0;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+            color: #6c757d;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__options {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+            color: #212529;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 0.375rem 0.75rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .select2-container--bootstrap-5.select2-container--disabled .select2-selection,
+        .select2-container--bootstrap-5 .select2-results__option[aria-disabled=true] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+            position: absolute;
+            right: 2.5rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            padding: 0.25em 0.25em;
+            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/0.75rem auto no-repeat;
+            cursor: pointer;
+            opacity: 0.4;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
+            opacity: 0.6;
+        }
     </style>
 
     <form class="mb-2" id="dateForm" action="">
@@ -288,78 +402,53 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-
-                        <form id="addAppointmentForm" action="{{ route('public.appointments.store') }}" method="post" autocomplete="off">
+                        <form id="addAppointmentForm" action="{{ route('user.appointments.store') }}" method="POST">
                             @csrf
-                            @method('post')
 
                             <input type="hidden" name="datetime" value="">
                             <input type="hidden" name="place_id" value="">
 
-                            <div class="form-group mb-2">
-                                <label for="appointmentDate">Дата</label>
-                                <input class="form-control" id="appointmentDate" type="text" name="date" value="" disabled>
+                            <div class="mb-3">
+                                <label for="appointmentDate" class="form-label">Дата</label>
+                                <input type="text" class="form-control" id="appointmentDate" disabled>
                             </div>
 
-                            <div class="form-group mb-2">
-                                <label for="appointmentTime">Время</label>
-                                <input class="form-control" id="appointmentTime" type="text" name="time" value="" disabled>
+                            <div class="mb-3">
+                                <label for="appointmentTime" class="form-label">Время</label>
+                                <input type="text" class="form-control" id="appointmentTime" disabled>
                             </div>
 
-                            @if(auth()->user() && auth()->user()->hasRole('admin'))
-                                <div class="form-group mb-2">
-                                    <label for="appointmentUser">Пользователь <span class="text-danger">*</span></label>
+                            @role('admin')
+                            <div class="mb-3">
+                                <label for="appointmentMaster" class="form-label">Мастер</label>
+                                <select class="form-select" id="appointmentMaster" name="user_id" required>
+                                    <option value="">Выберите мастера</option>
+                                    @foreach(\App\Models\User::role('master')->with('master.person')->orderBy('name')->get() as $user)
+                                        <option value="{{ $user->id }}">{{ $user->master->person->full_name }} ({{ $user->master->description }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endrole
 
-                                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-                                    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
-                                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
-
-                                    <select id="appointmentUser" name="user_id" class="form-control" required>
-                                        <option value=""></option>
-                                        @foreach(\App\Models\User::role('master')->with(['master.person'])->get()->sortBy('master.person.full_name') as $user)
-                                            <option value="{{ $user->id }}" @selected($user->id == (isset($appointment) ? $appointment->user_id : request('user_id')))>
-                                                {{ $user->master->person->last_name }} {{ $user->master->person->first_name }} | {{ $user->master->description }} | {{ $user->master->phone }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-                                    <script>
-                                        $(document).ready(function() {
-                                            $('#appointmentUser').selectize({
-                                                sortField: 'text'
-                                            });
-                                        });
-                                    </script>
-                                </div>
-                            @endif
-
-                            <div class="form-group mb-2">
-                                <label for="appointmentDuration">Продолжительность (ч) <span class="text-danger">*</span></label>
-
+                            <div class="mb-3">
+                                <label for="appointmentDuration" class="form-label">Продолжительность</label>
+                                <select class="form-control" id="appointmentDuration" name="duration" required>
+                                    <option value="">Выберите продолжительность</option>
+                                </select>
                                 <select id="appointmentDurationOptions" style="display: none;">
-                                    <option value=""></option>
-                                    @for($i = \App\Services\AppointmentService::$minAppointmentDuration; $i <= 26*30; $i+=\App\Services\AppointmentService::$defaultTimeStep)
-                                        <option value="{{ $i }}" @selected(isset($appointment) ? $appointment->duration == $i : '')>
-                                            {{ now()->startOfDay()->addMinutes($i)->format('H:i') }}
-                                        </option>
-                                    @endfor
-                                </select>
-
-                                <select id="appointmentDuration" class="form-control" name="duration" id="duration" required>
-                                    <option value=""></option>
-                                    @for($i = 60; $i <= 22*30; $i+=30)
-                                        <option value="{{ $i }}" @selected(isset($appointment) ? $appointment->duration == $i : '')>
-                                            {{ now()->startOfDay()->addMinutes($i)->format('H:i') }}
-                                        </option>
+                                    @php
+                                        $minDuration = (new \App\Services\AppointmentService())->getMinDuration();
+                                    @endphp
+                                    @for($i = $minDuration; $i <= 960; $i += 30)
+                                        <option value="{{ $i }}">{{ str_pad(floor($i/60), 2, '0', STR_PAD_LEFT) }}:{{ str_pad($i%60, 2, '0', STR_PAD_LEFT) }}</option>
                                     @endfor
                                 </select>
                             </div>
 
-                            <div class="form-group mb-2">
-                                <label for="appointmentComment">Дополнительная информация</label>
-                                <textarea class="form-control" id="appointmentComment" name="comment" placeholder=""></textarea>
+                            <div class="mb-3">
+                                <label for="appointmentComment" class="form-label">Комментарий</label>
+                                <textarea class="form-control" id="appointmentComment" name="comment" rows="3"></textarea>
                             </div>
-
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -370,127 +459,128 @@
             </div>
         </div>
 
-
         <script>
-            $(document).ready(function () {
-
-                $('.js_cancel-appointment').on('click', function () {
-
-                    let info = $(this).closest('.appointment-info');
-                    let modal = $('#modalCancelAppointment');
-
-                    let id = info.find('.js_appointment-id').text();
-                    let date = info.find('.js_appointment-date').text();
-                    let time = info.find('.js_appointment-time').text();
-                    let place = info.find('.js_appointment-place').text();
-
-                    modal.find('.js_appointment-id').text(id);
-                    modal.find('.js_appointment-date').text(date);
-                    modal.find('.js_appointment-time').text(time);
-                    modal.find('.js_appointment-place').text(place);
-
-                    modal.modal('show');
-                });
-
-                $('#sendCancelAppointmentData').on('click', function () {
-                    let modal = $('#modalCancelAppointment');
-
-                    let appointmentId = $('#modalCancelAppointment').find('.js_appointment-id').text();
-                    let cancelReason = $('#modalCancelAppointment').find('.js_appointment-cancel-reason').val();
-
-                    $.ajax({
-                        url: '/appointments/' + appointmentId + '/cancel',  // URL для отправки запроса
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',  // CSRF-токен для защиты запроса
-                            cancellation_reason: cancelReason
-                        },
-                        success: function (response) {
-                            if (response.success) {
-                                alert('Запись успешно отменена.');
-                                // Обновляем интерфейс, можно скрыть запись или изменить её статус
-                                $('#appointment-' + appointmentId).remove();
-
-                                $('.js_app_' + appointmentId).remove();
-
-                                window.location.reload();
-
-                            } else {
-                                alert('Произошла ошибка: ' + response.message);
-                            }
-                        },
-                        error: function (xhr) {
-                            alert('Произошла ошибка. Попробуйте снова.');
-                        }
-                    });
-
-                    modal.modal('hide');
-                })
-
-                $('.time').each(function (el) {
-                    $(this).on('dblclick', function () {
-                        console.log(1);
-                    });
-                });
-
-                $('.js-add-app').each(function (el) {
-                    $(this).on('click', function () {
-
-                        let selectedHour = $(this).parent('.hour');
-
-                        $('#addAppointmentForm #appointmentMaster option:first').prop('selected', true);
-
-                        $('#addAppointmentForm #appointmentDuration option').remove();
-                        $('#addAppointmentForm #appointmentDuration').html($('#addAppointmentForm #appointmentDurationOptions').html());
-
-                        let time = selectedHour.attr('data-time');
-                        $('#addAppointmentForm #appointmentTime').val(time);
-
-                        let date = selectedHour.attr('data-date');
-                        $('#addAppointmentForm #appointmentDate').val(date);
-
-                        let datetime = selectedHour.attr('data-datetime');
-                        $('#addAppointmentForm [name="datetime"]').val(datetime);
-
-                        let placeId = selectedHour.attr('data-place_id');
-                        $('#addAppointmentForm [name="place_id"]').val(placeId);
-
-                        let maxDuration = selectedHour.attr('data-max_duration');
-                        $('#addAppointmentForm #appointmentDuration option').each(function () {
-                            if (parseInt(maxDuration) < parseInt($(this).attr('value'))) {
-                                $(this).remove();
-                            }
-                        });
-
-                        $('#exampleModal').modal('show');
-                        $('#addAppointmentButton').prop('disabled', false);
-                    })
-                });
-
-
-                $('#addAppointmentButton').on('click', function () {
-                    $(this).prop('disabled', true);
-                    let form = $('#addAppointmentForm');
-
-                    if (checkRequiredFields(form)) {
-                        form.submit();
-                    }
-                });
-
-                function checkRequiredFields(form) {
-                    let needToFillCount = 0;
-
-                    form.find('[required]').each(function () {
-                        if ($(this).val() == '') {
-                            $(this).css('border-color', 'red');
-                            needToFillCount += 1;
-                        } else {
-                            $(this).css('border-color', ' ');
-                        }
-                    });
-
-                    return needToFillCount == 0;
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof jQuery === 'undefined') {
+                    console.error('jQuery is not loaded');
+                    return;
                 }
+
+                $(document).ready(function () {
+                    // Обработка отмены записи
+                    $('.js_cancel-appointment').on('click', function () {
+                        let info = $(this).closest('.appointment-info');
+                        let modal = $('#modalCancelAppointment');
+
+                        let id = info.find('.js_appointment-id').text();
+                        let date = info.find('.js_appointment-date').text();
+                        let time = info.find('.js_appointment-time').text();
+                        let place = info.find('.js_appointment-place').text();
+
+                        modal.find('.js_appointment-id').text(id);
+                        modal.find('.js_appointment-date').text(date);
+                        modal.find('.js_appointment-time').text(time);
+                        modal.find('.js_appointment-place').text(place);
+
+                        modal.modal('show');
+                    });
+
+                    // Обработка добавления записи
+                    $('.js-add-app').on('click', function () {
+                        try {
+                            let selectedHour = $(this).parent('.hour');
+
+                            // Сброс выбора мастера для администратора
+                            if ($('#appointmentMaster').length) {
+                                $('#appointmentMaster').val(null).trigger('change');
+                            }
+
+                            $('#addAppointmentForm #appointmentDuration option').remove();
+                            $('#addAppointmentForm #appointmentDuration').html($('#addAppointmentForm #appointmentDurationOptions').html());
+
+                            let time = selectedHour.attr('data-time');
+                            $('#addAppointmentForm #appointmentTime').val(time);
+
+                            let date = selectedHour.attr('data-date');
+                            $('#addAppointmentForm #appointmentDate').val(date);
+
+                            let datetime = selectedHour.attr('data-datetime');
+                            $('#addAppointmentForm [name="datetime"]').val(datetime);
+
+                            let placeId = selectedHour.attr('data-place_id');
+                            $('#addAppointmentForm [name="place_id"]').val(placeId);
+
+                            let maxDuration = selectedHour.attr('data-max_duration');
+                            $('#addAppointmentForm #appointmentDuration option').each(function () {
+                                if (parseInt(maxDuration) < parseInt($(this).attr('value'))) {
+                                    $(this).remove();
+                                }
+                            });
+
+                            $('#exampleModal').modal('show');
+                            $('#addAppointmentButton').prop('disabled', false);
+                        } catch (error) {
+                            console.error('Error in js-add-app click handler:', error);
+                        }
+                    });
+
+                    // Обработка кнопки добавления
+                    $('#addAppointmentButton').on('click', function () {
+                        try {
+                            $(this).prop('disabled', true);
+                            let form = $('#addAppointmentForm');
+
+                            if (checkRequiredFields(form)) {
+                                showLoading();
+                                form.submit();
+                            } else {
+                                $(this).prop('disabled', false);
+                            }
+                        } catch (error) {
+                            console.error('Error in addAppointmentButton click handler:', error);
+                            $(this).prop('disabled', false);
+                        }
+                    });
+
+                    function checkRequiredFields(form) {
+                        try {
+                            let isValid = true;
+                            form.find('[required]').each(function() {
+                                if (!$(this).val()) {
+                                    isValid = false;
+                                    $(this).addClass('is-invalid');
+                                    if (!$(this).next('.invalid-feedback').length) {
+                                        $(this).after('<div class="invalid-feedback">Это поле обязательно для заполнения</div>');
+                                    }
+                                } else {
+                                    $(this).removeClass('is-invalid');
+                                    $(this).next('.invalid-feedback').remove();
+                                }
+                            });
+
+                            return isValid;
+                        } catch (error) {
+                            console.error('Error in checkRequiredFields:', error);
+                            return false;
+                        }
+                    }
+
+                    function showLoading() {
+                        $('#addAppointmentButton').prop('disabled', true);
+                        $('#addAppointmentButton').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...');
+                    }
+
+                    // Добавляем обработку ошибок с сервера
+                    @if($errors->any())
+                        let errorMessages = [];
+                        @foreach($errors->all() as $error)
+                            errorMessages.push("{{ $error }}");
+                        @endforeach
+                        alert('Ошибка:\n' + errorMessages.join('\n'));
+                        $('#addAppointmentButton').prop('disabled', false);
+                        $('#addAppointmentButton').html('Добавить');
+                    @endif
+                });
             });
         </script>
 

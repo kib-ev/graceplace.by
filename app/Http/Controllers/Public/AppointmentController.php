@@ -15,11 +15,13 @@ class AppointmentController extends Controller
 {
     public function store(Request $request)
     {
+        $minDuration = (new AppointmentService())->getMinDuration();
+
         $request->validate([
             'master_id' => 'required|exists:masters,id',
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
-            'duration' => 'required|integer|min:30|max:240',
+            'duration' => "required|integer|min:{$minDuration}|max:960",
             'place_id' => 'required|exists:places,id',
             'client_name' => 'required|string|max:255',
             'client_phone' => 'required|string|max:255',
