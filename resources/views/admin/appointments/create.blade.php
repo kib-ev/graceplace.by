@@ -14,9 +14,9 @@
 
     }
     .comments__list .comment__item .comment__text {
-        background: #e9ecef;
-        padding: 5px 10px;
-        border: 1px solid #dee2e6;`
+        /*background: #e9ecef;*/
+        /*padding: 5px 10px;*/
+        /*border: 1px solid #dee2e6;*/
 
     }
     .comments__list .comment__item button[type=submit] {
@@ -166,7 +166,7 @@
                     <label for="price">Стоимость</label>
                     <input id="price" type="number" step="0.01" min="0" class="form-control" name="price"
                            value="{{ isset($appointment) ? $appointment->price : '' }}"
-                           placeholder="Расчетная: {{ isset($appointment) ? $appointment->getExpectedPrice() : '' }} BYN" disabled>
+                           placeholder="Расчетная: {{ isset($appointment) ? $appointment->getExpectedPrice() : '' }} BYN">
                 </div>
 
                 <hr>

@@ -87,28 +87,20 @@
                     </td>
                 </tr>
             @endforeach
-
-
             <tr>
                 <th colspan="8" class="bg-secondary text-white">
                     Завершенные
                 </th>
             </tr>
-
             @foreach ($tickets->where('status', 'resolved') as $ticket)
                 <tr>
                     <td>{{ $ticket->id }}</td>
                     <td style="width: 540px;">
                         <div class="mb-2"><b>{{ $ticket->title }}</b></div>
-
-
                         <div style="padding: 5px 10px;">
                             {{ $ticket->description }}
                         </div>
-
                         @include('admin.comments.includes.widget', ['model' => $ticket, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
-
-
                     </td>
                     <td>{{ ucfirst($ticket->priority) }}</td>
                     <td>
@@ -142,8 +134,7 @@
             @endforeach
             </tbody>
         </table>
-
         <!-- Пагинация -->
-        {{ $tickets->links() }}
+        {{ $tickets->links('pagination::bootstrap-5') }}
     </div>
 @endsection

@@ -18,7 +18,7 @@ class TicketController extends Controller
         $user = Auth::user();
 
         if ($user->hasRole('admin')) {
-            $tickets = Ticket::latest()->paginate(20);
+            $tickets = Ticket::latest()->paginate(100);
         } else {
             $tickets = $user->tickets()->latest()->paginate(10);
         }

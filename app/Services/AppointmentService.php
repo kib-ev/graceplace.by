@@ -395,4 +395,9 @@ final class AppointmentService
             });
         }
     }
+
+    public function isTimeSlotAvailable($id, Carbon $startAt, Carbon $endAt): bool
+    {
+        return true;
+    }
 }

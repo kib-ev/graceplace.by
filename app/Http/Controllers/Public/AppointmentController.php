@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Master;
+use App\Models\Place;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -13,23 +15,49 @@ class AppointmentController extends Controller
 {
     public function store(Request $request)
     {
-        if (!auth()->user()->can('add appointment')) {
-            return back()->withErrors('У вас нет прав на добавление записи.');
+        $request->validate([
+            'master_id' => 'required|exists:masters,id',
+            'date' => 'required|date|after_or_equal:today',
+            'time' => 'required|date_format:H:i',
+            'duration' => 'required|integer|min:30|max:240',
+            'place_id' => 'required|exists:places,id',
+            'client_name' => 'required|string|max:255',
+            'client_phone' => 'required|string|max:255',
+        ]);
+
+        $master = Master::findOrFail($request->master_id);
+        $place = Place::findOrFail($request->place_id);
+        
+        // Combine date and time
+        $startAt = Carbon::parse($request->date . ' ' . $request->time);
+        $endAt = $startAt->copy()->addMinutes($request->duration);
+
+        // Check if the time slot is available
+        $appointmentService = new AppointmentService();
+        if (!$appointmentService->isTimeSlotAvailable($place->id, $startAt, $endAt)) {
+            return back()->withErrors(['time' => 'Выбранное время уже занято. Пожалуйста, выберите другое время.'])->withInput();
         }
-        $appointment = new Appointment();
-        $appointment->fill($request->all());
-        $appointment->start_at = Carbon::parse($request->get('datetime'));
-        $appointment->user_id = $request->get('user_id') ?? auth()->id();
-        $appointment->is_created_by_user = !auth()->user()->hasRole('admin');
+
+        // Calculate price
+        $hours = $request->duration / 60;
+        $price = $hours * $place->price_per_hour;
+
+        // Create appointment
+        $appointment = new Appointment([
+            'user_id' => $master->user_id,
+            'place_id' => $place->id,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
+            'duration' => $request->duration,
+            'price' => $price,
+            'client_name' => $request->client_name,
+            'client_phone' => $request->client_phone,
+        ]);
+
         $appointment->save();
-        if($appointment->id && $request->get('comment')) {
-            $appointment->addComment(Auth::user(), $request->get('comment'), BOOKING_ADD_COMMENT);
-        }
-        if($appointment->id) {
-            return back();
-        } else {
-            return back()->withErrors('Ошибка сохранения.');
-        }
+
+        return redirect()->route('public.masters.show', $master)
+            ->with('success', 'Запись успешно создана! Мы свяжемся с вами для подтверждения.');
     }
 
     public function cancelAppointment(Request $request, Appointment $appointment)

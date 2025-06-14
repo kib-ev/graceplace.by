@@ -8,6 +8,9 @@
 
     <meta http-equiv="Cache-Control" content="no-cache">
 
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- META OG -->
 {{--    <meta property="og:title" content="Your Page Title" />--}}
 {{--    <meta property="og:description" content="Your Page Description" />--}}
@@ -20,6 +23,7 @@
     <link href="{{ asset('/build/assets/app-D-sv12UV.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('styles.css') }}?{{ filemtime(public_path('styles.css')) }}">
+    @stack('styles')
 
     <!-- Scripts -->
     {{--    @vite(['resources/sass/app.scss', 'resources/js/app.js'])--}}
@@ -60,9 +64,9 @@
 
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="Grace Place Logo"> Grace Place</a>
 
-        @if(auth()->user() && auth()->user()->hasRole('admin'))
+        @role('admin')
             @include('admin.layouts.includes.menu')
-        @endif
+        @endrole
 
     </div>
 </nav>
@@ -74,9 +78,9 @@
             @if(auth()->user())
                 Вы вошли как: <b title="ID: {{ auth()->id() }}">{{ auth()->user()->name }}</b> <a href="/logout">Выйти</a>
 
-                @if(auth()->user()->hasRole(['admin']))
+                @role('admin')
                     <br>(админ)
-                @endif
+                @endrole
 
             @else
                 <a href="{{ route('login') }}">Вход на сайт</a>
@@ -436,7 +440,12 @@
     @endif
 
     @yield('content')
+
+    @stack('modals')
 </div>
+
+<!-- Scripts -->
+@stack('scripts')
 
 <footer>
     <div class="container">
@@ -454,6 +463,5 @@
             .catch(e => console.error("SW registration failed", e));
     }
 </script>
-
 </body>
 </html>

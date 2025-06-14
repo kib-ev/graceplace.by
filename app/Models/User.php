@@ -73,6 +73,11 @@ class User extends Authenticatable
         return $this->hasMany(UserTransaction::class);
     }
 
+    public function schedule()
+    {
+        return $this->hasOne(UserSchedule::class);
+    }
+
     public function getFullName($addPatronymic = false): string
     {
         $fullName = [$this->master->person->last_name, $this->master->person->first_name];

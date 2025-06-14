@@ -23,6 +23,8 @@ Route::get('/masters/{}', function () {
     return view('welcome', compact('date'));
 });
 
+Route::get('/masters/{master}', [\App\Http\Controllers\Public\MasterController::class, 'show'])->name('public.masters.show');
+
 Route::get('/gpt', function () {
     return view('gpt');
 });
@@ -281,7 +283,6 @@ Route::post('/book/{master}/reserve', [\App\Http\Controllers\Public\BookingContr
 
 
 Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
-
     // USER SETTINGS
     Route::post('/settings', function () {
         $user = auth()->user();
@@ -308,11 +309,9 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
     });
 
     Route::get('/documents/{appointmentId}', function (Request $request, $appointmentId) {
-
         $appointment = \App\Models\Appointment::find($appointmentId);
 
         if($appointment && (auth()->user()->hasRole(['admin']) || auth()->id() == $appointment->user_id)) {
-
             if($request->has('html')) {
                 return view('user.documents.show', compact('appointment'));
             } else {
@@ -327,6 +326,15 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
 
         return abort(404);
     });
+});
+
+// Маршруты расписания (требуют роль мастера)
+Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(function () {
+    Route::get('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'index'])->name('schedule.index');
+    Route::post('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'store'])->name('schedule.store');
+    Route::post('/schedule/delete', [App\Http\Controllers\User\ScheduleController::class, 'delete'])->name('schedule.delete');
+    Route::get('/schedule/all-intervals', [App\Http\Controllers\User\ScheduleController::class, 'getAllIntervals'])->name('schedule.all-intervals');
+    Route::get('/schedule/csrf', [App\Http\Controllers\User\ScheduleController::class, 'refreshCsrf'])->name('schedule.csrf');
 });
 
 Auth::routes();
@@ -397,4 +405,6 @@ Route::prefix('admin')
         Route::put('tickets/{ticket}', [TicketController::class, 'update'])->name('update');
         Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
     });
+
+Route::post('/appointments', [\App\Http\Controllers\Public\AppointmentController::class, 'store'])->name('public.appointments.store');
 

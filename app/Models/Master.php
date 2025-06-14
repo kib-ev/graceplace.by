@@ -29,6 +29,11 @@ class Master extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function schedule()
+    {
+        return $this->hasOne(MasterSchedule::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return $this->person?->first_name . ($this->person?->last_name ? ' ' . $this->person?->last_name : '');

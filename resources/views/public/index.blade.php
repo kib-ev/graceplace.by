@@ -8,6 +8,10 @@
             <form class="me-2" id="dateForm" action="" style="display: inline-block;">
                 <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
             </form>
+
+            @role('admin')
+                <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}"> Записи {{ $date->format('d.m.Y') }}</a></span>
+            @endrole
         </div>
     </div>
 

@@ -179,9 +179,9 @@
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> GracePlace</a>
 
 
-        @if(auth()->user() && auth()->user()->hasRole('admin'))
+        @role('admin')
             @include('admin.layouts.includes.menu')
-        @endif
+        @endrole
 
     </div>
 </nav>
