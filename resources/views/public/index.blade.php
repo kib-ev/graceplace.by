@@ -1,5 +1,45 @@
 @extends('public.layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+@endpush
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        function initSelect2Master() {
+            if ($('#appointmentMaster').data('select2')) {
+                $('#appointmentMaster').select2('destroy');
+            }
+            $('#appointmentMaster').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Выберите мастера',
+                allowClear: true,
+                dropdownParent: $('#exampleModal'),
+                language: {
+                    inputTooShort: function() {
+                        return 'Пожалуйста, введите 2 или более символов';
+                    },
+                    noResults: function() {
+                        return 'Мастеров не найдено';
+                    },
+                    searching: function() {
+                        return 'Поиск...';
+                    }
+                },
+                minimumInputLength: 2
+            });
+        }
+        $(document).ready(function() {
+            // Инициализация при открытии модального окна
+            $('#exampleModal').on('shown.bs.modal', function () {
+                initSelect2Master();
+            });
+        });
+    </script>
+@endpush
 
 @section('content')
     {{-- Select Date --}}
