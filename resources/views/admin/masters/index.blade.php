@@ -28,12 +28,12 @@
             <table class="table table-bordered mb-5">
                 <tr>
                     <td style="width: 50px;"></td>
+                    <td style="padding: 2px;"></td>
                     <td style="width: 440px;">Имя мастера</td>
                     <td style="width: 140px;">Телефон</td>
                     <td>Инста</td>
                     <td>Директ</td>
                     <td>Услуги</td>
-                    <td></td>
                     <td>Дата <br> регистрации</td>
                     <td>Записи</td>
                     <td>Последний <br> визит</td>
@@ -43,6 +43,8 @@
                     @if($master->user)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
+
+                        <td title="ЕРИП" style="width: 2px; padding: 2px; background: {{ $master->user->getSetting('payment_link.place') && $master->user->getSetting('payment_link.storage') ? '#4ab728' : '#ff2318' }}"></td>
 
                         <td title="master_id: {{ $master->id }} | user_id: {{ $master->user_id }}">
                             <a href="{{ route('admin.masters.show', $master) }}">{{ $master->person->full_name }}</a>
@@ -79,8 +81,7 @@
 
                         <td>{{ $master->description }}</td>
 
-                        <td title="ЕРИП" style="width: 10px; background: {{ $master->user->getSetting('payment_link.place') && $master->user->getSetting('payment_link.storage') ? '#84db9b' : 'none' }}">
-                        </td>
+
                         <td>
                             {{ $master->created_at->format('d.m.Y') }}
 

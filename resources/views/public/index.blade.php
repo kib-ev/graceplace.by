@@ -3,6 +3,133 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    <style>
+        .bg-default {
+            background-color: #E5E7EB;
+        }
+        .bg-weekend {
+            background-color: #d5d6d9;
+        }
+        .bg-selected {
+            background-color: #3F8CFF !important;
+            color: white;
+        }
+        .time-slot.selecting {
+            background-color: rgba(40, 167, 69, 0.5);
+            color: white;
+        }
+        .time-slot.deselecting {
+            background-color: rgba(220, 53, 69, 0.5);
+            color: white;
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            padding-right: calc(1.5em + 0.75rem);
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            width: 100%;
+            min-height: calc(1.5em + 0.75rem + 2px);
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single {
+            padding-right: 2.25rem;
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding: 0;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            font-size: 0.9rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+            color: #6c757d;
+            /*font-size: 0.9em;*/
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__options {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+            color: #212529;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 0.375rem 0.75rem;
+            font-size: 1em !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .select2-container--bootstrap-5.select2-container--disabled .select2-selection,
+        .select2-container--bootstrap-5 .select2-results__option[aria-disabled=true] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+            position: absolute;
+            right: 2.5rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            padding: 0.25em 0.25em;
+            cursor: pointer;
+            opacity: 0.4;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
+            opacity: 0.6;
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -39,153 +166,6 @@
             });
         });
     </script>
-@endpush
-
-@section('content')
-    {{-- Select Date --}}
-    <div class="row mb-2 mt-2">
-        <div class="col-12">
-            <form class="me-2" id="dateForm" action="" style="display: inline-block;">
-                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
-            </form>
-
-            @role('admin')
-                <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}"> Записи {{ $date->format('d.m.Y') }}</a></span>
-            @endrole
-        </div>
-    </div>
-
-    <style>
-        .bg-default {
-            background-color: #E5E7EB;
-        }
-        .bg-weekend {
-            background-color: #d5d6d9;
-        }
-        .bg-selected {
-            background-color: #3F8CFF !important;
-            color: white;
-        }
-        .time-slot.selecting {
-            background-color: rgba(40, 167, 69, 0.5);
-            color: white;
-        }
-        .time-slot.deselecting {
-            background-color: rgba(220, 53, 69, 0.5);
-            color: white;
-        }
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-        .invalid-feedback {
-            display: block;
-            width: 100%;
-            margin-top: 0.25rem;
-            font-size: 0.875em;
-            color: #dc3545;
-        }
-        .select2-container--bootstrap-5 .select2-selection {
-            width: 100%;
-            min-height: calc(1.5em + 0.75rem + 2px);
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single {
-            padding-right: 2.25rem;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding: 0;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #212529;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
-            color: #6c757d;
-        }
-
-        .select2-container--bootstrap-5 .select2-dropdown {
-            border-color: #dee2e6;
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-results__options {
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 0.5rem 0;
-            color: #212529;
-        }
-
-        .select2-container--bootstrap-5 .select2-results__option {
-            padding: 0.375rem 0.75rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-results__option--highlighted {
-            background-color: #0d6efd;
-            color: #fff;
-        }
-
-        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-        .select2-container--bootstrap-5.select2-container--open .select2-selection {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .select2-container--bootstrap-5.select2-container--disabled .select2-selection,
-        .select2-container--bootstrap-5 .select2-results__option[aria-disabled=true] {
-            background-color: #e9ecef;
-            cursor: not-allowed;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
-            position: absolute;
-            right: 2.5rem;
-            width: 0.75rem;
-            height: 0.75rem;
-            padding: 0.25em 0.25em;
-            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/0.75rem auto no-repeat;
-            cursor: pointer;
-            opacity: 0.4;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
-            opacity: 0.6;
-        }
-    </style>
-
-    <form class="mb-2" id="dateForm" action="">
-        <div class="d-flex overflow-auto" id="dateCarousel"></div>
-        <input type="hidden" name="date" id="selectedDate">
-    </form>
 
     <script>
         const dateCarousel = document.getElementById('dateCarousel');
@@ -255,7 +235,26 @@
             activeCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
         }
     </script>
+@endpush
 
+@section('content')
+    {{-- Select Date --}}
+    <div class="row mb-2 mt-2">
+        <div class="col-12">
+            <form class="me-2" id="dateForm" action="" style="display: inline-block;">
+                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
+            </form>
+
+            @role('admin')
+                <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}"> Записи {{ $date->format('d.m.Y') }}</a></span>
+            @endrole
+        </div>
+    </div>
+
+    <form class="mb-2" id="dateForm" action="">
+        <div class="d-flex overflow-auto" id="dateCarousel"></div>
+        <input type="hidden" name="date" id="selectedDate">
+    </form>
 
     {{-- Calendar --}}
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
