@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+    "name": "Instagram Info V2",
+  "version": "2.0.0",
+  "description": "Добавляет информацию о пользователе в Instagram Direct.",
+  "permissions": ["tabs", "activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://www.instagram.com/direct/t/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/direct/t/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+    },
+    "action": {
+        "default_popup": "popup.html"
+  }
+}

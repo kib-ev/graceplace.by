@@ -4,6 +4,7 @@ use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AppointmentController;
+use Illuminate\Support\Facades\Validator;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,26 +17,36 @@ use App\Http\Controllers\Api\AppointmentController;
 |
 */
 
+Route::middleware(['api_token'])->group(function() {
+    Route::get('/v2/user/{username}', function (Request $request, $username) {
+        $validator = Validator::make(['username' => $username], [
+            'username' => 'required|string|min:2|max:100'
+        ]);
 
-Route::get('/user/{directId}', function (Request $request, $directId) {
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-    $master = \App\Models\Master::where('direct', 'like', "%{$directId}%")->orWhere('instagram', 'like', "%{$directId}%")->first();
+        $master = \App\Models\Master::where('instagram', 'like', "%{$username}%")->first();
 
-    if ($master) {
-        return [
-            'name' => implode(' ', [$master->person->last_name, $master->person->first_name, $master->person->patronymic]),
-            'link' => route('admin.masters.show', $master->id),
-            'status' => 'ok',
-            'phone' => $master->user->phone,
-            'direct_id' => $directId
-        ];
-    }
+        if ($master) {
+            return response()->json([
+                'status' => 'ok',
+                'name' => implode(' ', [$master->person->last_name, $master->person->first_name, $master->person->patronymic]),
+                'link' => route('admin.masters.show', $master->id),
+                'phone' => $master->user->phone,
+                'username' => $username
+            ]);
+        }
 
-    return [
-        'status' => null,
-        'direct_id' => $directId
-    ];
-
+        return response()->json([
+            'status' => 'not_found',
+            'username' => $username
+        ], 404);
+    });
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
