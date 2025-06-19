@@ -170,6 +170,7 @@
     <script>
         const dateCarousel = document.getElementById('dateCarousel');
         const selectedDateInput = document.getElementById('selectedDate');
+        const dateCarouselForm = document.getElementById('dateCarouselForm');
 
         const monthShort = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
             'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
@@ -197,14 +198,14 @@
             card.style.lineHeight = '20px';
             card.style.cursor = 'pointer';
             card.innerHTML = `
-          <div><strong>${dayNumber}</strong></div>
-          <div style="text-transform: uppercase;">${dayOfWeek}</div>
-          <div style="text-transform: lowercase;">${monthName}</div>
-        `;
+                <div><strong>${dayNumber}</strong></div>
+                <div style="text-transform: uppercase;">${dayOfWeek}</div>
+                <div style="text-transform: lowercase;">${monthName}</div>
+            `;
             card.dataset.date = dateValue;
 
             // Выходные
-            const day = currentDate.getDay(); // 0 = вс, 6 = сб
+            const day = currentDate.getDay();
             if (day === 0 || day === 6) {
                 card.classList.add('bg-weekend');
             } else {
@@ -222,7 +223,7 @@
             if (currentDate.toDateString() === selectedDate.toDateString()) {
                 card.classList.add('bg-selected', 'text-white');
                 selectedDateInput.value = dateValue;
-                card.id = 'activeCard'; // добавляем id для scroll
+                card.id = 'activeCard';
             }
 
             dateCarousel.appendChild(card);
@@ -234,6 +235,13 @@
         if (activeCard) {
             activeCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
         }
+
+        // Синхронизация форм выбора даты
+        document.querySelector('#dateSelectorForm input[type="date"]').addEventListener('change', function(e) {
+            const selectedDateInput = document.getElementById('selectedDate');
+            selectedDateInput.value = this.value;
+            window.location.href = '/?date=' + this.value;
+        });
     </script>
 @endpush
 
@@ -241,8 +249,8 @@
     {{-- Select Date --}}
     <div class="row mb-2 mt-2">
         <div class="col-12">
-            <form class="me-2" id="dateForm" action="" style="display: inline-block;">
-                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
+            <form class="me-2" id="dateSelectorForm" action="" style="display: inline-block;">
+                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateSelectorForm').submit();">
             </form>
 
             @role('admin')
@@ -251,7 +259,7 @@
         </div>
     </div>
 
-    <form class="mb-2" id="dateForm" action="">
+    <form class="mb-2" id="dateCarouselForm" action="">
         <div class="d-flex overflow-auto" id="dateCarousel"></div>
         <input type="hidden" name="date" id="selectedDate">
     </form>
