@@ -53,7 +53,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::get('/places/{place}/availability', function (Request $request, \App\Models\Place $place) {
     if($request->has('date')) {
         $date = $request->get('date');
@@ -62,7 +61,6 @@ Route::get('/places/{place}/availability', function (Request $request, \App\Mode
         return \Illuminate\Support\Facades\Response::json(['data' => $response]);
     }
 });
-
 
 Route::get('/places/availability', function (Request $request) {
 
