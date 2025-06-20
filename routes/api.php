@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Validator;
 |
 */
 
-Route::middleware(['api_token'])->group(function() {
+Route::middleware(['api_token'])->group(function() {  // php artisan api:api:generate-token
     Route::get('/v2/user/{username}', function (Request $request, $username) {
         $validator = Validator::make(['username' => $username], [
             'username' => 'required|string|min:2|max:100'

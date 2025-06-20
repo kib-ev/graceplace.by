@@ -175,20 +175,22 @@
             'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 
         const today = new Date();
-        const maxDate = new Date();
-        maxDate.setMonth(maxDate.getMonth() + 3);
+        const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
-        // Берём дату из параметра URL (если есть)
+        const maxDate = new Date(todayUTC);
+        maxDate.setUTCMonth(maxDate.getUTCMonth() + 3);
+
+        // Берём дату из параметра URL (если есть), YYYY-MM-DD парсится как UTC
         const urlParams = new URLSearchParams(window.location.search);
         const selectedDateFromURL = urlParams.get('date');
-        let selectedDate = selectedDateFromURL ? new Date(selectedDateFromURL) : today;
+        let selectedDate = selectedDateFromURL ? new Date(selectedDateFromURL) : todayUTC;
 
-        let currentDate = new Date(today);
+        let currentDate = new Date(todayUTC);
 
         while (currentDate <= maxDate) {
-            const dayNumber = currentDate.getDate();
-            const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short' });
-            const monthName = monthShort[currentDate.getMonth()];
+            const dayNumber = currentDate.getUTCDate();
+            const dayOfWeek = currentDate.toLocaleDateString('ru-RU', { weekday: 'short', timeZone: 'UTC' });
+            const monthName = monthShort[currentDate.getUTCMonth()];
             const dateValue = currentDate.toISOString().split('T')[0];
 
             const card = document.createElement('div');
@@ -204,7 +206,7 @@
             card.dataset.date = dateValue;
 
             // Выходные
-            const day = currentDate.getDay(); // 0 = вс, 6 = сб
+            const day = currentDate.getUTCDay(); // 0 = вс, 6 = сб
             if (day === 0 || day === 6) {
                 card.classList.add('bg-weekend');
             } else {
@@ -219,14 +221,14 @@
             });
 
             // Подсвечиваем выбранную дату
-            if (currentDate.toDateString() === selectedDate.toDateString()) {
+            if (currentDate.getTime() === selectedDate.getTime()) {
                 card.classList.add('bg-selected', 'text-white');
                 selectedDateInput.value = dateValue;
                 card.id = 'activeCard'; // добавляем id для scroll
             }
 
             dateCarousel.appendChild(card);
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
 
         // Скроллим активную карточку в центр области видимости

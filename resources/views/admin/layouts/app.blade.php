@@ -14,7 +14,7 @@
     <meta property="og:image" content="{{ asset('/images/logo.jpg') }}" />
 {{--    <meta property="og:url" content="Link to Your Page" />--}}
 
-    <title>GracePlace Minsk</title>
+    <title>Grace Place Minsk</title>
 
 
     <link href="{{ asset('/build/assets/app-D-sv12UV.css') }}" rel="stylesheet">
@@ -176,8 +176,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
 
-        <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> GracePlace</a>
-
+        <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> Grace Place</a>
 
         @role('admin')
             @include('admin.layouts.includes.menu')
