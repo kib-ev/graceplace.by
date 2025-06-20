@@ -27,6 +27,7 @@
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Права</a>
         <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
+        <a class="nav-link" href="{{ route('admin.download.chrome-extension') }}">Скачать плагин</a>
         <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
     </div>
 </div>

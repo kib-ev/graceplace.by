@@ -188,6 +188,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index']);
 
+    Route::get('/download/chrome-extension', [\App\Http\Controllers\Admin\AdminController::class, 'downloadChromeExtension'])->name('download.chrome-extension');
+
     // MASTERS
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
 
