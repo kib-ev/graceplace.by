@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasComments;
 use App\Traits\Payable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,6 +33,13 @@ class StorageBooking extends Model
     public function cell()
     {
         return $this->hasOne(StorageCell::class, 'id', 'model_id');
+    }
+
+    public function scopeWithDebt(Builder $builder)
+    {
+        return $builder->where('start_at', '<=', now())
+            ->whereNull('finished_at')
+            ->whereRaw('DATE_ADD(start_at, INTERVAL (duration - 1) DAY) < NOW()');
     }
 
     public function daysLeft(): int

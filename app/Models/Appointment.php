@@ -30,14 +30,22 @@ class Appointment extends Model
     const BOOKING_ADD_COMMENT = 'booking_add';
     const BOOKING_CANCEL_COMMENT = 'booking_cancel';
 
-    public function scopeWithoutCanceled(\Illuminate\Database\Eloquent\Builder $builder)
+    public function scopeWithoutCanceled(Builder $builder)
     {
         return $builder->whereNull('canceled_at');
     }
 
-    public function scopeOnlyActive(\Illuminate\Database\Eloquent\Builder $builder)
+    public function scopeOnlyActive(Builder $builder)
     {
         return $builder->whereNull('canceled_at');
+    }
+
+    public function scopeWithDebt(Builder $builder)
+    {
+        return $builder
+            ->where('start_at', '<=', now()->startOfDay())
+            ->whereNull('price')
+            ->whereNull('canceled_at');
     }
 
     public function user()
@@ -69,20 +77,6 @@ class Appointment extends Model
     {
         return $this->is_created_by_user;
     }
-//
-//    public function mergeWithClosest()
-//    {
-//        $thisDayAppointments = Appointment::where('user_id', $this->user_id)
-//            ->whereNull('canceled_at')
-//            ->where('place_id', $this->place_id)
-//            ->whereDate('start_at', $this->start_at)
-//            ->where('id', '!=', $this->id)
-//            ->get();
-//
-//        foreach ($thisDayAppointments as $thisDayAppointment) {
-//            $this->mergeAppointment($thisDayAppointment);
-//        }
-//    }
 
     public function mergeAppointment(Appointment $appointment)
     {

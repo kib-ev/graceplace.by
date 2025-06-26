@@ -19,9 +19,19 @@
     <div class="navbar-nav">
         {{--                <a class="nav-link active" aria-current="page" href="#">Home</a>--}}
         <a class="nav-link" href="{{ route('admin.appointments.index') }}">Записи</a>
-        <a class="nav-link" href="{{ route('admin.masters.index', ['is_active' => 1]) }}">Мастера</a>
+        <a class="nav-link" href="{{ route('admin.masters.index', ['is_active' => 1]) }}">
+            Мастера
+            @if(isset($mastersWithAppointmentsDebtCount) && $mastersWithAppointmentsDebtCount > 0)
+                <span class="badge bg-danger">{{ $mastersWithAppointmentsDebtCount }}</span>
+            @endif
+        </a>
         <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
-        <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">Локер</a>
+        <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">
+            Локер
+            @if(isset($mastersWithStorageBookingDebtCount) && $mastersWithStorageBookingDebtCount > 0)
+                <span class="badge bg-danger">{{ $mastersWithStorageBookingDebtCount }}</span>
+            @endif
+        </a>
         <a class="nav-link" href="{{ route('admin.tickets.index') }}">Заявки</a>
         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>

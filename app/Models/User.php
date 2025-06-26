@@ -215,7 +215,8 @@ class User extends Authenticatable
 
     public function getDebtAmount()
     {
-        return $this->appointments->where('start_at', '<=', now()->startOfDay())
+        return $this->appointments
+            ->where('start_at', '<=', now()->startOfDay())
             ->whereNull('price')
             ->whereNull('canceled_at')
             ->sum(function (Appointment $appointment) {
