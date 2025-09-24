@@ -43,7 +43,9 @@
                             <td>{{ $user->id }}</td>
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
-                            <td>{{ optional($user->confirmed_at)->format('d.m.Y H:i') }}</td>
+                            <td>
+                                {{ $user->pivot->confirmed_at ? \Carbon\Carbon::parse($user->pivot->confirmed_at)->format('d.m.Y H:i') : '—' }}
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>

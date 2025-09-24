@@ -23,7 +23,7 @@ class MandatoryNoticeController extends Controller
             ->first();
 
         if (!$notice) {
-            return redirect()->intended(route('home'));
+            return redirect()->to('/');
         }
 
         return view('user.mandatory-notices.show', compact('notice'));

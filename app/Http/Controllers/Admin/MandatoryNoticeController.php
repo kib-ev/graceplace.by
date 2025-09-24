@@ -22,7 +22,8 @@ class MandatoryNoticeController extends Controller
 
     public function create()
     {
-        return view('admin.mandatory-notices.create');
+        $masters = User::query()->role('master')->where('is_active', 1)->orderBy('name')->get(['id','name','email']);
+        return view('admin.mandatory-notices.create', compact('masters'));
     }
 
     public function store(Request $request)
@@ -34,7 +35,8 @@ class MandatoryNoticeController extends Controller
             'days_to_live' => ['nullable', 'integer', 'min:1', 'max:3650'],
             'is_active' => ['nullable', 'boolean'],
             'audience_mode' => ['required', 'in:all_masters,specific'],
-            'user_ids' => ['nullable', 'string'], // comma-separated
+            'user_ids' => ['nullable', 'array'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
         ]);
 
         $notice = new MandatoryNotice();
@@ -55,7 +57,7 @@ class MandatoryNoticeController extends Controller
                 ->all();
         } else {
             // specific
-            $userIds = collect(preg_split('/[,\s]+/', (string)($data['user_ids'] ?? ''), -1, PREG_SPLIT_NO_EMPTY))
+            $userIds = collect($data['user_ids'] ?? [])
                 ->map(fn($v) => (int)$v)
                 ->filter()
                 ->unique()

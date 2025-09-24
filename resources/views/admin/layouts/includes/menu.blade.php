@@ -25,6 +25,7 @@
                 <span class="badge bg-danger">{{ $mastersWithAppointmentsDebtCount }}</span>
             @endif
         </a>
+        <a class="nav-link" href="{{ route('admin.mandatory-notices.index') }}">Уведомления</a>
         <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
         <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">
             Локер

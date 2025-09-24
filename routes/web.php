@@ -232,7 +232,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/payment-requirements/{id}/destroy', [\App\Http\Controllers\PaymentRequirementController::class, 'destroy'])->name('payment-requirements.destroy'); // todo refactor
 
     // MANDATORY NOTICES
-    Route::resource('mandatory-notices', \App\Http\Controllers\Admin\MandatoryNoticeController::class);
+    Route::resource('mandatory-notices', \App\Http\Controllers\Admin\MandatoryNoticeController::class)->only(['index','create','store','show','destroy']);
 
     // OTHER
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');

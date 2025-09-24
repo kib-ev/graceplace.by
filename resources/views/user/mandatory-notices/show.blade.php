@@ -1,5 +1,9 @@
 @extends('public.layouts.app')
 
+@section('master-menu')
+    <!-- EMPTY -->
+@endsection
+
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
@@ -13,9 +17,9 @@
                             {!! nl2br(e($notice->body)) !!}
                         </div>
 
-                        @if($notice->expires_at)
+                        @if($notice->created_at)
                             <div class="text-muted mb-3">
-                                Действительно до: {{ $notice->expires_at->format('d.m.Y H:i') }}
+                                Дата создания: {{ $notice->created_at->format('d.m.Y H:i') }}
                             </div>
                         @endif
 

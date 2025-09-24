@@ -3,7 +3,7 @@
 @section('content')
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Обязательные уведомления</h3>
+            <h3 class="mb-0">Уведомления</h3>
             <a href="{{ route('admin.mandatory-notices.create') }}" class="btn btn-primary">Создать</a>
         </div>
 
