@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Str;
+
 const BOOKING_ADD_COMMENT = 'booking_comment';
 const BOOKING_CANCEL_COMMENT = 'cancellation_reason';
 const ADMIN_COMMENT_TYPE = 'admin';
@@ -152,4 +154,9 @@ function morph($n, $f1, $f2, $f5) {
     if ($n1>1 && $n1<5)	return $f2;
     if ($n1==1)		return $f1;
     return $f5;
+}
+
+function user_email_from_phone_number($phoneNumber): string
+{
+    return Str::replace(['+', ' ', '-', '(', ')'], '', $phoneNumber). '@graceplace.by';
 }

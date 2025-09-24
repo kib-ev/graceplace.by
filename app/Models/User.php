@@ -73,6 +73,12 @@ class User extends Authenticatable
         return $this->hasMany(UserTransaction::class);
     }
 
+    public function setPhoneAttribute($value): void
+    {
+        $this->attributes['phone'] = $value;
+        $this->attributes['email'] = user_email_from_phone_number($value);
+    }
+
     public function schedule()
     {
         return $this->hasOne(UserSchedule::class);

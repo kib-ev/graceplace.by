@@ -56,10 +56,8 @@ class LoginController extends Controller
         })->first();
 
         if(isset($person->master) && $request->get('password') == 'graceplace' . $person->master->id) {
-
             User::updateOrCreate([
-
-                'email' => Str::replace(['+'], '', $request->get('phone')). '@graceplace.by',
+                'email' => user_email_from_phone_number($request->get('phone')),
                 'phone' => $request->get('phone'),
             ], [
                 'name' => $person->master->full_name,
