@@ -217,7 +217,10 @@
                 document.querySelectorAll('#dateCarousel .card').forEach(c => c.classList.remove('bg-selected', 'text-white'));
                 card.classList.add('bg-selected', 'text-white');
                 selectedDateInput.value = dateValue;
-                window.location.href = '/?date=' + dateValue;
+
+                const params = new URLSearchParams(window.location.search);
+                params.set('date', dateValue);
+                window.location.href = `${window.location.pathname}?${params.toString()}`;
             });
 
             // Подсвечиваем выбранную дату
@@ -421,7 +424,7 @@
             </div>
 
             <div class="social mt-3">
-                <a href="https://www.instagram.com/beautycoworkingminsk/" target="_blank" class="mb-3"><img style="width: 50px;" src="./images/instagram.png" alt="Instagram GracePlace.By Minsk"></a>
+                <a href="https://www.instagram.com/beautycoworkingminsk/" target="_blank" class="mb-3"><img style="width: 50px;" src="/images/instagram.png" alt="Instagram GracePlace.By Minsk"></a>
                 <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Написать в Direct</a>
             </div>
 

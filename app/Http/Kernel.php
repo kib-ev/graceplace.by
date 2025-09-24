@@ -72,5 +72,6 @@ class Kernel extends HttpKernel
         'master' => \App\Http\Middleware\CheckMasterRole::class,
         'check.cancellation' => \App\Http\Middleware\CheckCancellationCutoff::class,
         'api_token' => \App\Http\Middleware\ApiTokenMiddleware::class,
+        'notice.required' => \App\Http\Middleware\RequireNoticeConfirmation::class,
     ];
 }

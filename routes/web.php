@@ -39,7 +39,14 @@ Route::get('/schedule', function () {
     return view('public/index', compact('date'));
 });
 
+// PUBLIC
 Route::get('/', function (Request $request) {
+    if (auth()->check()) {
+        $dateParam = $request->get('date');
+        $dateStr = $dateParam ? \Illuminate\Support\Carbon::parse($dateParam)->toDateString() : now()->format('Y-m-d');
+        return redirect()->route('user.schedule', ['date' => $dateStr]);
+    }
+
     $request->validate([
         'date'  => 'date',
     ]);
@@ -53,19 +60,41 @@ Route::get('/', function (Request $request) {
     return view('public/index', compact('date'));
 });
 
-Route::get('/index1', function (\Illuminate\Http\Request $request) {
-    if (!$request->has('date')) {
-        return redirect()->to('/index1?date=' . now()->format('Y-m-d'));
-    }
+// USER
+Route::prefix('user')->name('user.')->middleware(['auth', 'notice.required'])->group(function () { // notice.required
 
-    $request->validate([
-        'date' => 'required|date',
-    ]);
+    Route::get('/schedule', function (Request $request) {
+        $request->validate([
+            'date'  => 'date',
+        ]);
 
-    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
+        $dateInput = $request->get('date');
 
-    return view('public/index', compact('date'));
+        if (!$dateInput) {
+            return redirect()->route('user.schedule', ['date' => now()->format('Y-m-d')]);
+        }
+
+        $date = \Illuminate\Support\Carbon::parse($dateInput);
+
+        return view('public/index', compact('date'));
+    })->name('schedule');
 });
+
+// Роуты уведомлений (доступны мастерам без блока notice.required)
+Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(function () {
+    Route::get('/notices/pending', [\App\Http\Controllers\User\MandatoryNoticeController::class, 'show'])->name('notices.show');
+    Route::post('/notices/confirm', [\App\Http\Controllers\User\MandatoryNoticeController::class, 'confirm'])->name('notices.confirm');
+    Route::get('/notices/history', [\App\Http\Controllers\User\MandatoryNoticeController::class, 'history'])->name('notices.history');
+});
+
+// Маршруты расписания (требуют роль мастера)
+//Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(function () {
+//    Route::get('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'index'])->name('schedule.index');
+//    Route::post('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'store'])->name('schedule.store');
+//    Route::post('/schedule/delete', [App\Http\Controllers\User\ScheduleController::class, 'delete'])->name('schedule.delete');
+//    Route::get('/schedule/all-intervals', [App\Http\Controllers\User\ScheduleController::class, 'getAllIntervals'])->name('schedule.all-intervals');
+//    Route::get('/schedule/csrf', [App\Http\Controllers\User\ScheduleController::class, 'refreshCsrf'])->name('schedule.csrf');
+//});
 
 Route::get('/booking', function (Request $request) {
     $request->validate([
@@ -202,6 +231,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/appointments/payment-requirements', [\App\Http\Controllers\PaymentRequirementController::class, 'store'])->name('appointments.payment-requirements.store');
     Route::get('/payment-requirements/{id}/destroy', [\App\Http\Controllers\PaymentRequirementController::class, 'destroy'])->name('payment-requirements.destroy'); // todo refactor
 
+    // MANDATORY NOTICES
+    Route::resource('mandatory-notices', \App\Http\Controllers\Admin\MandatoryNoticeController::class);
 
     // OTHER
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');
@@ -349,26 +380,12 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
     });
 });
 
-// Маршруты расписания (требуют роль мастера)
-Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(function () {
-    Route::get('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'index'])->name('schedule.index');
-    Route::post('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'store'])->name('schedule.store');
-    Route::post('/schedule/delete', [App\Http\Controllers\User\ScheduleController::class, 'delete'])->name('schedule.delete');
-    Route::get('/schedule/all-intervals', [App\Http\Controllers\User\ScheduleController::class, 'getAllIntervals'])->name('schedule.all-intervals');
-    Route::get('/schedule/csrf', [App\Http\Controllers\User\ScheduleController::class, 'refreshCsrf'])->name('schedule.csrf');
-});
-
 Auth::routes();
 
 Route::get('/logout', function () {
     \Illuminate\Support\Facades\Auth::logout();
     return redirect('/');
-});
-
-Route::get('/home', function () {
-    return redirect()->to('/');
-})->name('home');
-
+})->name('user.logout');
 
 Route::get('/pay', function () {
     return redirect()->to('https://pay.raschet.by/#00020132520010by.raschet01074440631101722420-2-i20250128120211530393354040.006304BAE7');

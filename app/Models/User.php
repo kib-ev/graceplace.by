@@ -233,4 +233,11 @@ class User extends Authenticatable
                     ->orWhereColumn('canceled_at', '>=', 'start_at');
             })->count();
     }
+
+    public function mandatoryNotices()
+    {
+        return $this->belongsToMany(\App\Models\MandatoryNotice::class, 'mandatory_notice_user', 'user_id', 'mandatory_notice_id')
+            ->withPivot(['confirmed_at'])
+            ->withTimestamps();
+    }
 }
