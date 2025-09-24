@@ -4,7 +4,6 @@ use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AppointmentController;
-use Illuminate\Support\Facades\Validator;
 
 /*
 |--------------------------------------------------------------------------

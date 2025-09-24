@@ -18,7 +18,7 @@ class ApiTokenMiddleware
     public function handle(Request $request, Closure $next)
     {
         $token = $request->header('X-API-Token');
-        
+
         if (!$token) {
             return response()->json([
                 'error' => 'API Token не предоставлен',
@@ -45,4 +45,4 @@ class ApiTokenMiddleware
 
         return $next($request);
     }
-} 
+}

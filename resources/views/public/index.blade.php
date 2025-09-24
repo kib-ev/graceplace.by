@@ -206,7 +206,7 @@
             card.dataset.date = dateValue;
 
             // Выходные
-            const day = currentDate.getUTCDay(); // 0 = вс, 6 = сб
+            const day = currentDate.getDay(); // 0 = вс, 6 = сб
             if (day === 0 || day === 6) {
                 card.classList.add('bg-weekend');
             } else {
