@@ -289,9 +289,8 @@ Route::name('public.')->middleware(['auth'])->group(function () {
     Route::resource('masters', \App\Http\Controllers\Public\MasterController::class)->only(['show', 'index']);
 
     // APPOINTMENTS
-    Route::resource('appointments', \App\Http\Controllers\Public\AppointmentController::class)->only(['store']);
-
-    Route::any('/appointments/{appointment}/cancel', [\App\Http\Controllers\Public\AppointmentController::class, 'cancelAppointment'])->name('appointments.cancel');
+//    Route::resource('appointments', \App\Http\Controllers\Public\AppointmentController::class)->only(['store']);
+//    Route::any('/appointments/{appointment}/cancel', [\App\Http\Controllers\Public\AppointmentController::class, 'cancelAppointment'])->name('appointments.cancel');
 
     Route::resource('places', \App\Http\Controllers\Public\PlaceController::class)->only('show');
 

@@ -416,6 +416,13 @@ final class AppointmentService
     public function isTimeSlotAvailable($placeId, Carbon $startAt, Carbon $endAt): bool
     {
         try {
+            \Log::info('Checking time slot availability', [
+                'place_id' => $placeId,
+                'start_at' => $startAt->format('Y-m-d H:i:s'),
+                'end_at' => $endAt->format('Y-m-d H:i:s'),
+                'duration_minutes' => $startAt->diffInMinutes($endAt)
+            ]);
+
             // Проверяем, нет ли других записей в это время
             $overlappingAppointments = Appointment::where('place_id', $placeId)
                 ->whereNull('canceled_at')
@@ -428,11 +435,36 @@ final class AppointmentService
                           });
                     });
                 })
-                ->count();
+                ->get();
 
-            return $overlappingAppointments === 0;
+            \Log::info('Found overlapping appointments', [
+                'count' => $overlappingAppointments->count(),
+                'appointments' => $overlappingAppointments->map(function($app) {
+                    return [
+                        'id' => $app->id,
+                        'start_at' => $app->start_at->format('Y-m-d H:i:s'),
+                        'duration' => $app->duration,
+                        'end_at' => $app->start_at->addMinutes($app->duration)->format('Y-m-d H:i:s'),
+                        'user_id' => $app->user_id,
+                        'canceled_at' => $app->canceled_at
+                    ];
+                })->toArray()
+            ]);
+
+            $isAvailable = $overlappingAppointments->count() === 0;
+            
+            \Log::info('Time slot availability result', [
+                'is_available' => $isAvailable,
+                'reason' => $isAvailable ? 'No overlapping appointments found' : 'Found ' . $overlappingAppointments->count() . ' overlapping appointments'
+            ]);
+
+            return $isAvailable;
         } catch (\Exception $e) {
-            \Log::error('Error checking time slot availability: ' . $e->getMessage());
+            \Log::error('Error checking time slot availability: ' . $e->getMessage(), [
+                'place_id' => $placeId,
+                'start_at' => $startAt->format('Y-m-d H:i:s'),
+                'end_at' => $endAt->format('Y-m-d H:i:s')
+            ]);
             throw new \Exception('Не удалось проверить доступность временного слота. Пожалуйста, попробуйте еще раз.');
         }
     }

@@ -15,6 +15,10 @@ class AppointmentController extends Controller
 {
     public function store(Request $request)
     {
+        \Log::info('Public appointment creation started', [
+            'request_data' => $request->all()
+        ]);
+
         $minDuration = (new AppointmentService())->getMinDuration();
 
         $request->validate([
@@ -29,15 +33,28 @@ class AppointmentController extends Controller
 
         $master = Master::findOrFail($request->master_id);
         $place = Place::findOrFail($request->place_id);
-        
+
         // Combine date and time
         $startAt = Carbon::parse($request->date . ' ' . $request->time);
         $endAt = $startAt->copy()->addMinutes($request->duration);
 
+        \Log::info('Appointment validation passed, checking time slot', [
+            'place_id' => $place->id,
+            'start_at' => $startAt->format('Y-m-d H:i:s'),
+            'end_at' => $endAt->format('Y-m-d H:i:s'),
+            'duration' => $request->duration
+        ]);
+
         // Check if the time slot is available
         $appointmentService = new AppointmentService();
         if (!$appointmentService->isTimeSlotAvailable($place->id, $startAt, $endAt)) {
-            return back()->withErrors(['time' => 'Выбранное время уже занято. Пожалуйста, выберите другое время.'])->withInput();
+            \Log::warning('Time slot not available - returning error', [
+                'place_id' => $place->id,
+                'start_at' => $startAt->format('Y-m-d H:i:s'),
+                'end_at' => $endAt->format('Y-m-d H:i:s'),
+                'duration' => $request->duration
+            ]);
+            return back()->withErrors(['time' => 'Выбранное время уже занято. Пожалуйста, выберите другое время.!'])->withInput();
         }
 
         // Calculate price
@@ -57,6 +74,10 @@ class AppointmentController extends Controller
         ]);
 
         $appointment->save();
+
+        \Log::info('Appointment created successfully', [
+            'appointment_id' => $appointment->id
+        ]);
 
         return redirect()->route('public.masters.show', $master)
             ->with('success', 'Запись успешно создана! Мы свяжемся с вами для подтверждения.');

@@ -19,9 +19,13 @@ class AppointmentController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('Public appointment creation started', [
+            'request_data' => $request->all()
+        ]);
+
         // Валидация входящих данных
         $minDuration = (new AppointmentService())->getMinDuration();
-        
+
         $rules = [
             'datetime' => [
                 'required',
@@ -59,7 +63,7 @@ class AppointmentController extends Controller
             // Проверяем доступность временного слота
             $startAt = Carbon::parse($request->get('datetime'));
             $endAt = $startAt->copy()->addMinutes($request->get('duration'));
-            
+
             $appointmentService = new AppointmentService();
             if (!$appointmentService->isTimeSlotAvailable($request->get('place_id'), $startAt, $endAt)) {
                 return back()->withErrors(['datetime' => 'Выбранное время уже занято. Пожалуйста, выберите другое время.'])->withInput();
