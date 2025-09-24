@@ -35,7 +35,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Записей через ЛК</td>
+                    <td>Записей через личный кабинет</td>
                     <td>
                         {{ $appointmentsStats->self_added }}
                         @if($appointmentsStats->total > 0)

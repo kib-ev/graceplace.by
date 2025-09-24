@@ -35,4 +35,8 @@ return [
         'token' => env('API_TOKEN'),
     ],
 
+    'instagram' => [
+        'session_id' => env('INSTAGRAM_SESSION_ID'),
+    ],
+
 ];

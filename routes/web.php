@@ -53,16 +53,36 @@ Route::get('/', function (Request $request) {
     return view('public/index', compact('date'));
 });
 
-Route::get('/index1', function () {
-    $date = request('date');
+Route::get('/index1', function (\Illuminate\Http\Request $request) {
+    if (!$request->has('date')) {
+        return redirect()->to('/index1?date=' . now()->format('Y-m-d'));
+    }
 
-//    if(is_null($date)) {
-//        return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
-//    }
+    $request->validate([
+        'date' => 'required|date',
+    ]);
+
+    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
 
     return view('public/index', compact('date'));
 });
 
+Route::get('/booking', function (Request $request) {
+    $request->validate([
+        'date'  => 'date',
+    ]);
+
+    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
+
+    if(is_null($date)) {
+        // todo change
+        return redirect()->to('/booking?date=' . now()->format('Y-m-d'));
+    }
+
+    return view('public/booking/index', compact('date'));
+});
+
+Route::post('/booking', [\App\Http\Controllers\Public\BookingController::class, 'store'])->name('public.booking.store');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
 
@@ -88,7 +108,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->orderBy('a.place_id')
             ->orderBy('hour_of_day')
             ->get();
-       return view('admin.appointments_stats', compact('stats'));
+        return view('admin.appointments_stats', compact('stats'));
     });
 
     Route::get('appointments-chart', function (Request $request) {

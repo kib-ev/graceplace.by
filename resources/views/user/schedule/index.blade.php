@@ -11,14 +11,7 @@
             <div class="card mb-3 d-none">
                 <div class="card-header">Debug: Existing Intervals</div>
                 <div class="card-body">
-                    @php
-                        $startDate = \Carbon\Carbon::now()->startOfDay();
-                        $endDate = \Carbon\Carbon::now()->addDays(100)->endOfDay();
-                        $schedules = \App\Models\UserSchedule::getScheduleForDateRange(auth()->id(), $startDate, $endDate);
-                        echo "<pre>";
-                        print_r($schedules);
-                        echo "</pre>";
-                    @endphp
+                    
                 </div>
             </div>
             <!-- End debug output -->
@@ -184,6 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Предотвращаем выделение текста при перетаскивании
             e.preventDefault();
+        } else if (e.target.classList.contains('time-slot')) {
+            handleTimeSlotMouseDown(e);
         }
     });
 
@@ -341,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const startMinutes = parseInt(interval.start_time.split(':')[0]) * 60 + parseInt(interval.start_time.split(':')[1]);
                         const endMinutes = parseInt(interval.end_time.split(':')[0]) * 60 + parseInt(interval.end_time.split(':')[1]);
 
-                        for (let minutes = startMinutes; minutes < endMinutes; minutes++) {
+                        for (let minutes = startMinutes; minutes < endMinutes; minutes += CONFIG.SLOT_DURATION) {
                             const slot = document.querySelector(
                                 `.time-slot[data-date="${date}"][data-time="${formatTime(minutes)}"]`
                             );
@@ -496,6 +491,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const currentSlot = e.target;
         if (currentSlot.dataset.date !== startSlot.dataset.date) return;
+        
+        const daySlots = document.querySelectorAll(`.time-slot[data-date="${startSlot.dataset.date}"]`);
+
+        daySlots.forEach(slot => {
+            slot.classList.remove('selecting', 'deselecting');
+        });
 
         const startTime = startSlot.dataset.time;
         const currentTime = currentSlot.dataset.time;
@@ -506,12 +507,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const minMinutes = Math.min(startMinutes, currentMinutes);
         const maxMinutes = Math.max(startMinutes, currentMinutes);
 
-        document.querySelectorAll('.time-slot').forEach(slot => {
+        daySlots.forEach(slot => {
             const slotMinutes = parseInt(slot.dataset.time.split(':')[0]) * 60 + parseInt(slot.dataset.time.split(':')[1]);
-            const slotDate = slot.dataset.date;
 
-            if (slotDate === startSlot.dataset.date && slotMinutes >= minMinutes && slotMinutes <= maxMinutes) {
-                slot.classList.remove('selected', 'selecting', 'deselecting');
+            if (slotMinutes >= minMinutes && slotMinutes <= maxMinutes) {
                 slot.classList.add(isDeselecting ? 'deselecting' : 'selecting');
             }
         });
@@ -524,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const deselectedSlots = document.querySelectorAll('.deselecting');
 
         if (selectedSlots.length > 0) {
+            console.log('Начало выделения');
             const date = startSlot.dataset.date;
             const slots = Array.from(selectedSlots);
             const times = slots.map(slot => slot.dataset.time);
@@ -543,9 +543,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     slot.classList.remove('selecting');
                 });
             }
+            console.log('Конец выделения');
         }
 
         if (deselectedSlots.length > 0) {
+            console.log('Начало удаления');
             const date = startSlot.dataset.date;
             const slots = Array.from(deselectedSlots);
             const times = slots.map(slot => slot.dataset.time);
@@ -565,6 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     slot.classList.add('selected');
                 });
             }
+            console.log('Конец удаления');
         }
 
         isMouseDown = false;

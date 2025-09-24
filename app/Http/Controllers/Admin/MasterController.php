@@ -44,7 +44,9 @@ class MasterController extends Controller
                 });
             })->get();
 
-        $masters->load(['comments.user', 'person', 'user.settings', 'user.appointments.place']);
+        $masters->load(['comments.user', 'person', 'user.settings', 'user.appointments' => function ($query) {
+            $query->with('place');
+        }]);
 
         return view('admin.masters.index', compact('masters'));
     }

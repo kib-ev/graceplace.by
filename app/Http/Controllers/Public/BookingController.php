@@ -50,6 +50,42 @@ class BookingController extends Controller
         return view('public.booking.show', compact('master', 'place', 'slots'));
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'place_id' => 'required|exists:places,id',
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'duration' => 'required|integer|min:60',
+            'master_id' => 'required|exists:masters,id',
+            'price' => 'required|numeric',
+        ]);
+
+        $startAt = Carbon::parse($validated['date'] . ' ' . $validated['start_time']);
+
+        // Find master's user_id
+        $master = Master::find($validated['master_id']);
+        if (!$master) {
+            return response()->json(['message' => 'Master not found'], 404);
+        }
+
+        $appointment = Appointment::create([
+            'place_id' => $validated['place_id'],
+            'user_id' => $master->user_id,
+            'start_at' => $startAt,
+            'duration' => $validated['duration'],
+            'price' => $validated['price'],
+            'is_created_by_user' => true, // Assuming this is a user-initiated booking
+        ]);
+
+        session()->flash('success', 'Вы успешно записаны!');
+
+        return response()->json([
+            'redirect_url' => '/booking?date=' . $validated['date'] . '&place_id=' . $validated['place_id']
+        ]);
+    }
+
     // Обработка бронирования от клиента
     public function reserve(Request $request, Master $master)
     {

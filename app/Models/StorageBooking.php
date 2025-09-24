@@ -39,7 +39,7 @@ class StorageBooking extends Model
     {
         return $builder->where('start_at', '<=', now())
             ->whereNull('finished_at')
-            ->whereRaw('DATE_ADD(start_at, INTERVAL (duration - 1) DAY) < NOW()');
+            ->whereRaw('DATE_ADD(start_at, INTERVAL (duration - 2) DAY) < NOW()');
     }
 
     public function daysLeft(): int

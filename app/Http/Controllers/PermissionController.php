@@ -10,8 +10,7 @@ class PermissionController extends Controller
     // Отображение списка мастеров и их прав на отмену записи
     public function index()
     {
-        // Получаем всех мастеров (предполагаем, что у мастеров есть роль 'master')
-        $users = User::role('master')->get();
+        $users = User::all();
         $permissionName = 'cancel appointment';
 
         return view('admin.permissions.index', compact('users', 'permissionName'));
@@ -43,13 +42,12 @@ class PermissionController extends Controller
                 }
             }
 
-        return redirect()->back()->with('success', 'Права мастеров обновлены');
+        return redirect()->back()->with('success', 'Права обновлены');
     }
 
     // Обновление прав мастеров
     public function updateAll(Request $request)
     {
-        // Получаем всех мастеров
         $users = User::all();
 
         foreach ($users as $user) {
@@ -78,6 +76,6 @@ class PermissionController extends Controller
             }
         }
 
-        return redirect()->route('admin.permissions.index')->with('success', 'Права мастеров обновлены');
+        return redirect()->route('admin.permissions.index')->with('success', 'Права обновлены');
     }
 }

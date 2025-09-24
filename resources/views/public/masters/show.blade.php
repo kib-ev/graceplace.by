@@ -6,11 +6,11 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    @if($master->image_path)
-                        <img src="{{ $master->image_path }}" class="img-fluid rounded mb-3" alt="{{ $master->person->full_name }}">
+                    @if($master->avatar)
+                        <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->person->full_name }}">
                     @endif
                     <h1 class="h3">{{ $master->person->full_name }}</h1>
-                    
+
                     @if($master->description)
                         <p class="text-muted">{{ $master->description }}</p>
                     @endif
@@ -39,15 +39,15 @@
                 <div class="card-body">
                     <h2 class="h4 mb-4">Записаться на прием</h2>
 
-                    <form action="{{ route('public.appointments.store') }}" method="POST">
+                    <form action="{{ route('public.booking.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="master_id" value="{{ $master->id }}">
 
                         <div class="mb-3">
                             <label for="date" class="form-label">Дата</label>
-                            <input type="date" class="form-control" id="date" name="date" 
-                                   min="{{ now()->format('Y-m-d') }}" 
-                                   value="{{ old('date', request('date', now()->format('Y-m-d'))) }}" 
+                            <input type="date" class="form-control" id="date" name="date"
+                                   min="{{ now()->format('Y-m-d') }}"
+                                   value="{{ old('date', request('date', now()->format('Y-m-d'))) }}"
                                    required>
                         </div>
 
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function calculateTotalPrice() {
         const duration = parseInt(durationSelect.value) / 60; // Convert to hours
         const placeOption = placeSelect.selectedOptions[0];
-        
+
         if (placeOption && placeOption.dataset.price) {
             const pricePerHour = parseFloat(placeOption.dataset.price);
             const total = duration * pricePerHour;

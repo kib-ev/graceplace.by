@@ -28,6 +28,7 @@
             <table class="table table-bordered mb-5">
                 <tr>
                     <td style="width: 50px;"></td>
+                    <td style="width: 80px;"></td>
                     <td style="padding: 2px;"></td>
                     <td style="width: 440px;">Имя мастера</td>
                     <td style="width: 140px;">Телефон</td>
@@ -43,6 +44,11 @@
                     @if($master->user)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
+                        <td>
+                            @if($master->avatar)
+                                <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->person->full_name }}">
+                            @endif
+                        </td>
 
                         <td title="ЕРИП" style="width: 2px; padding: 2px; background: {{ $master->user->getSetting('payment_link.place') && $master->user->getSetting('payment_link.storage') ? '#4ab728' : '#ff2318' }}"></td>
 
@@ -66,7 +72,7 @@
                         </td>
 
                         <td>
-                            @if(isset($master->instagram))
+                            @if(isset($master->instagram) && $master->instagram !== '')
                                 <a target="_blank" href="{{ $master->instagram }}">Inst</a>
                             @endif
                         </td>

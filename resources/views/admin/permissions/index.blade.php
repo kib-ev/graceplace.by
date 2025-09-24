@@ -32,7 +32,7 @@
                 @foreach($users as $user)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.masters.show', $user->master) }}">{{ $user->name }}</a>
+                            <a href="{{ route('admin.users.show', $user) }}">{{ $user->name }}</a>
                         </td>
                         <td>
                             <input type="checkbox" name="cancel_{{ $user->id }}" class="cancel-checkbox"

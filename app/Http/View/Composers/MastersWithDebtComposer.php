@@ -15,7 +15,7 @@ class MastersWithDebtComposer
             ->count();
 
         $mastersWithStorageBookingDebtCount = StorageBooking::withDebt()
-            ->distinct('user_id')
+//            ->distinct('user_id')
             ->count();
 
         $view->with([
