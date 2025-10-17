@@ -26,6 +26,8 @@ class Kernel extends ConsoleKernel
                 }
             }
         })->everyMinute();
+
+        $schedule->command('masters:update-status')->dailyAt('02:00');
     }
 
     /**
