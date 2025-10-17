@@ -18,24 +18,6 @@
 
             <hr>
 
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5>Price Information</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tr>
-                            <td><strong>Current Price:</strong></td>
-                            <td>{{ number_format($place->getCurrentPrice(), 2) }} BYN/hour</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Price History Records:</strong></td>
-                            <td>{{ $place->prices()->count() }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
             <table class="table table-bordered">
                 <tr>
                     <td>ID: {{ $place->id }}</td>
@@ -81,17 +63,13 @@
                 <tr>
                     <th>Аренда руб</th>
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ $place->appointments()->whereYear('start_at',2024)->whereMonth('start_at', $i)->sum('price') }}
-                        </td>
+                        <td>{{ $stats2024[$i]['price'] }}</td>
                     @endfor
                 </tr>
                 <tr>
                     <th>Часов аренды</th>
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ $place->appointments()->whereYear('start_at',2024)->whereMonth('start_at', $i)->sum('duration') / 60 }}
-                        </td>
+                        <td>{{ $stats2024[$i]['duration'] }}</td>
                     @endfor
                 </tr>
             </table>
@@ -110,17 +88,13 @@
                 <tr>
                     <th>Аренда руб</th>
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ $place->appointments()->whereYear('start_at',2025)->whereMonth('start_at', $i)->sum('price') }}
-                        </td>
+                        <td>{{ $stats2025[$i]['price'] }}</td>
                     @endfor
                 </tr>
                 <tr>
                     <th>Часов аренды</th>
                     @for($i = 1; $i <=12; $i++)
-                        <td>
-                            {{ $place->appointments()->whereYear('start_at',2025)->whereMonth('start_at', $i)->sum('duration') / 60 }}
-                        </td>
+                        <td>{{ $stats2025[$i]['duration'] }}</td>
                     @endfor
                 </tr>
             </table>

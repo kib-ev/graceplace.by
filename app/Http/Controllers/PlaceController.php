@@ -40,7 +40,41 @@ class PlaceController extends Controller
      */
     public function show(Place $place)
     {
-        return view('admin.places.show', compact('place'));
+        $place->load([
+            'appointments.user.master',
+            'appointments.place',
+            'appointments.comments.user',
+            'prices'
+        ]);
+        
+        $stats2024 = $this->getMonthlyStats($place, 2024);
+        $stats2025 = $this->getMonthlyStats($place, 2025);
+        
+        return view('admin.places.show', compact('place', 'stats2024', 'stats2025'));
+    }
+    
+    private function getMonthlyStats(Place $place, int $year): array
+    {
+        $monthlyData = $place->appointments()
+            ->whereYear('start_at', $year)
+            ->selectRaw('MONTH(start_at) as month, SUM(price) as total_price, SUM(duration) as total_duration')
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month')
+            ->map(function($item) {
+                return [
+                    'price' => $item->total_price ?? 0,
+                    'duration' => ($item->total_duration ?? 0) / 60
+                ];
+            })
+            ->toArray();
+        
+        $stats = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $stats[$i] = $monthlyData[$i] ?? ['price' => 0, 'duration' => 0];
+        }
+        
+        return $stats;
     }
 
     /**
