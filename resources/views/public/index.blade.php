@@ -280,12 +280,28 @@
                                 <a class="text-white" href="{{ route('public.places.show', $place) }}">{{ $place->name }}</a>
                             </div>
 
+                            @php
+                                try {
+                                    $datePrice = $place->getPriceForDate(\Carbon\Carbon::parse($date));
+                                } catch (\Exception $e) {
+                                    $datePrice = 0;
+                                }
+                            @endphp
+
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-                                {{ $place->price_per_hour }} руб. / час
+                                @if($datePrice > 0)
+                                    {{ number_format($datePrice, 2) }} руб. / час
+                                @else
+                                    <small style="color: #ffc107;">No price</small>
+                                @endif
                             </div>
 
                             <div class="title" style="height: 30px; text-align: center; background: #37c35b; color: #fff;">
-                                {{ $place->price_per_hour * 8 }} руб. / день
+                                @if($datePrice > 0)
+                                    {{ number_format($datePrice * 8, 0) }} руб. / день
+                                @else
+                                    <small style="color: #ffc107;">No price</small>
+                                @endif
                             </div>
 
                             <div class="time">

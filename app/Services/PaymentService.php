@@ -33,24 +33,48 @@ final class PaymentService
         return UserTransaction::where('user_id', $user->id)->sum('amount');
     }
 
-    public function createPaymentRequirement($model, float $amountDue, int $expirationDays = null, Carbon $dateTime = null): PaymentRequirement
+    public function createPaymentRequirement($model, float $amountDue, int $expirationDays = null, Carbon $dateTime = null, array $additionalData = []): PaymentRequirement
     {
         if (!method_exists($model, 'paymentRequirements')) {
-            throw new \Exception("Модель не поддерживает создание требований на оплату.");
+            throw new \Exception("Model does not support payment requirements.");
         }
 
         $dateTime = $dateTime ?? now();
 
-        return PaymentRequirement::create([
+        $data = [
             'user_id' => $model->user_id,
             'payable_type' => $model::class,
             'payable_id' => $model->id,
             'amount_due' => $amountDue,
-            'due_date' => $expirationDays ? $dateTime->clone()->addDays($expirationDays) : null ,
+            'expected_amount' => $additionalData['expected_amount'] ?? $amountDue,
+            'remaining_amount' => $additionalData['remaining_amount'] ?? $amountDue,
+            'price_per_hour_snapshot' => $additionalData['price_per_hour_snapshot'] ?? null,
+            'due_date' => $expirationDays ? $dateTime->clone()->addDays($expirationDays) : null,
             'status' => 'pending',
             'created_at' => $dateTime,
             'updated_at' => $dateTime,
-        ]);
+        ];
+
+        return PaymentRequirement::create($data);
+    }
+
+    public function createPaymentRequirementForAppointment(\App\Models\Appointment $appointment, int $expirationDays = null, Carbon $dateTime = null): PaymentRequirement
+    {
+        $dateTime = $dateTime ?? $appointment->start_at ?? now();
+        $expectedAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($appointment);
+        $pricePerHour = $appointment->place->getPriceForDate($appointment->start_at);
+
+        return $this->createPaymentRequirement(
+            $appointment,
+            $expectedAmount,
+            $expirationDays,
+            $dateTime,
+            [
+                'expected_amount' => $expectedAmount,
+                'remaining_amount' => $expectedAmount,
+                'price_per_hour_snapshot' => $pricePerHour,
+            ]
+        );
     }
 
     public function createPayment($model, $paymentAmount, $paymentMethod, Carbon $dateTime = null)

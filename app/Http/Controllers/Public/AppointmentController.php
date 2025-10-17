@@ -57,10 +57,6 @@ class AppointmentController extends Controller
             return back()->withErrors(['time' => 'Выбранное время уже занято. Пожалуйста, выберите другое время.!'])->withInput();
         }
 
-        // Calculate price
-        $hours = $request->duration / 60;
-        $price = $hours * $place->price_per_hour;
-
         // Create appointment
         $appointment = new Appointment([
             'user_id' => $master->user_id,
@@ -68,12 +64,16 @@ class AppointmentController extends Controller
             'start_at' => $startAt,
             'end_at' => $endAt,
             'duration' => $request->duration,
-            'price' => $price,
             'client_name' => $request->client_name,
             'client_phone' => $request->client_phone,
         ]);
 
         $appointment->save();
+
+        // Calculate and set price based on the appointment date
+        $appointmentService = new \App\Services\AppointmentService();
+        $price = $appointmentService->calculateAppointmentCost($appointment);
+        $appointment->update(['price' => $price]);
 
         \Log::info('Appointment created successfully', [
             'appointment_id' => $appointment->id

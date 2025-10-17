@@ -53,8 +53,8 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="width: 250px;"><strong>Всего долг:</strong></td>
-                        <td>{{ $appointment->user->appointments->sum(function ($a) { $a->paymentRequirements()->sum('amount_due'); }) }} BYN</td>
+                        <td style="width: 250px;"><strong>Остаток к оплате:</strong></td>
+                        <td>{{ number_format($appointment->leftToPay(), 2, '.') }} BYN</td>
                     </tr>
                 </table>
             </div>
@@ -62,7 +62,7 @@
 
 {{--        @dump($appointment->paymentRequirements->sum('amount_due'))--}}
 
-        @if($appointment->paymentRequirements->sum('amount_due') < $appointment->getExpectedPrice())
+        @if($appointment->paymentRequirements->sum('expected_amount') < $appointment->getExpectedPrice())
             <h2 class="mt-4">Создать требование на оплату</h2>
             <form action="{{ route('admin.appointments.payment-requirements.store') }}" method="POST">
                 @csrf
@@ -102,7 +102,8 @@
             <tr>
                 <th>ID</th>
                 <th>Дата и время создания</th>
-                <th>Сумма к оплате</th>
+                <th>Ожидаемая сумма</th>
+                <th>Остаток к оплате</th>
                 <th>Срок оплаты</th>
                 <th>Статус</th>
                 <th></th>
@@ -113,7 +114,8 @@
                 <tr>
                     <td>{{ $requirement->id }}</td>
                     <td>{{ $requirement->created_at->format('d.m.Y H:i') }}</td>
-                    <td>{{ number_format($requirement->amount_due, 2) }} BYN</td>
+                    <td>{{ number_format($requirement->expected_amount ?? 0, 2) }} BYN</td>
+                    <td>{{ number_format($requirement->remaining_amount ?? 0, 2) }} BYN</td>
                     <td>{{ $requirement->due_date?->format('d.m.Y') }}</td>
                     <td>{{ $requirement->status }}</td>
                     <td><a href="{{ route('admin.payment-requirements.destroy', $requirement->id) }}">удалить</a></td>

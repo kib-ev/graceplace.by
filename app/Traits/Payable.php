@@ -20,13 +20,30 @@ trait Payable
     public function isPaid()
     {
         $existsPaymentRequirements = count($this->paymentRequirements) >= 1;
-        return $existsPaymentRequirements
-            && $this->paymentRequirements()->sum('amount_due') == $this->payments()->where('status', Payment::STATUS_COMPLETED)->sum('amount');
+        if (!$existsPaymentRequirements) {
+            return false;
+        }
+
+        return $this->paymentRequirements()->sum('remaining_amount') == 0;
     }
 
     public function leftToPay()
     {
-        $diff = $this->paymentRequirements()->where('status', 'pending')->sum('amount_due') - $this->payments()->where('status', 'completed')->sum('amount');
-        return max(0, $diff);
+        return max(0, $this->paymentRequirements()->where('status', 'pending')->sum('remaining_amount'));
+    }
+
+    public function getExpectedTotal()
+    {
+        return $this->paymentRequirements()->sum('expected_amount');
+    }
+
+    public function getTotalDiscount()
+    {
+        $expected = $this->getExpectedTotal();
+        $remaining = $this->paymentRequirements()->sum('remaining_amount');
+        $paid = $expected - $remaining;
+        $actuallyPaid = $this->payments()->where('status', Payment::STATUS_COMPLETED)->sum('amount');
+
+        return max(0, $expected - $actuallyPaid);
     }
 }

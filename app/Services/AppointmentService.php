@@ -284,15 +284,14 @@ final class AppointmentService
         $start = $appointment->start_at;
         $end = $appointment->start_at->copy()->addMinutes($appointment->duration);
 
-        // Рассчитываем длительность аренды в часах
+        $pricePerHour = $appointment->place->getPriceForDate($start);
+
         $durationInMinutes = $start->diffInMinutes($end);
 
-        // Аренда на день (более 8 часов)
         if ($durationInMinutes >= 8 * 60) {
-            $amount = $appointment->place->getHourlyCost() * 8; // Стоимость аренды на 8 часов
+            $amount = $pricePerHour * 8;
         } else {
-            // Обычная почасовая аренда
-            $amount = $appointment->place->getHourlyCost() * $durationInMinutes / 60;
+            $amount = $pricePerHour * $durationInMinutes / 60;
         }
 
         return $amount;

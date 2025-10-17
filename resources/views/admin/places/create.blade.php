@@ -20,10 +20,12 @@
                     <textarea id="description" class="form-control" name="description" autocomplete="off">{{ isset($place) ? $place->description : '' }}</textarea>
                 </div>
 
-                <div class="form-group mb-2">
-                    <label for="priceHour">Цена за час</label>
-                    <input id="priceHour" class="form-control" type="number" step="0.01" min="0" name="price_per_hour" value="{{ isset($place) ? $place->price_per_hour : '' }}" autocomplete="off">
+                @if(isset($place))
+                <div class="alert alert-info">
+                    <strong>Price Management:</strong> Prices are now managed through the 
+                    <a href="{{ route('admin.places.prices.index', $place) }}">Price History</a> page.
                 </div>
+                @endif
 
                 <div class="form-group mb-2">
                     <label for="image">Путь к картинке</label>

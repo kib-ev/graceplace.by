@@ -55,13 +55,13 @@ class PaymentRequirement extends Model
         $this->update([
             'status' => self::STATUS_PAID,
             'amount_due' => 0,
+            'remaining_amount' => 0,
         ]);
     }
 
-    // Проверка выполнения требования
     public function isFullyPaid()
     {
-        return $this->payments()->sum('amount') >= $this->amount;
+        return $this->remaining_amount <= 0;
     }
 
     /**
@@ -71,12 +71,31 @@ class PaymentRequirement extends Model
      */
     public function applyPayment($amount)
     {
+        $newRemainingAmount = $this->remaining_amount - $amount;
         $newAmountDue = $this->amount_due - $amount;
 
-        if ($newAmountDue <= 0) {
+        if ($newRemainingAmount <= 0) {
             $this->markAsPaid();
         } else {
-            $this->update(['amount_due' => $newAmountDue]);
+            $this->update([
+                'amount_due' => max(0, $newAmountDue),
+                'remaining_amount' => max(0, $newRemainingAmount)
+            ]);
         }
+    }
+
+    public function getDiscount(): float
+    {
+        return $this->expected_amount - ($this->expected_amount - $this->remaining_amount + $this->amount_due);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->getDiscount() > 0;
+    }
+
+    public function getPaidAmount(): float
+    {
+        return $this->expected_amount - $this->remaining_amount;
     }
 }

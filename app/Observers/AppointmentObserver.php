@@ -20,8 +20,8 @@ class AppointmentObserver
      */
     public function created(Appointment $appointment): void
     {
-//        $paymentService = app(PaymentService::class);
-//        $paymentService->createPaymentRequirement($appointment, $appointment->getExpectedPrice());
+        $paymentService = app(PaymentService::class);
+        $paymentService->createPaymentRequirementForAppointment($appointment);
 
         // MERGE CLOSEST APPOINTMENTS ------------------------------------
         $appointments = Appointment::whereDate('start_at', $appointment->start_at)->whereNull('canceled_at')->get();

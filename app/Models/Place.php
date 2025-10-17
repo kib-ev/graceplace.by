@@ -24,6 +24,44 @@ class Place extends Model
         return $this->appointments();
     }
 
+    public function prices()
+    {
+        return $this->hasMany(PlacePrice::class)->orderBy('effective_from', 'desc');
+    }
+
+    public function getPriceForDate(Carbon $date): float
+    {
+        $price = $this->prices()
+            ->where('effective_from', '<=', $date)
+            ->orderBy('effective_from', 'desc')
+            ->first();
+
+        if (!$price) {
+            throw new \Exception("No price found for place '{$this->name}' (ID: {$this->id}) on date {$date->format('Y-m-d')}. Please add price history.");
+        }
+
+        return $price->price_per_hour;
+    }
+
+    public function getCurrentPrice(): float
+    {
+        return $this->getPriceForDate(now());
+    }
+
+    public function getHourlyCost()
+    {
+        return $this->getCurrentPrice();
+    }
+
+    public function getFuturePrice(Carbon $date): ?PlacePrice
+    {
+        return $this->prices()
+            ->where('effective_from', '>', now())
+            ->where('effective_from', '<=', $date)
+            ->orderBy('effective_from', 'desc')
+            ->first();
+    }
+
     public function isAppointment(Carbon $date) : Appointment|null
     {
         $isAppointment = null;
@@ -61,11 +99,6 @@ class Place extends Model
         }
 
         return null;
-    }
-
-    public function getHourlyCost()
-    {
-        return $this->price_per_hour;
     }
 
     // Метод для проверки доступности рабочего места на конкретную дату

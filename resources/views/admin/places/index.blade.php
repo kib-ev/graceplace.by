@@ -27,7 +27,11 @@
                         <td class="text-end">{{ $place->sort }}</td>
                         <td><a href="{{ route('admin.places.show', $place) }}">{{ $place->name }}</a></td>
                         <td>{{ $place->description }}</td>
-                        <td class="text-end">{{ $place->price_per_hour }}</td>
+                        <td class="text-end">
+                            <a href="{{ route('admin.places.prices.index', $place) }}" title="Manage prices">
+                                {{ number_format($place->getCurrentPrice(), 2) }}
+                            </a>
+                        </td>
                         <td class="text-end">{{ number_format($place->getAverageProfitPerMonth(), 2) }}</td>
                         <td class="text-end">{{ $place->getAverageRentHoursPerDay() }}</td>
                         <td><a href="{{ route('admin.places.edit', $place) }}"><i class="fa fa-edit"></i></a></td>

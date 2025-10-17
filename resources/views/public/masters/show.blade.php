@@ -83,8 +83,8 @@
                             <select class="form-control" id="place_id" name="place_id" required>
                                 <option value="">Выберите рабочее место</option>
                                 @foreach(\App\Models\Place::all() as $place)
-                                    <option value="{{ $place->id }}" data-price="{{ $place->price_per_hour }}">
-                                        {{ $place->name }} ({{ $place->price_per_hour }} BYN/час)
+                                    <option value="{{ $place->id }}" data-price="{{ $place->getCurrentPrice() }}">
+                                        {{ $place->name }} ({{ number_format($place->getCurrentPrice(), 0) }} BYN/час)
                                     </option>
                                 @endforeach
                             </select>

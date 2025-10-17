@@ -424,7 +424,7 @@
 
             function updateModal() {
                 if (selectedSlots.length > 0) {
-                    const placePrice = {{ $selectedPlace->price_per_hour }};
+                    const placePrice = {{ $selectedPlace->getCurrentPrice() }};
                     const firstSlot = selectedSlots[0];
                     const lastSlot = selectedSlots[selectedSlots.length - 1];
 

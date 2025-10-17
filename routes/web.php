@@ -246,6 +246,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // PLACES
     Route::resource('places', \App\Http\Controllers\PlaceController::class);
+    Route::prefix('places/{place}')->name('places.')->group(function () {
+        Route::get('prices', [\App\Http\Controllers\Admin\PlacePriceController::class, 'index'])->name('prices.index');
+        Route::get('prices/create', [\App\Http\Controllers\Admin\PlacePriceController::class, 'create'])->name('prices.create');
+        Route::post('prices', [\App\Http\Controllers\Admin\PlacePriceController::class, 'store'])->name('prices.store');
+        Route::get('prices/{price}/edit', [\App\Http\Controllers\Admin\PlacePriceController::class, 'edit'])->name('prices.edit');
+        Route::put('prices/{price}', [\App\Http\Controllers\Admin\PlacePriceController::class, 'update'])->name('prices.update');
+        Route::delete('prices/{price}', [\App\Http\Controllers\Admin\PlacePriceController::class, 'destroy'])->name('prices.destroy');
+    });
 
     // LOGS
     Route::get('logs', function () {
