@@ -23,7 +23,8 @@ class StatsController extends Controller
             SUM(CASE WHEN canceled_at IS NOT NULL THEN 1 ELSE 0 END) as canceled,
             SUM(CASE WHEN is_created_by_user = 1 THEN 1 ELSE 0 END) as self_added,
             SUM(CASE WHEN canceled_at IS NULL THEN duration ELSE 0 END) as total_duration,
-            SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as total_price
+            SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as total_price,
+            SUM(CASE WHEN canceled_at IS NULL AND duration >= 480 THEN 1 ELSE 0 END) as over_8_hours
         ')->first();
 
         // 3. Месячная статистика 2024

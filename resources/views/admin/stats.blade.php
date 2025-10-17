@@ -48,6 +48,15 @@
                     <td>{{ $appointmentsStats->total_duration / 60 }}</td>
                 </tr>
                 <tr>
+                    <td>Записей более 8 часов</td>
+                    <td>
+                        {{ $appointmentsStats->over_8_hours }}
+                        @if($appointmentsStats->visited > 0)
+                            ({{ round($appointmentsStats->over_8_hours / $appointmentsStats->visited * 100, 1) }} %)
+                        @endif
+                    </td>
+                </tr>
+                <tr>
                     <td>Средний чек</td>
                     <td>{{ $appointmentsStats->visited ? number_format($appointmentsStats->total_price / $appointmentsStats->visited, 2) : 0 }}</td>
                 </tr>
