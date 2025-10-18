@@ -196,12 +196,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/appointments/merge-closest', [\App\Http\Controllers\Admin\AppointmentController::class, 'mergeClosestAppointments'])
         ->name('appointments.merge-closest');
 
+    Route::post('/appointments/create-requirements', [\App\Http\Controllers\Admin\AppointmentController::class, 'createRequirementsForDate'])
+        ->name('appointments.create-requirements');
+
     Route::resource('appointments', \App\Http\Controllers\Admin\AppointmentController::class);
     Route::post('/appointments/{appointment}/pay', function (Request $request, \App\Models\Appointment $appointment) {
         $amount = $request->get('amount');
         $useBalance = $request->get('use_balance') == 'on';
 
-        if(is_null($appointment->price)) {
+        if(!$appointment->isPaid()) {
             $user = $appointment->user;
 
             if($amount > 0) {
@@ -210,10 +213,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
                 }
                 $user->withdraw($amount, 'Appointment ID: ' . $appointment->id . ' <<< PLACE RENT', $request->get('created_at'));
             }
-
-            $appointment->update([
-                'price' => $amount
-            ]);
         }
 
         return back();

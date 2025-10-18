@@ -83,7 +83,19 @@
                             </tr>
 
                             <tr>
-                                <td>СУММА: {{ $sum = \App\Models\Appointment::whereNull('canceled_at')->where('user_id', $master->user_id)->sum('price') }} BYN</td>
+                                <td>СУММА: {{ $sum = \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                                        ->whereIn('payable_id', \App\Models\Appointment::whereNull('canceled_at')
+                                            ->where('user_id', $master->user_id)
+                                            ->select('id'))
+                                        ->sum('expected_amount') }} BYN</td>
+                            </tr>
+                            <tr>
+                                <td>ОПЛАЧЕНО: {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                                        ->whereIn('payable_id', \App\Models\Appointment::whereNull('canceled_at')
+                                            ->where('user_id', $master->user_id)
+                                            ->select('id'))
+                                        ->selectRaw('SUM(expected_amount - remaining_amount) as paid_sum')
+                                        ->value('paid_sum') }} BYN</td>
                             </tr>
 
                             <tr>
@@ -214,7 +226,14 @@
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('price') }}
+                                        {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                                            ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
+                                                ->whereNull('canceled_at')
+                                                ->whereDate('start_at', '<=', now())
+                                                ->whereYear('start_at', '2024')
+                                                ->whereMonth('start_at', $i)
+                                                ->select('id'))
+                                            ->sum('expected_amount') }}
                                     </td>
                                 @endfor
                             </tr>
@@ -241,7 +260,14 @@
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
                                     <td>
-                                        {{ $master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('price') }}
+                                        {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                                            ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
+                                                ->whereNull('canceled_at')
+                                                ->whereDate('start_at', '<=', now())
+                                                ->whereYear('start_at', '2025')
+                                                ->whereMonth('start_at', $i)
+                                                ->select('id'))
+                                            ->sum('expected_amount') }}
                                     </td>
                                 @endfor
                             </tr>
@@ -279,7 +305,15 @@
                                 <tr>
                                     @for($i = 1; $i <=12; $i++)
                                         <td>
-                                            {{ $master->user->appointments()->where('place_id', $uniqueAppointment->place_id)->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('price') }}
+                                            {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                                                ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
+                                                    ->where('place_id', $uniqueAppointment->place_id)
+                                                    ->whereNull('canceled_at')
+                                                    ->whereDate('start_at', '<=', now())
+                                                    ->whereYear('start_at', '2025')
+                                                    ->whereMonth('start_at', $i)
+                                                    ->select('id'))
+                                                ->sum('expected_amount') }}
                                         </td>
                                     @endfor
                                 </tr>

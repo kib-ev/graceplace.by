@@ -168,28 +168,28 @@
             <td>Услуги по предоставлению рабочего места для ведения деятельности в сфере бьюти-услуг</td>
             <td>шт</td>
             <td class="right">1</td>
-            <td class="right">{{ $appointment->price }}</td>
-            <td class="right">{{ $appointment->price }}</td>
+            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
+            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
             <td class="right">20%</td>
-            <td class="right">{{ number_format($appointment->price * 0.2, 2, '.', '') }}</td>
-            <td class="right">{{ $appointment->price }}</td>
+            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount() * 0.2, 2, '.', '') }}</td>
+            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>Итого:</b></td>
-            <td class="right"><b>{{ $appointment->price }}</b></td>
+            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</b></td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>В том числе НДС:</b></td>
-            <td class="right"><b>{{ number_format($appointment->price * 0.2, 2, '.', '') }}</b></td>
+            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount() * 0.2, 2, '.', '') }}</b></td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>Всего с НДС:</b></td>
-            <td class="right"><b>{{ $appointment->price }}</b></td>
+            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</b></td>
         </tr>
         </tbody>
     </table>
     <br>
-    <p>Всего оказано услуг 1, на сумму: {{ num2str($appointment->price) }}, <br>в т.ч. НДС: {{ num2str($appointment->price * 0.2) }}.</p>
+    <p>Всего оказано услуг 1, на сумму: {{ num2str($appointment->paymentRequirements->first()->getPaidAmount()) }}, <br>в т.ч. НДС: {{ num2str($appointment->paymentRequirements->first()->getPaidAmount() * 0.2) }}.</p>
     <br>
     <p>Вышеперечисленные услуги выполнены полностью и в срок. <br>Заказчик претензий по объему, качеству и срокам оказания услуг не имеет.</p>
     <br>

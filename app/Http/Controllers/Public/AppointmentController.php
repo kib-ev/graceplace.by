@@ -65,15 +65,23 @@ class AppointmentController extends Controller
             'end_at' => $endAt,
             'duration' => $request->duration,
             'client_name' => $request->client_name,
-            'client_phone' => $request->client_phone,
+            'client_phone' => $request->client_phone,   
         ]);
 
         $appointment->save();
 
-        // Calculate and set price based on the appointment date
-        $appointmentService = new \App\Services\AppointmentService();
-        $price = $appointmentService->calculateAppointmentCost($appointment);
-        $appointment->update(['price' => $price]);
+        // Create payment requirement instead of storing price column
+        $expected = (new AppointmentService())->calculateAppointmentCost($appointment);
+        \App\Models\PaymentRequirement::create([
+            'user_id' => $appointment->user_id,
+            'payable_type' => Appointment::class,
+            'payable_id' => $appointment->id,
+            'amount_due' => $expected,
+            'expected_amount' => $expected,
+            'remaining_amount' => $expected,
+            'status' => \App\Models\PaymentRequirement::STATUS_PENDING,
+            'due_date' => $appointment->start_at->toDateString(),
+        ]);
 
         \Log::info('Appointment created successfully', [
             'appointment_id' => $appointment->id

@@ -44,8 +44,11 @@ class Appointment extends Model
     {
         return $builder
             ->where('start_at', '<=', now()->startOfDay())
-            ->whereNull('price')
-            ->whereNull('canceled_at');
+            ->whereNull('canceled_at')
+            ->whereHas('paymentRequirements', function($query) {
+                $query->where('status', '!=', 'paid')
+                      ->where('remaining_amount', '>', 0);
+            });
     }
 
     public function user()

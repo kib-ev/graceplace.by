@@ -237,9 +237,12 @@ class Place extends Model
         $appointments = $this->appointments()
             ->whereNull('canceled_at')
             ->whereBetween('start_at', [now()->subDays($lastMonths  * 30), now()])
+            ->with('paymentRequirements')
             ->get();
 
-        return $appointments->sum(function ($a) { return $a->price; }) / $lastMonths;
+        return $appointments->sum(function ($a) {
+            return count($a->paymentRequirements) > 0 ? $a->paymentRequirements->first()->getPaidAmount() : 0;
+        }) / $lastMonths;
     }
 
     public function getAverageRentHoursPerDay($lastMonths = 3): string

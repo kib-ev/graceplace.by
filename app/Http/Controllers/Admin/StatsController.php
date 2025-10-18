@@ -19,32 +19,45 @@ class StatsController extends Controller
         // 2. Общая статистика по записям
         $appointmentsStats = Appointment::selectRaw('
             COUNT(*) as total,
-            SUM(CASE WHEN canceled_at IS NULL THEN 1 ELSE 0 END) as visited,
-            SUM(CASE WHEN canceled_at IS NOT NULL THEN 1 ELSE 0 END) as canceled,
-            SUM(CASE WHEN is_created_by_user = 1 THEN 1 ELSE 0 END) as self_added,
-            SUM(CASE WHEN canceled_at IS NULL THEN duration ELSE 0 END) as total_duration,
-            SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as total_price,
-            SUM(CASE WHEN canceled_at IS NULL AND duration >= 480 THEN 1 ELSE 0 END) as over_8_hours
-        ')->first();
+            SUM(CASE WHEN appointments.canceled_at IS NULL THEN 1 ELSE 0 END) as visited,
+            SUM(CASE WHEN appointments.canceled_at IS NOT NULL THEN 1 ELSE 0 END) as canceled,
+            SUM(CASE WHEN appointments.is_created_by_user = 1 THEN 1 ELSE 0 END) as self_added,
+            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as total_duration,
+            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as total_price,
+            SUM(CASE WHEN appointments.canceled_at IS NULL AND appointments.duration >= 480 THEN 1 ELSE 0 END) as over_8_hours
+        ')
+        ->leftJoin('payment_requirements', function($join) {
+            $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                 ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+        })
+        ->first();
 
         // 3. Месячная статистика 2024
         $monthlyStats2024 = Appointment::selectRaw('
-            MONTH(start_at) as month,
-            SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as revenue,
-            SUM(CASE WHEN canceled_at IS NULL THEN duration ELSE 0 END) as hours
+            MONTH(appointments.start_at) as month,
+            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
+            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
         ')
-            ->whereYear('start_at', 2024)
+            ->leftJoin('payment_requirements', function($join) {
+                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+            })
+            ->whereYear('appointments.start_at', 2024)
             ->groupBy('month')
             ->get()
             ->keyBy('month');
 
         // 4. Месячная статистика 2025
         $monthlyStats2025 = Appointment::selectRaw('
-            MONTH(start_at) as month,
-            SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as revenue,
-            SUM(CASE WHEN canceled_at IS NULL THEN duration ELSE 0 END) as hours
+            MONTH(appointments.start_at) as month,
+            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
+            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
         ')
-            ->whereYear('start_at', 2025)
+            ->leftJoin('payment_requirements', function($join) {
+                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+            })
+            ->whereYear('appointments.start_at', 2025)
             ->groupBy('month')
             ->get()
             ->keyBy('month');
@@ -109,12 +122,16 @@ class StatsController extends Controller
                 $week++;
             }
             $stats = Appointment::selectRaw('
-                YEARWEEK(start_at, 1) as yearweek,
-                MIN(DATE(start_at)) as week_start,
-                SUM(CASE WHEN canceled_at IS NULL THEN duration ELSE 0 END) as hours,
-                SUM(CASE WHEN canceled_at IS NULL THEN price ELSE 0 END) as revenue
+                YEARWEEK(appointments.start_at, 1) as yearweek,
+                MIN(DATE(appointments.start_at)) as week_start,
+                SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours,
+                COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue
             ')
-                ->whereYear('start_at', $year)
+                ->leftJoin('payment_requirements', function($join) {
+                    $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                         ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+                })
+                ->whereYear('appointments.start_at', $year)
                 ->groupBy('yearweek')
                 ->orderBy('yearweek')
                 ->get()

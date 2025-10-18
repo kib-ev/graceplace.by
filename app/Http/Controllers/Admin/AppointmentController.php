@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\PaymentRequirement;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class AppointmentController extends Controller
             $query->whereDate('start_at', $request->get('date'));
         });
 
-        $appointments = $appointments->with(['user.master.person', 'place'])->get();
+        $appointments = $appointments->with(['user.master.person', 'place', 'paymentRequirements', 'payments'])->get();
 
         return view('admin.appointments.index', compact('appointments', 'dateFrom', 'dateTo'));
     }
@@ -94,6 +95,7 @@ class AppointmentController extends Controller
      */
     public function edit(Appointment $appointment)
     {
+        $appointment->load('paymentRequirements', 'payments');
         return view('admin.appointments.edit', compact('appointment'));
     }
 
@@ -102,10 +104,59 @@ class AppointmentController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
-        // CANCEL
+        // CANCEL with penalties
         if ($request->get('cancel') == 1) {
             $reason = $request->get('cancellation_reason');
+
+            // always cancel appointment first
             (new AppointmentService())->cancelAppointment(user: auth()->user(), appointment: $appointment, cancellationReason: $reason);
+
+            // penalty mode
+            $penalty = $request->get('cancel_penalty'); // '100' | '50' | null
+            $expected = $appointment->getExpectedPrice();
+
+            if ($penalty === '100') {
+                // keep or create requirement for 100%
+                $requirement = $appointment->paymentRequirements()->first();
+                if ($requirement) {
+                    $requirement->update([
+                        'amount_due' => $expected,
+                        'expected_amount' => $expected,
+                        'remaining_amount' => $expected,
+                        'status' => PaymentRequirement::STATUS_PENDING,
+                        'due_date' => $appointment->start_at->toDateString(),
+                    ]);
+                } else {
+                    PaymentRequirement::create([
+                        'user_id' => $appointment->user_id,
+                        'payable_type' => Appointment::class,
+                        'payable_id' => $appointment->id,
+                        'amount_due' => $expected,
+                        'expected_amount' => $expected,
+                        'remaining_amount' => $expected,
+                        'status' => PaymentRequirement::STATUS_PENDING,
+                        'due_date' => $appointment->start_at->toDateString(),
+                    ]);
+                }
+            } elseif ($penalty === '50') {
+                // recreate requirement with 50% (floor to cents)
+                $appointment->paymentRequirements()->delete();
+                $half = floor($expected * 100 / 2) / 100; // floor to 2 decimals
+                PaymentRequirement::create([
+                    'user_id' => $appointment->user_id,
+                    'payable_type' => Appointment::class,
+                    'payable_id' => $appointment->id,
+                    'amount_due' => $half,
+                    'expected_amount' => $half,
+                    'remaining_amount' => $half,
+                    'status' => PaymentRequirement::STATUS_PENDING,
+                    'due_date' => $appointment->start_at->toDateString(),
+                ]);
+            } else {
+                // default cancel: remove payment requirements
+                $appointment->paymentRequirements()->delete();
+            }
+
             return back();
         }
 
@@ -146,5 +197,34 @@ class AppointmentController extends Controller
         (new AppointmentService())->mergeAppointments($appointments);
 
         return redirect()->route('admin.appointments.index', ['date_from'=> $date, 'date_to' => $date]);
+    }
+
+    public function createRequirementsForDate(Request $request)
+    {
+        $date = Carbon::parse($request->get('date'));
+
+        $appointments = Appointment::query()
+            ->whereDate('start_at', $date)
+            ->whereNull('canceled_at')
+            ->with('paymentRequirements')
+            ->get();
+
+        foreach ($appointments as $appointment) {
+            if ($appointment->paymentRequirements->count() === 0) {
+                $expected = $appointment->getExpectedPrice();
+                PaymentRequirement::create([
+                    'user_id' => $appointment->user_id,
+                    'payable_type' => Appointment::class,
+                    'payable_id' => $appointment->id,
+                    'amount_due' => $expected,
+                    'expected_amount' => $expected,
+                    'remaining_amount' => $expected,
+                    'status' => PaymentRequirement::STATUS_PENDING,
+                    'due_date' => $appointment->start_at->toDateString(),
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.appointments.index', ['date_from'=> $date->toDateString(), 'date_to' => $date->toDateString()])->with('success', 'Требования созданы');
     }
 }

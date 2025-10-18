@@ -58,8 +58,8 @@
                                 <span style="color: red;">(отчество)</span>
                             @endif
 
-                            @if($master->user->getDebtAmount() > 0)
-                                <div class="bg-danger text-white p-2">Задолженность: {{ number_format($master->user->getDebtAmount(), 2) }} </div>
+                            @if(($master->debt_amount_byn ?? 0) > 0)
+                                <div class="bg-danger text-white p-2">Задолженность: {{ number_format($master->debt_amount_byn, 2) }} </div>
                             @endif
 
                             @include('admin.comments.includes.widget', ['model' => $master, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
@@ -101,33 +101,28 @@
                         </td>
 
                         <td style="white-space: nowrap;">
-                            @php
-                                $appointments = $master->user->appointments;
-                            @endphp
-
-                            {{ $totalCount = $appointments->count() }} /
-                            {{ $visitCount = $appointments->whereNull('canceled_at')->count() }} /
-                            {{ $cancelCount = $appointments->whereNotNull('canceled_at')->count() }}
+                            {{ $totalCount = (int)($master->appointments_total_count ?? 0) }} /
+                            {{ $visitCount = (int)($master->appointments_visit_count ?? 0) }} /
+                            {{ $cancelCount = (int)($master->appointments_cancel_count ?? 0) }}
 
                             <br>
                             @if($totalCount > 10)
                                 @php
-                                    $lateCancelCount = $master->user->getLateCancellationCount();
-                                    $visitPercent = $lateCancelCount / $totalCount * 100;
+                                    $lateCancelCount = (int)($master->late_cancel_count ?? 0);
+                                    $lateCancelPercent = $totalCount > 0 ? ($lateCancelCount / $totalCount * 100) : 0;
                                 @endphp
-                                <span class="{{ $lateCancelCount > 10 ? 'bg-danger text-white' : '' }}">{{ number_format($lateCancelCount) }} %</span>
+                                <span class="{{ $lateCancelCount > 10 ? 'bg-danger text-white' : '' }}">{{ number_format($lateCancelPercent) }} %</span>
                             @endif
                             <br>
                         </td>
 
                         <td style="white-space: nowrap;">
                             @php
-                                $lastAppointment = $master->lastAppointment();
+                                $lastAt = $master->last_appointment_at ?? null;
                             @endphp
-
-                            @if($lastAppointment && $lastAppointment->start_at < now())
-                                {{ \Carbon\Carbon::now()->startOfDay()->diffInDays($lastAppointment->start_at) }} д. назад
-                            @elseif($lastAppointment && $lastAppointment->start_at >= now())
+                            @if($lastAt && \Carbon\Carbon::parse($lastAt) < now())
+                                {{ \Carbon\Carbon::now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($lastAt)) }} д. назад
+                            @elseif($lastAt && \Carbon\Carbon::parse($lastAt) >= now())
                                 <span style="color: greenyellow;">запись</span>
                             @else
                                 <span style="color: orangered;">нет</span>
@@ -145,6 +140,7 @@
                     @endif
                 @endforeach
             </table>
+            
         </div>
     </div>
 @endsection

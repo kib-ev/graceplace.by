@@ -223,10 +223,12 @@ class User extends Authenticatable
     {
         return $this->appointments
             ->where('start_at', '<=', now()->startOfDay())
-            ->whereNull('price')
             ->whereNull('canceled_at')
+            ->filter(function (Appointment $appointment) {
+                return !$appointment->isPaid();
+            })
             ->sum(function (Appointment $appointment) {
-                return $appointment->getExpectedPrice();
+                return $appointment->leftToPay();
             });
     }
 

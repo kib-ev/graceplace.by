@@ -324,7 +324,7 @@ final class AppointmentService
     {
         $amount = $amount ?? $this->calculateAppointmentCost($appointment);
 
-        if(is_null($appointment->price)) {
+        if(!$appointment->isPaid()) {
             $user = $appointment->user;
 
             if($amount > 0) {
@@ -333,10 +333,6 @@ final class AppointmentService
                 }
                 $user->withdraw($amount, 'Appointment ID: ' . $appointment->id . ' <<< PLACE RENT');
             }
-
-            $appointment->update([
-                'price' => $amount
-            ]);
         }
     }
 
@@ -390,17 +386,14 @@ final class AppointmentService
                 $groupUserAppointments->each(function ($appointment1) use ($groupUserAppointments) {
                     $groupUserAppointments->where('id','!=', $appointment1->id)->each(function ($appointment2) use ($appointment1, $groupUserAppointments) {
 
-                        // MERGE AND DELETE
                         if($appointment1->end_at == $appointment2->start_at) {
                             $newDuration = $appointment1->duration + $appointment2->duration;
-                            $newPrice = (isset($appointment1->price) || isset($appointment2->price)) ? $appointment1->price + $appointment2->price : null;
                             $appointment2->comments()->update([
                                 'model_id' => $appointment1->id
                             ]);
                             $appointment2->delete();
                             $appointment1->update([
                                 'duration' => $newDuration,
-                                'price' => $newPrice,
                             ]);
                         }
                     });

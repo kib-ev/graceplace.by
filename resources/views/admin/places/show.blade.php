@@ -44,7 +44,9 @@
                 </tr>
 
                 <tr>
-                    <td>СУММА: {{ $place->appointments->sum('price') }} BYN</td>
+                    <td>СУММА: {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
+                        ->whereIn('payable_id', $place->appointments->pluck('id'))
+                        ->sum('expected_amount') }} BYN</td>
                 </tr>
 
             </table>

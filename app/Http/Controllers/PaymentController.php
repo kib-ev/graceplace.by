@@ -22,6 +22,7 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string',
             'created_at' => 'required|string|date',
+            'note' => 'nullable|string|max:1000',
         ]);
 
         $appointment = Appointment::find($request->appointment_id);
@@ -29,14 +30,15 @@ class PaymentController extends Controller
         $amount = $request->get('amount');
         $paymentMethod = $request->get('payment_method');
         $createdAt = Carbon::parse($request->created_at);
+        $note = $request->get('note');
 
-        $payment = (new PaymentService())->createPayment($appointment, $amount, $paymentMethod, $createdAt);
+        $payment = (new PaymentService())->createPayment($appointment, $amount, $paymentMethod, $createdAt, $note);
 
 //        if ($payment->payment_method == 'cash') {
             (new PaymentService())->changePaymentStatus($payment, Payment::STATUS_COMPLETED); // TODO REMOVE / temp
 //        }
 
-        return redirect()->route('admin.appointments.payments.show', $request->appointment_id)->with('success', 'Платеж успешно создан.');
+        return redirect()->back()->with('success', 'Платеж успешно создан.');
     }
 
     public function updateStatus(Request $request, Payment $payment)

@@ -170,7 +170,15 @@
     </div>
 
     @php
-        $masterEndedAppointments = auth()->user()->appointments()->where('price', '>', 0)->whereNull('canceled_at')->where('start_at', '<', now())->where('start_at', '>=', '2025-01-01 00:00')->where('start_at', '>=', now()->subDays(30))->get();
+        $masterEndedAppointments = auth()->user()->appointments()
+            ->whereNull('canceled_at')
+            ->where('start_at', '<', now())
+            ->where('start_at', '>=', '2025-01-01 00:00')
+            ->where('start_at', '>=', now()->subDays(30))
+            ->whereHas('paymentRequirements', function($q) {
+                $q->where('expected_amount', '>', 0);
+            })
+            ->get();
     @endphp
 
     @if(count($masterEndedAppointments) > 0)

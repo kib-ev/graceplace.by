@@ -71,13 +71,15 @@
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap; text-align: right;">
-                                @if(isset($appointment->price))
-                                    @if($appointment->price == 0)
+                                @if(count($appointment->paymentRequirements) > 0)
+                                    @php
+                                        $paidAmount = $appointment->paymentRequirements->first()->getPaidAmount();
+                                    @endphp
+                                    @if($paidAmount == 0)
                                         FREE
                                     @else
-                                        {{ number_format($appointment->price, 2) }} BYN
+                                        {{ number_format($paidAmount, 2) }} BYN
                                     @endif
-
                                 @else
                                     <span style="color: #dddddd;">{{ number_format($appointment->getExpectedPrice(), 2) }} BYN</span>
                                 @endif

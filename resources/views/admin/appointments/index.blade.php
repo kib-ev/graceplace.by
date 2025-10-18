@@ -1,5 +1,19 @@
 @extends('admin.layouts.app')
 
+@section('style')
+    <style>
+        .badge-cash {
+            background: lightgreen;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+        .badge-service {
+            background: lightblue;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+    </style>
+@endsection
 
 @section('content')
     <div class="row">
@@ -72,6 +86,11 @@
                 </div>
 
             <div class="float-end">
+                <form action="{{ route('admin.appointments.create-requirements') }}" method="post" style="display: inline;">
+                    @csrf
+                    <input type="hidden" name="date" value="{{ $nextDate->format('Y-m-d') }}">
+                    <button type="submit" style="color: #333;" class="btn btn-link p-0 me-3">[создать платежные требования]</button>
+                </form>
                 <a href="{{ route('admin.appointments.merge-closest') }}?date={{ $nextDate->format('Y-m-d') }}">[объединить соседние записи]</a>
             </div>
 
@@ -187,13 +206,23 @@
                                     </td>
 
                                     <td style="width: 100px; white-space: nowrap; text-align: right;">
-
-                                        @if(is_null($appointment->price) && isset($appointment->place))
-                                            <span style="color: #c1bebe;">{{ $appointment->getExpectedPrice() }} BYN</span>
+                                        @if(count($appointment->paymentRequirements) == 0)
+                                            <span style="color: #c1bebe;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>
+                                        @elseif($appointment->isPaid())
+                                            <b style="color: #000;">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.') }} BYN</b>
                                         @else
-                                            <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
+                                            <span style="color: #000; font-weight: 200;">{{ number_format($appointment->paymentRequirements->first()->expected_amount, 2, '.') }} BYN</span>
                                         @endif
 
+                                        @if($appointment->payments->where('status', 'completed')->where('amount', '>', 0)->count() > 0)
+                                            <br>
+
+                                            @foreach($appointment->payments->where('status', 'completed') as $payment)
+                                                <span class="badge-{{ $payment->payment_method }}" style="font-size: 0.85em; color: #666;">
+                                                    {{ ucfirst($payment->payment_method) }}
+                                                </span>
+                                            @endforeach
+                                        @endif
                                     </td>
 
 
@@ -228,7 +257,7 @@
 
                             @empty
                                 <tr>
-                                    <td colspan="9">Нет записей</td>
+                                    <td colspan="10">Нет записей</td>
                                 </tr>
                             @endforelse
 
@@ -243,7 +272,7 @@
                                 <th style="text-align: right;">ИТОГО</th>
 
                                 <th style="width: 100px; white-space: nowrap; text-align: right;">
-                                    <b title="{{ number_format($appointmentsToDay->whereNull('canceled_at')->sum(function ($a) { return $a->getExpectedPrice(); }), 2, '.') }} BYN">{{ number_format($appointmentsToDay->sum('price'), 2, '.') }} BYN</b>
+                                    <b title="{{ number_format($appointmentsToDay->whereNull('canceled_at')->sum(function ($a) { return $a->getExpectedPrice(); }), 2, '.') }} BYN">{{ number_format($appointmentsToDay->whereNull('canceled_at')->sum(function ($a) { return count($a->paymentRequirements) > 0 ? $a->paymentRequirements->first()->getPaidAmount() : 0; }), 2, '.') }} BYN</b>
                                 </th>
 
                                 <th></th>
@@ -336,13 +365,20 @@
                                     </td>
 
                                     <td style="width: 100px; white-space: nowrap; text-align: right;">
-
-                                        @if(is_null($appointment->price) && isset($appointment->place))
-                                            <span style="color: #c1bebe;">{{ $appointment->getExpectedPrice() }} BYN</span>
+                                        @if(count($appointment->paymentRequirements) == 0)
+                                            <span style="color: #c1bebe;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>
+                                        @elseif($appointment->isPaid())
+                                            <b style="color: #000;">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.') }} BYN</b>
                                         @else
-                                            <b style="color: {{ is_null($appointment->price) ? 'red' : '#000' }}">{{ $appointment->price ?? '-' }} BYN</b>
+                                            <span style="color: #000; font-weight: 300;">{{ number_format($appointment->paymentRequirements->first()->expected_amount, 2, '.') }} BYN</span>
                                         @endif
 
+                                        @if($appointment->payments->where('status', 'completed')->count() > 0)
+                                            <br>
+                                            <span style="font-size: 0.85em; color: #666;">
+                                                {{ ucfirst($appointment->payments->where('status', 'completed')->first()->payment_method) }}
+                                            </span>
+                                        @endif
                                     </td>
 
                                     <td style="width: 1%;">

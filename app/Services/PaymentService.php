@@ -41,16 +41,20 @@ final class PaymentService
 
         $dateTime = $dateTime ?? now();
 
+        // If amount is 0 (100% discount), mark as paid immediately
+        $status = $amountDue == 0 ? 'paid' : ($additionalData['status'] ?? 'pending');
+        $remainingAmount = $amountDue == 0 ? 0 : ($additionalData['remaining_amount'] ?? $amountDue);
+
         $data = [
             'user_id' => $model->user_id,
             'payable_type' => $model::class,
             'payable_id' => $model->id,
             'amount_due' => $amountDue,
             'expected_amount' => $additionalData['expected_amount'] ?? $amountDue,
-            'remaining_amount' => $additionalData['remaining_amount'] ?? $amountDue,
+            'remaining_amount' => $remainingAmount,
             'price_per_hour_snapshot' => $additionalData['price_per_hour_snapshot'] ?? null,
             'due_date' => $expirationDays ? $dateTime->clone()->addDays($expirationDays) : null,
-            'status' => 'pending',
+            'status' => $status,
             'created_at' => $dateTime,
             'updated_at' => $dateTime,
         ];
@@ -77,7 +81,7 @@ final class PaymentService
         );
     }
 
-    public function createPayment($model, $paymentAmount, $paymentMethod, Carbon $dateTime = null)
+    public function createPayment($model, $paymentAmount, $paymentMethod, Carbon $dateTime = null, $note = null)
     {
         if (!method_exists($model, 'payments')) {
             throw new \Exception("Модель не поддерживает создание оплат.");
@@ -91,6 +95,7 @@ final class PaymentService
             'payable_id' => $model->id,
             'amount' => $paymentAmount,
             'payment_method' => $paymentMethod,
+            'note' => $note,
             'status' => 'pending',
             'created_at' => $dateTime,
             'updated_at' => $dateTime,
@@ -110,6 +115,14 @@ final class PaymentService
             $result = $payment->update([
                 'status' => $newPaymentStatus
             ]);
+
+            if ($newPaymentStatus == Payment::STATUS_COMPLETED && $currentPaymentStatus != Payment::STATUS_COMPLETED) {
+                $this->applyPaymentToRequirements($payment);
+            }
+
+            if ($currentPaymentStatus == Payment::STATUS_COMPLETED && $newPaymentStatus != Payment::STATUS_COMPLETED) {
+                $this->revertPaymentFromRequirements($payment);
+            }
         }
 
         // PAYMENT METHOD BALANCE
@@ -132,6 +145,64 @@ final class PaymentService
         $payment->mergeGuarded(['status']);
 
         return $result ?? false;
+    }
+
+    protected function applyPaymentToRequirements(Payment $payment)
+    {
+        $payable = $payment->payable;
+        if (!$payable) {
+            return;
+        }
+
+        $remainingAmount = $payment->amount;
+
+        // Apply payment to pending requirements
+        $requirements = $payable->paymentRequirements()
+            ->where('status', 'pending')
+            ->where('remaining_amount', '>', 0)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        foreach ($requirements as $requirement) {
+            if ($remainingAmount <= 0) {
+                break;
+            }
+
+            $amountToApply = min($remainingAmount, $requirement->remaining_amount);
+            $requirement->applyPayment($amountToApply);
+            $remainingAmount -= $amountToApply;
+        }
+    }
+
+    protected function revertPaymentFromRequirements(Payment $payment)
+    {
+        $payable = $payment->payable;
+        if (!$payable) {
+            return;
+        }
+
+        // Revert payment by adding amount back to requirements
+        $requirements = $payable->paymentRequirements()
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $remainingAmount = $payment->amount;
+
+        foreach ($requirements as $requirement) {
+            if ($remainingAmount <= 0) {
+                break;
+            }
+
+            $requirement->remaining_amount += $remainingAmount;
+            $requirement->amount_due += $remainingAmount;
+            
+            if ($requirement->remaining_amount > 0) {
+                $requirement->status = 'pending';
+            }
+            
+            $requirement->save();
+            break;
+        }
     }
 
     /**

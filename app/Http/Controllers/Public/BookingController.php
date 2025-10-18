@@ -59,12 +59,10 @@ class BookingController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'duration' => 'required|integer|min:60',
             'master_id' => 'required|exists:masters,id',
-            'price' => 'required|numeric',
         ]);
 
         $startAt = Carbon::parse($validated['date'] . ' ' . $validated['start_time']);
 
-        // Find master's user_id
         $master = Master::find($validated['master_id']);
         if (!$master) {
             return response()->json(['message' => 'Master not found'], 404);
@@ -75,9 +73,11 @@ class BookingController extends Controller
             'user_id' => $master->user_id,
             'start_at' => $startAt,
             'duration' => $validated['duration'],
-            'price' => $validated['price'],
-            'is_created_by_user' => true, // Assuming this is a user-initiated booking
+            'is_created_by_user' => true,
         ]);
+
+        $paymentService = new \App\Services\PaymentService();
+        $paymentService->createPaymentRequirementForAppointment($appointment);
 
         session()->flash('success', 'Вы успешно записаны!');
 
@@ -86,23 +86,25 @@ class BookingController extends Controller
         ]);
     }
 
-    // Обработка бронирования от клиента
     public function reserve(Request $request, Master $master)
     {
         $validated = $request->validate([
             'start_at' => 'required|date|after:now',
             'client_name' => 'required|string',
+            'place_id' => 'required|exists:places,id',
         ]);
 
-        // Можно добавить проверку что слот ещё свободен
-
-        Appointment::create([
-            'master_id' => $master->id,
+        $appointment = Appointment::create([
+            'user_id' => $master->user_id,
+            'place_id' => $validated['place_id'],
             'start_at' => $validated['start_at'],
-            'duration' => 60, // Например, фиксировано 1 час
+            'duration' => 60,
             'is_created_by_user' => true,
             'description' => 'Бронирование через сайт от ' . $validated['client_name'],
         ]);
+
+        $paymentService = new \App\Services\PaymentService();
+        $paymentService->createPaymentRequirementForAppointment($appointment);
 
         return redirect()->back()->with('success', 'Бронирование успешно!');
     }
