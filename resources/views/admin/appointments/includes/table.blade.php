@@ -71,17 +71,12 @@
                             </td>
 
                             <td style="width: 1%; min-width: 30px; white-space: nowrap; text-align: right;">
-                                @if(count($appointment->paymentRequirements) > 0)
-                                    @php
-                                        $paidAmount = $appointment->paymentRequirements->first()->getPaidAmount();
-                                    @endphp
-                                    @if($paidAmount == 0)
-                                        FREE
-                                    @else
-                                        {{ number_format($paidAmount, 2) }} BYN
-                                    @endif
+                                @if(count($appointment->paymentRequirements) == 0)
+                                    <span style="color: #dddddd;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>
+                                @elseif($appointment->isPaid())
+                                    <b style="color: #000;">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.') }} BYN</b>
                                 @else
-                                    <span style="color: #dddddd;">{{ number_format($appointment->getExpectedPrice(), 2) }} BYN</span>
+                                    <span style="color: #000; font-weight: 200;">{{ number_format($appointment->paymentRequirements->first()->expected_amount, 2, '.') }} BYN</span>
                                 @endif
                             </td>
 

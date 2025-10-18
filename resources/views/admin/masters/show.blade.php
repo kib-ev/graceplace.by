@@ -65,41 +65,32 @@
                             </tr>
 
                             <tr>
-                                <td>Количество записей: {{ $totalCount = \App\Models\Appointment::where('user_id', $master->user_id)->count() }}</td>
+                                <td>Количество записей: {{ $totalCount }}</td>
                             </tr>
 
                             <tr>
                                 <td>
-                                    Количество отмен: {{ $cancelCount = \App\Models\Appointment::whereNotNull('canceled_at')->where('user_id', $master->user_id)->count() }}
+                                    Количество отмен: {{ $cancelCount }}
                                     / {{ $totalCount ? number_format($cancelCount / $totalCount * 100, 0) : '0' }} %
                                 </td>
                             </tr>
 
                             <tr>
                                 <td>
-                                    Количество посещений: {{ $visitCount = \App\Models\Appointment::whereNull('canceled_at')->where('user_id', $master->user_id)->count() }}
+                                    Количество посещений: {{ $visitCount }}
                                     / {{ $totalCount ? number_format($visitCount / $totalCount * 100, 0) : '0' }} %
                                 </td>
                             </tr>
 
                             <tr>
-                                <td>СУММА: {{ $sum = \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-                                        ->whereIn('payable_id', \App\Models\Appointment::whereNull('canceled_at')
-                                            ->where('user_id', $master->user_id)
-                                            ->select('id'))
-                                        ->sum('expected_amount') }} BYN</td>
+                                <td>СУММА: {{ $sum = $sumExpected }} BYN</td>
                             </tr>
                             <tr>
-                                <td>ОПЛАЧЕНО: {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-                                        ->whereIn('payable_id', \App\Models\Appointment::whereNull('canceled_at')
-                                            ->where('user_id', $master->user_id)
-                                            ->select('id'))
-                                        ->selectRaw('SUM(expected_amount - remaining_amount) as paid_sum')
-                                        ->value('paid_sum') }} BYN</td>
+                                <td>ОПЛАЧЕНО: {{ $sumPaid }} BYN</td>
                             </tr>
 
                             <tr>
-                                <td>Всего часов: {{ $hours = \App\Models\Appointment::whereNull('canceled_at')->where('user_id', $master->user_id)->sum('duration') / 60 }}</td>
+                                <td>Всего часов: {{ $hours = $totalMinutes / 60 }}</td>
                             </tr>
 
                             <tr>
@@ -225,24 +216,13 @@
                             <tr>
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
-                                    <td>
-                                        {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-                                            ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
-                                                ->whereNull('canceled_at')
-                                                ->whereDate('start_at', '<=', now())
-                                                ->whereYear('start_at', '2024')
-                                                ->whereMonth('start_at', $i)
-                                                ->select('id'))
-                                            ->sum('expected_amount') }}
-                                    </td>
+                                    <td>{{ number_format($expectedByMonth[2024][$i] ?? 0, 2) }}</td>
                                 @endfor
                             </tr>
                             <tr>
                                 <td><b>Часов аренды</b></td>
                                 @for($i = 1; $i <=12; $i++)
-                                    <td>
-                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2024')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
-                                    </td>
+                                    <td>{{ number_format(($durationByMonth[2024][$i] ?? 0) / 60, 2) }}</td>
                                 @endfor
                             </tr>
                         </table>
@@ -259,24 +239,13 @@
                             <tr>
                                 <td><b>Сумма оплат</b></td>
                                 @for($i = 1; $i <=12; $i++)
-                                    <td>
-                                        {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-                                            ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
-                                                ->whereNull('canceled_at')
-                                                ->whereDate('start_at', '<=', now())
-                                                ->whereYear('start_at', '2025')
-                                                ->whereMonth('start_at', $i)
-                                                ->select('id'))
-                                            ->sum('expected_amount') }}
-                                    </td>
+                                    <td>{{ number_format($expectedByMonth[2025][$i] ?? 0, 2) }}</td>
                                 @endfor
                             </tr>
                             <tr>
                                 <td><b>Часов аренды</b></td>
                                 @for($i = 1; $i <=12; $i++)
-                                    <td>
-                                        {{ number_format($master->user->appointments()->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60, 2) }}
-                                    </td>
+                                    <td>{{ number_format(($durationByMonth[2025][$i] ?? 0) / 60, 2) }}</td>
                                 @endfor
                             </tr>
                         </table>
@@ -296,25 +265,13 @@
                                 <tr>
                                     <th rowspan="2">{{ $uniqueAppointment->place->name }}</th>
                                     @for($i = 1; $i <=12; $i++)
-                                        <td>
-                                            {{ $master->user->appointments()->where('place_id', $uniqueAppointment->place_id)->whereNull('canceled_at')->whereDate('start_at', '<=', now())->whereYear('start_at', '2025')->whereMonth('start_at', $i)->sum('duration') / 60  }}
-                                        </td>
+                                        <td>{{ ($placeDuration[$uniqueAppointment->place_id][$i] ?? 0) / 60 }}</td>
                                     @endfor
 
                                 </tr>
                                 <tr>
                                     @for($i = 1; $i <=12; $i++)
-                                        <td>
-                                            {{ \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-                                                ->whereIn('payable_id', \App\Models\Appointment::where('user_id', $master->user_id)
-                                                    ->where('place_id', $uniqueAppointment->place_id)
-                                                    ->whereNull('canceled_at')
-                                                    ->whereDate('start_at', '<=', now())
-                                                    ->whereYear('start_at', '2025')
-                                                    ->whereMonth('start_at', $i)
-                                                    ->select('id'))
-                                                ->sum('expected_amount') }}
-                                        </td>
+                                        <td>{{ number_format($placeExpected[$uniqueAppointment->place_id][$i] ?? 0, 2) }}</td>
                                     @endfor
                                 </tr>
                             @endforeach
