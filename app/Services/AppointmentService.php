@@ -308,6 +308,9 @@ final class AppointmentService
             $appointment->canceled_at = now();
             $appointment->save();
 
+            // Remove any existing payment requirements by default on cancel
+            $appointment->paymentRequirements()->delete();
+
             // Добавляем комментарий с причиной отмены
             if ($cancellationReason) {
                 $appointment->addComment($user, $cancellationReason, Appointment::BOOKING_CANCEL_COMMENT);
