@@ -16,6 +16,7 @@
             <a href="/admin/appointments/cancel-stats">Статистика отмен</a>
             <a href="/admin/appointments-chart">График загрузки по часам</a>
             <a href="/admin/appointments-stats">Тепловая карта загрузки</a>
+            <a href="/admin/revenue/hours">Выручка по часам</a>
 
             <table class="table table-bordered">
                 <tr>

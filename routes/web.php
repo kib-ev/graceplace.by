@@ -193,6 +193,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return view('admin.appointments_cancel_stats', compact('losses', 'startDate', 'endDate'));
     });
 
+    // REVENUE
+    Route::get('/revenue/hours', [\App\Http\Controllers\Admin\RevenueController::class, 'byHours'])
+        ->name('revenue.hours');
+
     Route::get('/appointments/merge-closest', [\App\Http\Controllers\Admin\AppointmentController::class, 'mergeClosestAppointments'])
         ->name('appointments.merge-closest');
 
