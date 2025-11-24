@@ -31,6 +31,22 @@
                 </table>
             @else
                 <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 1%; min-width: 30px;">#</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">Дата</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">День</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">Время</th>
+                            <th style="width: 1%; min-width: 30px;"></th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">Мастер</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">Место</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap; text-align: right;">Сумма</th>
+                            <th>Описание / Комментарии</th>
+                            <th style="width: 1%; min-width: 90px; white-space: nowrap;">Акт</th>
+                            <th style="width: 1%; min-width: 30px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     @foreach($appointmentByStatus as $appointment)
 
                         <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
@@ -106,11 +122,20 @@
                                 </div>
                             </td>
 
+                            <td style="width: 1%; min-width: 90px; white-space: nowrap;">
+                                @if($appointment->isPaid())
+                                    <a target="_blank" href="{{ url('/user/documents/' . $appointment->id . '?download') }}">Скачать</a>
+                                @else
+                                    <span style="color: #c1bebe;">—</span>
+                                @endif
+                            </td>
+
                             <td style="width: 1%; min-width: 30px; white-space: nowrap;">
                                 <a href="{{ route('admin.appointments.edit', $appointment) }}"><span class="fa fa-edit"></span></a>
                             </td>
                         </tr>
                     @endforeach
+                    </tbody>
                 </table>
             @endif
         </div>
