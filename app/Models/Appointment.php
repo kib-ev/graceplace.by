@@ -43,11 +43,10 @@ class Appointment extends Model
     public function scopeWithDebt(Builder $builder)
     {
         return $builder
-            ->where('start_at', '<=', now()->startOfDay())
+            ->whereRaw('TIMESTAMPADD(MINUTE, duration, start_at) <= ?', [now()])
             ->whereNull('canceled_at')
             ->whereHas('paymentRequirements', function($query) {
-                $query->where('status', '!=', 'paid')
-                      ->where('remaining_amount', '>', 0);
+                $query->where('remaining_amount', '>', 0);
             });
     }
 

@@ -40,7 +40,7 @@
                     <div class="mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="audience_mode" id="aud_all" value="all_masters" {{ old('audience_mode', 'all_masters') === 'all_masters' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="aud_all">Все пользователи с ролью master</label>
+                            <label class="form-check-label" for="aud_all">Все активные пользователи с ролью master</label>
                         </div>
                     </div>
                     <div class="mb-2">

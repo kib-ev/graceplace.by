@@ -392,7 +392,28 @@
                                 </tr>
                             @endforelse
 
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th style="text-align: right;">ИТОГО</th>
 
+                                @php
+                                    $totalCanceledPaid = $appointmentsToDay->whereNotNull('canceled_at')->sum(function ($a) {
+                                        return $a->payments->where('status', 'completed')->sum('amount');
+                                    });
+                                @endphp
+
+                                <th style="width: 100px; white-space: nowrap; text-align: right;">
+                                    <b>{{ number_format($totalCanceledPaid, 2, '.') }} BYN</b>
+                                </th>
+
+                                <th></th>
+
+                            </tr>
                         </table>
                     </div>
                 </div>

@@ -53,6 +53,7 @@ class MandatoryNoticeController extends Controller
         if ($data['audience_mode'] === 'all_masters') {
             $userIds = User::query()
                 ->role('master')
+                ->where('is_active', 1)
                 ->pluck('id')
                 ->all();
         } else {

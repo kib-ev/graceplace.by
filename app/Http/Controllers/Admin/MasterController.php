@@ -80,13 +80,13 @@ class MasterController extends Controller
                 'debt_amount_byn' => PaymentRequirement::query()
                     ->selectRaw('COALESCE(SUM(remaining_amount), 0)')
                     ->where('payable_type', Appointment::class)
-                    ->where('status', '!=', 'paid')
+                    ->where('remaining_amount', '>', 0)
                     ->whereIn('payable_id', function ($q) {
                         $q->from('appointments')
                           ->select('id')
                           ->whereColumn('appointments.user_id', 'masters.user_id')
                           ->whereNull('canceled_at')
-                          ->whereDate('start_at', '<=', now()->startOfDay());
+                          ->whereRaw('TIMESTAMPADD(MINUTE, duration, start_at) <= ?', [now()]);
                     }),
             ])
             ->orderBy('masters.created_at')

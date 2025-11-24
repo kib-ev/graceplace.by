@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Master;
+use App\Models\PaymentRequirement;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -391,12 +392,35 @@ final class AppointmentService
 
                         if($appointment1->end_at == $appointment2->start_at) {
                             $newDuration = $appointment1->duration + $appointment2->duration;
+
+                            // move comments from second to first
                             $appointment2->comments()->update([
                                 'model_id' => $appointment1->id
                             ]);
+
+                            // remove existing payment requirements for both appointments
+                            $appointment1->paymentRequirements()->delete();
+                            $appointment2->paymentRequirements()->delete();
+
+                            // delete second appointment
                             $appointment2->delete();
+
+                            // update duration for first
                             $appointment1->update([
                                 'duration' => $newDuration,
+                            ]);
+
+                            // create fresh payment requirement for merged appointment
+                            $expected = $this->calculateAppointmentCost($appointment1->fresh(['place']));
+                            PaymentRequirement::create([
+                                'user_id' => $appointment1->user_id,
+                                'payable_type' => Appointment::class,
+                                'payable_id' => $appointment1->id,
+                                'amount_due' => $expected,
+                                'expected_amount' => $expected,
+                                'remaining_amount' => $expected,
+                                'status' => PaymentRequirement::STATUS_PENDING,
+                                'due_date' => $appointment1->start_at->toDateString(),
                             ]);
                         }
                     });
