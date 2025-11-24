@@ -25,6 +25,18 @@ class MasterController extends Controller
     {
         $search = $request->get('search');
 
+        $activeCount = Master::query()
+            ->whereHas('user', function (Builder $user) {
+                $user->where('is_active', 1);
+            })
+            ->count();
+
+        $inactiveCount = Master::query()
+            ->whereHas('user', function (Builder $user) {
+                $user->where('is_active', 0);
+            })
+            ->count();
+
         $masters = Master::query()
             ->select('masters.*')
             ->when($request->has('is_active'), function (Builder $masters) use ($request) {
@@ -92,7 +104,7 @@ class MasterController extends Controller
             ->orderBy('masters.created_at')
             ->get();
 
-        return view('admin.masters.index', compact('masters'));
+        return view('admin.masters.index', compact('masters', 'activeCount', 'inactiveCount'));
     }
 
     /**

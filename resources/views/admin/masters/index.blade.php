@@ -22,8 +22,12 @@
             <a href="{{ route('admin.masters.create') }}" class="btn btn-primary">Создать</a>
             <hr>
 
-            <a href="?is_active=1">Активные</a>
-            <a href="?is_active=0">Не активные</a>
+            <a href="?is_active=1" class="{{ request('is_active') === '1' ? 'fw-bold' : '' }}">
+                Активные ({{ $activeCount }})
+            </a>
+            <a href="?is_active=0" class="{{ request('is_active') === '0' ? 'fw-bold' : '' }}" style="margin-left: 10px;">
+                Неактивные ({{ $inactiveCount }})
+            </a>
 
             <table class="table table-bordered mb-5">
                 <tr>
