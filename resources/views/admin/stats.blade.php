@@ -65,6 +65,10 @@
                     <td>Средняя стоимость часа</td>
                     <td>{{ $appointmentsStats->total_duration ? number_format($appointmentsStats->total_price / ($appointmentsStats->total_duration / 60), 2) : 0 }}</td>
                 </tr>
+                <tr>
+                    <td>Штрафы</td>
+                    <td>{{ $canceledWithPaymentCount }}</td>
+                </tr>
             </table>
 
             2024

@@ -32,6 +32,13 @@ class StatsController extends Controller
         })
         ->first();
 
+        $canceledWithPaymentCount = Appointment::whereNotNull('canceled_at')
+            ->whereHas('payments', function ($query) {
+                $query->where('status', 'completed')
+                    ->where('amount', '>', 0);
+            })
+            ->count();
+
         // 3. Месячная статистика 2024
         $monthlyStats2024 = Appointment::selectRaw('
             MONTH(appointments.start_at) as month,
@@ -155,7 +162,8 @@ class StatsController extends Controller
             'monthlyStats2024', 'monthlyStats2025',
             'newMasters2024', 'newMasters2025',
             'uniqueMasters2024', 'uniqueMasters2025',
-            'weeklyStatsPrev', 'weeklyStatsCurr'
+            'weeklyStatsPrev', 'weeklyStatsCurr',
+            'canceledWithPaymentCount'
         ));
     }
 } 
