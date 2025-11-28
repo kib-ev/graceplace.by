@@ -94,14 +94,6 @@
 
                         <td>
                             {{ $master->created_at->format('d.m.Y') }}
-
-                            @isset($master->user->offer_accept_date)
-                                <br>
-                                <span style="background: greenyellow;">
-                                    {{ $master->user->offer_accept_date?->format('d.m.Y') }}
-                                </span>
-                            @endisset
-
                         </td>
 
                         <td style="white-space: nowrap;">

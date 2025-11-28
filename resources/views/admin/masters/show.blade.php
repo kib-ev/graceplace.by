@@ -126,15 +126,6 @@
                                 </td>
                             </tr>
 
-                            <tr>
-                                <td>
-                                    Дата согласия с офертой:
-                                    @if(isset($master->user->offer_accept_date))
-                                        {{ \Illuminate\Support\Carbon::parse($master->user->offer_accept_date)->format('d.m.Y H:i') }}
-                                    @endif
-                                </td>
-                            </tr>
-
                         </table>
 
                         <div class="text-end">

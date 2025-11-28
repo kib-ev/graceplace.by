@@ -403,20 +403,16 @@ Route::get('/pay', function () {
 });
 
 Route::get('/public-offer', function () {
+    return view('public.offers.offer-20251101');
+});
+Route::get('/public-offer/20251101', function () {
+    return view('public.offers.offer-20251101');
+});
+Route::get('/public-offer/20250101', function () {
     return view('public.offers.offer-20250101');
 });
 
-Route::post('/public-offer/accept', function () {
-    $user = auth()->user();
-
-    if ($user) {
-        $user->update([
-            'offer_accept_date' => now()
-        ]);
-
-        return redirect()->route('home');
-    }
-});
+// Маршрут акцепта оферты больше не используется, акцепт фиксируется через действия пользователя (регистрация, бронирование, оплата).
 
 
 Route::get('/test', function () {
