@@ -29,16 +29,27 @@ class Place extends Model
         return $this->hasMany(PlacePrice::class)->orderBy('effective_from', 'desc');
     }
 
+    public function photos()
+    {
+        return $this->hasMany(PlacePhoto::class)->orderBy('sort_order');
+    }
+
     public function getPriceForDate(Carbon $date): float
     {
+        // Normalize the date to start of day for consistent comparison
+        $dateNormalized = $date->copy()->startOfDay();
+        
         if ($this->relationLoaded('prices')) {
             $price = $this->prices
-                ->where('effective_from', '<=', $date)
+                ->filter(function($price) use ($dateNormalized) {
+                    return $price->effective_from->startOfDay()->lte($dateNormalized);
+                })
                 ->sortByDesc('effective_from')
                 ->first();
         } else {
+            // Use toDateString() to ensure proper date comparison
             $price = $this->prices()
-                ->where('effective_from', '<=', $date)
+                ->where('effective_from', '<=', $dateNormalized->toDateString())
                 ->orderBy('effective_from', 'desc')
                 ->first();
         }

@@ -15,8 +15,8 @@ class AdminController extends Controller
 
     public function downloadChromeExtension()
     {
-        $extensionPath = resource_path('chrome-extension/instagram-info-v2');
-        $zipFileName = 'chrome-extension-instagram-info-v2.zip';
+        $extensionPath = resource_path('chrome-extension/instagram');
+        $zipFileName = 'chrome-extension-instagram.zip';
         $zipPath = storage_path('app/' . $zipFileName);
 
         if (File::exists($zipPath)) {

@@ -32,7 +32,8 @@ return [
     ],
 
     'api' => [
-        'token' => env('API_TOKEN'),
+        // Токен, используемый внешними клиентами (например, расширением Instagram Info)
+        'token' => env('INSTAGRAM_INFO_API_TOKEN'),
     ],
 
     'instagram' => [

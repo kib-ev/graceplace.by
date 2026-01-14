@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Place;
+use App\Models\PlacePhoto;
+use App\Models\PlacePrice;
+use App\Services\AppointmentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class PlaceController extends Controller
 {
@@ -29,10 +34,28 @@ class PlaceController extends Controller
      */
     public function store(Request $request)
     {
-        $place = Place::make();
-        $place->fill($request->all())->save();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image_path' => 'nullable|string',
+            'sort' => 'nullable|integer',
+            'is_hidden' => 'nullable|boolean',
+            'price_per_hour' => 'required|numeric|min:0',
+        ]);
 
-        return redirect()->route('admin.places.show', $place);
+        $place = Place::make();
+        $place->fill($request->except('price_per_hour'))->save();
+
+        // Create initial price history entry
+        // Set effective_from to today's date (as date string) so price is available for all future dates
+        PlacePrice::create([
+            'place_id' => $place->id,
+            'price_per_hour' => $validated['price_per_hour'],
+            'effective_from' => Carbon::today()->toDateString(),
+        ]);
+
+        return redirect()->route('admin.places.show', $place)
+            ->with('success', 'Рабочее место успешно создано с начальной ценой.');
     }
 
     /**
@@ -55,20 +78,39 @@ class PlaceController extends Controller
     
     private function getMonthlyStats(Place $place, int $year): array
     {
-        $monthlyData = $place->appointments()
-            ->whereYear('start_at', $year)
-            ->selectRaw('MONTH(start_at) as month, SUM(price) as total_price, SUM(duration) as total_duration')
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month')
-            ->map(function($item) {
-                return [
-                    'price' => $item->total_price ?? 0,
-                    'duration' => ($item->total_duration ?? 0) / 60
-                ];
-            })
-            ->toArray();
+        $appointmentService = new AppointmentService();
         
+        // Get all appointments for the year with place and prices loaded
+        $appointments = $place->appointments()
+            ->whereYear('start_at', $year)
+            ->whereNull('canceled_at')
+            ->with(['place.prices'])
+            ->get();
+        
+        // Group by month and calculate totals
+        $monthlyData = [];
+        foreach ($appointments as $appointment) {
+            $month = (int) $appointment->start_at->format('n');
+            
+            if (!isset($monthlyData[$month])) {
+                $monthlyData[$month] = [
+                    'price' => 0,
+                    'duration' => 0
+                ];
+            }
+            
+            try {
+                $price = $appointmentService->calculateAppointmentCost($appointment);
+                $monthlyData[$month]['price'] += $price;
+            } catch (\Exception $e) {
+                // Skip appointments without price history
+                continue;
+            }
+            
+            $monthlyData[$month]['duration'] += $appointment->duration / 60;
+        }
+        
+        // Fill in all months
         $stats = [];
         for ($i = 1; $i <= 12; $i++) {
             $stats[$i] = $monthlyData[$i] ?? ['price' => 0, 'duration' => 0];
@@ -82,6 +124,7 @@ class PlaceController extends Controller
      */
     public function edit(Place $place)
     {
+        $place->load('photos');
         return view('admin.places.edit', compact('place'));
     }
 
@@ -101,5 +144,53 @@ class PlaceController extends Controller
     public function destroy(Place $place)
     {
         //
+    }
+
+    /**
+     * Upload photo for place.
+     */
+    public function uploadPhoto(Request $request, Place $place)
+    {
+        $request->validate([
+            'photo' => 'required|image|max:5120', // max 5MB
+        ]);
+
+        $path = $request->file('photo')->store('places', 'public');
+
+        $photo = PlacePhoto::create([
+            'place_id' => $place->id,
+            'file_path' => $path,
+            'sort_order' => $place->photos()->max('sort_order') + 1,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'photo' => [
+                'id' => $photo->id,
+                'url' => Storage::url($photo->file_path),
+                'path' => $photo->file_path,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete photo for place.
+     */
+    public function deletePhoto(Place $place, PlacePhoto $photo)
+    {
+        // Проверяем, что фото принадлежит этому месту
+        if ($photo->place_id !== $place->id) {
+            return response()->json(['success' => false, 'message' => 'Photo does not belong to this place'], 403);
+        }
+
+        // Удаляем файл из хранилища
+        if (Storage::disk('public')->exists($photo->file_path)) {
+            Storage::disk('public')->delete($photo->file_path);
+        }
+
+        // Удаляем запись из базы данных
+        $photo->delete();
+
+        return response()->json(['success' => true]);
     }
 }

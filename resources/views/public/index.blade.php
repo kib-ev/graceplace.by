@@ -243,18 +243,20 @@
 @endpush
 
 @section('content')
-    {{-- Select Date --}}
-    <div class="row mb-2 mt-2">
-        <div class="col-12">
-            <form class="me-2" id="dateForm" action="" style="display: inline-block;">
-                <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
-            </form>
+    @role('admin')
+        {{-- Select Date --}}
+        <div class="row mb-2 mt-2">
+            <div class="col-12">
 
-            @role('admin')
+                <form class="me-2" id="dateForm" action="" style="display: inline-block;">
+                    <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
+                </form>
+
                 <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}"> Записи {{ $date->format('d.m.Y') }}</a></span>
-            @endrole
+
+            </div>
         </div>
-    </div>
+    @endrole
 
     <form class="mb-2" id="dateForm" action="">
         <div class="d-flex overflow-auto" id="dateCarousel"></div>
@@ -266,7 +268,7 @@
         <div class="row mb-3" style="overflow-x: scroll;">
             <div class="col-12">
                 <div id="places" class="overflow-scroll table-drag-scroll">
-                    @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user(), function ($query) {
+                    @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user() && !is_admin(), function ($query) {
                                 $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
                                 $query->whereIn('id', $visibleWorkspaces);
                         })->orderBy('sort')->get() as $place)

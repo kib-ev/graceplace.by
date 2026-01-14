@@ -37,7 +37,7 @@ Route::middleware(['api_token'])->group(function() {  // php artisan api:api:gen
                 'name' => implode(' ', [$master->person->last_name, $master->person->first_name, $master->person->patronymic]),
                 'link' => route('admin.masters.show', $master->id),
                 'phone' => $master->user->phone,
-                'username' => $username
+                'username' => $username,
             ]);
         }
 

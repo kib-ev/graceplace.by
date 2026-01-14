@@ -256,6 +256,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('prices/{price}/edit', [\App\Http\Controllers\Admin\PlacePriceController::class, 'edit'])->name('prices.edit');
         Route::put('prices/{price}', [\App\Http\Controllers\Admin\PlacePriceController::class, 'update'])->name('prices.update');
         Route::delete('prices/{price}', [\App\Http\Controllers\Admin\PlacePriceController::class, 'destroy'])->name('prices.destroy');
+        Route::post('photos', [\App\Http\Controllers\PlaceController::class, 'uploadPhoto'])->name('photos.store');
+        Route::delete('photos/{photo}', [\App\Http\Controllers\PlaceController::class, 'deletePhoto'])->name('photos.destroy');
     });
 
     // LOGS

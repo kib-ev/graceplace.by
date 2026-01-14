@@ -35,16 +35,16 @@ class GenerateApiToken extends Command
         $envPath = base_path('.env');
         $envContent = file_get_contents($envPath);
 
-        if (str_contains($envContent, 'API_TOKEN=')) {
+        if (str_contains($envContent, 'INSTAGRAM_INFO_API_TOKEN=')) {
             // Обновляем существующий токен
             $envContent = preg_replace(
-                '/API_TOKEN=.*/',
-                'API_TOKEN=' . $token,
+                '/INSTAGRAM_INFO_API_TOKEN=.*/',
+                'INSTAGRAM_INFO_API_TOKEN=' . $token,
                 $envContent
             );
         } else {
             // Добавляем новый токен
-            $envContent .= "\nAPI_TOKEN=" . $token;
+            $envContent .= "\nINSTAGRAM_INFO_API_TOKEN=" . $token;
         }
 
         // Сохраняем изменения в .env файл
