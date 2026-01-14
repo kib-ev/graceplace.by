@@ -69,7 +69,22 @@ class StatsController extends Controller
             ->get()
             ->keyBy('month');
 
-        // 5. Новые мастера по месяцам 2024
+        // 5. Месячная статистика 2026
+        $monthlyStats2026 = Appointment::selectRaw('
+            MONTH(appointments.start_at) as month,
+            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
+            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
+        ')
+            ->leftJoin('payment_requirements', function($join) {
+                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+            })
+            ->whereYear('appointments.start_at', 2026)
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month');
+
+        // 6. Новые мастера по месяцам 2024
         $newMasters2024 = Master::selectRaw('
             MONTH(created_at) as month,
             COUNT(*) as count
@@ -79,7 +94,7 @@ class StatsController extends Controller
             ->get()
             ->keyBy('month');
 
-        // 6. Новые мастера по месяцам 2025
+        // 7. Новые мастера по месяцам 2025
         $newMasters2025 = Master::selectRaw('
             MONTH(created_at) as month,
             COUNT(*) as count
@@ -89,7 +104,17 @@ class StatsController extends Controller
             ->get()
             ->keyBy('month');
 
-        // 7. Уникальные мастера по месяцам (2024)
+        // 8. Новые мастера по месяцам 2026
+        $newMasters2026 = Master::selectRaw('
+            MONTH(created_at) as month,
+            COUNT(*) as count
+        ')
+            ->whereYear('created_at', 2026)
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month');
+
+        // 9. Уникальные мастера по месяцам (2024)
         $uniqueMasters2024 = Appointment::selectRaw('
             MONTH(start_at) as month,
             COUNT(DISTINCT user_id) as count
@@ -100,7 +125,7 @@ class StatsController extends Controller
             ->get()
             ->keyBy('month');
 
-        // 8. Уникальные мастера по месяцам (2025)
+        // 10. Уникальные мастера по месяцам (2025)
         $uniqueMasters2025 = Appointment::selectRaw('
             MONTH(start_at) as month,
             COUNT(DISTINCT user_id) as count
@@ -111,7 +136,18 @@ class StatsController extends Controller
             ->get()
             ->keyBy('month');
 
-        // 9. Недели за прошлый и текущий год (выручка и часы)
+        // 11. Уникальные мастера по месяцам (2026)
+        $uniqueMasters2026 = Appointment::selectRaw('
+            MONTH(start_at) as month,
+            COUNT(DISTINCT user_id) as count
+        ')
+            ->whereYear('start_at', 2026)
+            ->whereNull('canceled_at')
+            ->groupBy('month')
+            ->get()
+            ->keyBy('month');
+
+        // 12. Недели за прошлый и текущий год (выручка и часы)
         $weeklyStats = function($year) {
             $weeks = collect();
             $firstMonday = (new \DateTime("$year-01-01"))->modify('Monday this week');
@@ -159,9 +195,9 @@ class StatsController extends Controller
 
         return view('admin.stats', compact(
             'placesCount', 'mastersCount', 'appointmentsStats',
-            'monthlyStats2024', 'monthlyStats2025',
-            'newMasters2024', 'newMasters2025',
-            'uniqueMasters2024', 'uniqueMasters2025',
+            'monthlyStats2024', 'monthlyStats2025', 'monthlyStats2026',
+            'newMasters2024', 'newMasters2025', 'newMasters2026',
+            'uniqueMasters2024', 'uniqueMasters2025', 'uniqueMasters2026',
             'weeklyStatsPrev', 'weeklyStatsCurr',
             'canceledWithPaymentCount'
         ));

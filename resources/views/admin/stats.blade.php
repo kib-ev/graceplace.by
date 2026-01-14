@@ -152,6 +152,47 @@
                     <td></td>
                 </tr>
             </table>
+
+            2026
+            <table class="table table-bordered">
+                <tr>
+                    <td style="width: 110px;"></td>
+                    @for($i = 1; $i <=12; $i++)
+                        <td style="width: 90px;">{{ \Carbon\Carbon::parse('01-'. $i . '-2026')->format('M-Y') }}</td>
+                    @endfor
+                    <td><b>ВСЕГО</b></td>
+                </tr>
+                <tr>
+                    <td>Выручка</td>
+                    @php $total2026 = 0; @endphp
+                    @for($i = 1; $i <=12; $i++)
+                        <td>{{ $monthlyStats2026[$i]->revenue ?? 0 }}</td>
+                        @php $total2026 += $monthlyStats2026[$i]->revenue ?? 0; @endphp
+                    @endfor
+                    <td>{{ $total2026 }}</td>
+                </tr>
+                <tr>
+                    <td>Часы аренды</td>
+                    @php $hours2026 = 0; @endphp
+                    @for($i = 1; $i <=12; $i++)
+                        <td>{{ ($monthlyStats2026[$i]->hours ?? 0) / 60 }}</td>
+                        @php $hours2026 += $monthlyStats2026[$i]->hours ?? 0; @endphp
+                    @endfor
+                    <td>{{ $hours2026 / 60 }}</td>
+                </tr>
+                <tr>
+                    <td>Мастера</td>
+                    @for($i = 1; $i <=12; $i++)
+                        <td>
+                            @if(($newMasters2026[$i]->count ?? 0) > 0)
+                                +{{ $newMasters2026[$i]->count }} /
+                            @endif
+                            {{ $uniqueMasters2026[$i]->count ?? 0 }}
+                        </td>
+                    @endfor
+                    <td></td>
+                </tr>
+            </table>
         </div>
     </div>
 
