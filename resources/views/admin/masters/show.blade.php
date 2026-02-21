@@ -3,11 +3,34 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Мастер - {{ $master->person->last_name }} {{ $master->person->first_name }} {{ $master->person->patronymic }}</h1>
+            <h1>Мастер - {{ $master->full_name }}</h1>
             <hr>
 
-            @if($master->user->getDebtAmount() > 0)
-                <div class="bg-danger text-white p-3 mb-3" style="font-size: 1.4em;">Задолженность: {{ number_format($master->user->getDebtAmount(), 2) }} </div>
+            @php $debtAmount = $master->getDebtAmount(); @endphp
+            @if($debtAmount > 0)
+                <div class="bg-danger text-white p-3 mb-3" style="font-size: 1.4em;">
+                    Задолженность: {{ number_format($debtAmount, 2) }}
+                    <table class="table table-sm table-borderless text-white mb-0 mt-2" style="font-size: 0.8em; width: auto;">
+                        <thead>
+                            <tr>
+                                <th class="pe-3">Дата</th>
+                                <th class="pe-3">Место</th>
+                                <th class="text-end pe-3">Долг, BYN</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($master->getDebtAppointments() as $da)
+                                <tr>
+                                    <td class="pe-3">{{ $da->start_at->format('d.m.Y H:i') }}</td>
+                                    <td class="pe-3">{{ $da->place->name ?? '—' }}</td>
+                                    <td class="text-end pe-3">{{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}</td>
+                                    <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-white" style="opacity: 0.8;">→ запись</a></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
 
             <nav>
@@ -39,9 +62,7 @@
                             <tr>
                                 <td>
                                     <ul style="list-style-type: none; margin: 0px; padding: 0px;">
-                                        @foreach($master->person->phones as $phone)
-                                            <li>{{ $phone->number }}</li>
-                                        @endforeach
+                                        <li>{{ $master->phone }}</li>
                                     </ul>
                                 </td>
                             </tr>
@@ -108,9 +129,7 @@
 
                             <tr>
                                 <td style="background: lightgoldenrodyellow">
-                                    @foreach($master->person->phones as $phone)
-                                        <input class="form-control" type="text" value="{{ $phone->number }} {{ $master->person->last_name }} {{ $master->person->first_name }} {{ $master->person->patronymic }}" readonly>
-                                    @endforeach
+                                    <input class="form-control" type="text" value="{{ $master->phone }} {{ $master->full_name }}" readonly>
                                 </td>
                             </tr>
                             <tr>

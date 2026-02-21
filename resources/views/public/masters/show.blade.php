@@ -7,9 +7,9 @@
             <div class="card">
                 <div class="card-body">
                     @if($master->avatar)
-                        <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->person->full_name }}">
+                        <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->full_name }}">
                     @endif
-                    <h1 class="h3">{{ $master->person->full_name }}</h1>
+                    <h1 class="h3">{{ $master->full_name }}</h1>
 
                     @if($master->description)
                         <p class="text-muted">{{ $master->description }}</p>

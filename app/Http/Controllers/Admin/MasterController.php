@@ -25,18 +25,12 @@ class MasterController extends Controller
     {
         $search = $request->get('search');
 
-        $activeCount = Master::query()
-            ->whereHas('user', function (Builder $user) {
-                $user->where('is_active', 1);
-            })
-            ->count();
-
-        $inactiveCount = Master::query()
-            ->whereHas('user', function (Builder $user) {
-                $user->where('is_active', 0);
-            })
-            ->count();
-
+        $counts = Master::query()
+            ->join('users', 'users.id', '=', 'masters.user_id')
+            ->selectRaw('SUM(users.is_active = 1) as active, SUM(users.is_active = 0) as inactive')
+            ->first();
+        $activeCount   = (int) $counts->active;
+        $inactiveCount = (int) $counts->inactive;
         $masters = Master::query()
             ->select('masters.*')
             ->when($request->has('is_active'), function (Builder $masters) use ($request) {
@@ -89,17 +83,7 @@ class MasterController extends Controller
                         $q->whereRaw('TIMESTAMPDIFF(HOUR, canceled_at, start_at) < 24')
                           ->orWhereColumn('canceled_at', '>=', 'start_at');
                     }),
-                'debt_amount_byn' => PaymentRequirement::query()
-                    ->selectRaw('COALESCE(SUM(remaining_amount), 0)')
-                    ->where('payable_type', Appointment::class)
-                    ->where('remaining_amount', '>', 0)
-                    ->whereIn('payable_id', function ($q) {
-                        $q->from('appointments')
-                          ->select('id')
-                          ->whereColumn('appointments.user_id', 'masters.user_id')
-                          ->whereNull('canceled_at')
-                          ->whereRaw('TIMESTAMPADD(MINUTE, duration, start_at) <= ?', [now()]);
-                    }),
+                'debt_amount_byn' => Master::debtAmountSubquery(),
             ])
             ->orderBy('masters.created_at')
             ->get();
@@ -246,30 +230,23 @@ class MasterController extends Controller
      */
     public function update(Request $request, Master $master)
     {
-        $person = $master->person;
-        $person->fill($request->all())->save();
+        // Обновляем ФИО в people
+        $master->person->fill($request->only(['first_name', 'last_name', 'patronymic']))->save();
 
-        $phone = $person->phones->first();
-        $phone->update([
-            'number' => $request->get('phone')
-        ]);
 
-        $master->user->update([
-            'phone' => $phone->number
-        ]);
+        if ($request->filled('phone')) {
+            $master->person->phones()->updateOrCreate([], ['number' => $request->phone]);
+            $master->user->update(['phone' => $request->phone]);
+        }
 
-        $master->fill($request->all());
-        $master->update();
+        $master->fill($request->only(['instagram', 'direct', 'description']))->save();
 
         if ($request->has('is_active')) {
-            $master->user->update([
-                'is_active' => $request->get('is_active') == 1
-            ]);
+            $master->user->update(['is_active' => $request->is_active == 1]);
         }
 
         return back();
 
-//        return redirect()->route('admin.masters.show', $master);
     }
 
     /**

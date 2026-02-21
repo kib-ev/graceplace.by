@@ -50,15 +50,15 @@
                         <td>{{ $loop->index + 1 }}</td>
                         <td>
                             @if($master->avatar)
-                                <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->person->full_name }}">
+                                <img src="{{ Illuminate\Support\Facades\Storage::url($master->avatar) }}" class="img-fluid rounded mb-3" alt="{{ $master->full_name }}">
                             @endif
                         </td>
 
                         <td title="ЕРИП" style="width: 2px; padding: 2px; background: {{ $master->user->getSetting('payment_link.place') && $master->user->getSetting('payment_link.storage') ? '#4ab728' : '#ff2318' }}"></td>
 
                         <td title="master_id: {{ $master->id }} | user_id: {{ $master->user_id }}">
-                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->person->full_name }}</a>
-                            @if(is_null($master->person->patronymic))
+                            <a href="{{ route('admin.masters.show', $master) }}">{{ $master->full_name }}</a>
+                            @if(is_null($master->patronymic))
                                 <span style="color: red;">(отчество)</span>
                             @endif
 

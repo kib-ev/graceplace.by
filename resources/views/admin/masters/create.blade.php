@@ -15,22 +15,22 @@
 
                 <div class="form-group">
                     <label for="lastName">Фамилия</label>
-                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($master) ? $master->person->last_name : '' }}">
+                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($master) ? $master->last_name : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="firstName">Имя</label>
-                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($master) ? $master->person->first_name : '' }}">
+                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($master) ? $master->first_name : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="patronymic">Отчество</label>
-                    <input id="patronymic" class="form-control" type="text" name="patronymic" autocomplete="off" value="{{ isset($master) ? $master->person->patronymic : '' }}">
+                    <input id="patronymic" class="form-control" type="text" name="patronymic" autocomplete="off" value="{{ isset($master) ? $master->patronymic : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="phone">Телефон</label>
-                    <input id="phone" class="form-control" type="text" name="phone" value="{{ isset($master) ? $master->person->phones->first()?->number : '' }}">
+                    <input id="phone" class="form-control" type="text" name="phone" value="{{ isset($master) ? $master->phone : '' }}">
                 </div>
 
                 <div class="form-group">

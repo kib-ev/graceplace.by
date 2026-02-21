@@ -341,7 +341,7 @@
                                             @if($appointment && auth()->user())
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
                                                     @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
-                                                        <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->person->full_name }}">
+                                                        <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->full_name }}">
                                                             {{ $appointment->user?->master?->person?->first_name }}
                                                         </a>
                                                     @else
@@ -485,8 +485,8 @@
                                 <label for="appointmentMaster" class="form-label">Мастер</label>
                                 <select class="form-select" id="appointmentMaster" name="user_id" required>
                                     <option value="">Выберите мастера</option>
-                                    @foreach(\App\Models\User::role('master')->with('master.person')->orderBy('name')->get() as $user)
-                                        <option value="{{ $user->id }}">{{ $user->master->person->full_name }} ({{ $user->master->description }})</option>
+                                    @foreach(\App\Models\User::role('master')->with('master')->orderBy('name')->get()->filter(fn($u) => $u->master) as $user)
+                                        <option value="{{ $user->id }}">{{ $user->master->full_name }} ({{ $user->master->description }})</option>
                                     @endforeach
                                 </select>
                             </div>

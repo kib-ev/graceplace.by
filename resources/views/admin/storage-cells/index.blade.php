@@ -72,8 +72,8 @@
                     <label for="userId">Пользователь</label>
                     <select id="userId" class="form-control" name="user_id" required>
                         <option value=""></option>
-                        @foreach(\App\Models\User::with('master.person')->role('master')->get()->sortBy('master.person.full_name') as $selectUser)
-                            <option value="{{ $selectUser->id }}">{{ $selectUser->master->person->full_name }}</option>
+                        @foreach(\App\Models\User::with('master')->role('master')->get()->sortBy(fn($u) => $u->master?->full_name) as $selectUser)
+                            <option value="{{ $selectUser->id }}">{{ $selectUser->master->full_name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -218,18 +218,19 @@ class User extends Authenticatable
         return $balance;
     }
 
-    public function getDebtAmount()
-    {
-        return $this->appointments
-            ->where('start_at', '<=', now()->startOfDay())
-            ->whereNull('canceled_at')
-            ->filter(function (Appointment $appointment) {
-                return !$appointment->isPaid();
-            })
-            ->sum(function (Appointment $appointment) {
-                return $appointment->leftToPay();
-            });
-    }
+    // Используй Master::getDebtAmount() вместо этого метода
+    // public function getDebtAmount()
+    // {
+    //     return $this->appointments
+    //         ->where('start_at', '<=', now()->startOfDay())
+    //         ->whereNull('canceled_at')
+    //         ->filter(function (Appointment $appointment) {
+    //             return !$appointment->isPaid();
+    //         })
+    //         ->sum(function (Appointment $appointment) {
+    //             return $appointment->leftToPay();
+    //         });
+    // }
 
     public function getLateCancellationCount()
     {

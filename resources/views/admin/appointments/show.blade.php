@@ -15,10 +15,10 @@
                     <td>{{ $appointment->user->name }}</td>
                 </tr>
                 <tr>
-                    <td>{{ $appointment->user->master->person->birth_date }}</td>
+                    <td>{{ $appointment->user->master->birth_date }}</td>
                 </tr>
                 <tr>
-                    <td>{{ $appointment->user->master->person->phones->first()?->number }}</td>
+                    <td>{{ $appointment->user->master->phone }}</td>
                 </tr>
             </table>
         </div>

@@ -12,17 +12,17 @@
 
                 <div class="form-group">
                     <label for="firstName">Имя</label>
-                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($user) ? $master->person->first_name : '' }}">
+                    <input id="firstName" class="form-control" type="text" name="first_name" value="{{ isset($user) ? $master->first_name : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="lastName">Фамилия</label>
-                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($user) ? $master->person->last_name : '' }}">
+                    <input id="lastName" class="form-control" type="text" name="last_name" value="{{ isset($user) ? $master->last_name : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="phone">Телефон</label>
-                    <input id="phone" class="form-control" type="text" name="phone" value="{{ isset($user) ? $master->person->phones->first()?->number : '' }}">
+                    <input id="phone" class="form-control" type="text" name="phone" value="{{ isset($user) ? $master->phone : '' }}">
                 </div>
 
 

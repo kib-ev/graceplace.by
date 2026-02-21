@@ -8,7 +8,7 @@
 
             @if(isset($master))
 
-                <p>Вы вошли как: <b>{{ $master->person->last_name }} {{ $master->person->first_name }}</b></p>
+                <p>Вы вошли как: <b>{{ $master->last_name }} {{ $master->first_name }}</b></p>
 
                 <table class="table table-bordered">
                     <tr>
