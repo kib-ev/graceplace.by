@@ -118,7 +118,6 @@
                 <input type="hidden" name="extend" value="1">
                 <input type="hidden" name="duration" value="{{ $storageBooking->duration + 30 }}">
 
-                Баланс пользователя: {{ $storageBooking->user->getBalance() }}
                 <br>
                 <br>
 
@@ -126,13 +125,6 @@
 {{--                    <label for="">Дата платежа</label>--}}
 {{--                    <input class="form-control" type="datetime-local" value="{{ now()->subDay()->format('Y-m-d H:i') }}">--}}
 {{--                </div>--}}
-
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" value="on" id="useBalance" name="use_balance" @checked($storageBooking->user->getBalance() > 0)>
-                    <label class="form-check-label" for="useBalance">
-                        Списать с баланса пользователя
-                    </label>
-                </div>
 
                 <input class="btn btn-primary btn-sm" type="submit" value="Продлить на 30 дней">
 

@@ -209,24 +209,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         ->name('appointments.create-requirements');
 
     Route::resource('appointments', \App\Http\Controllers\Admin\AppointmentController::class);
-    Route::post('/appointments/{appointment}/pay', function (Request $request, \App\Models\Appointment $appointment) {
-        $amount = $request->get('amount');
-        $useBalance = $request->get('use_balance') == 'on';
-
-        if(!$appointment->isPaid()) {
-            $user = $appointment->user;
-
-            if($amount > 0) {
-                if (!$useBalance) {
-                    $user->deposit($amount, 'Appointment ID: ' . $appointment->id . ' <<< ADD CASH', $request->get('created_at'));
-                }
-                $user->withdraw($amount, 'Appointment ID: ' . $appointment->id . ' <<< PLACE RENT', $request->get('created_at'));
-            }
-        }
-
-        return back();
-
-    })->name('appointments.pay');
 
 
     // APPOINTMENTS PAYMENTS

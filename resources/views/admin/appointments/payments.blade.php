@@ -29,15 +29,6 @@
                     </tr>
 
                     <tr>
-                        <td><strong>Баланс пользователя:</strong></td>
-                        <td>{{ $appointment->user->real_balance }} BYN</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Бонусы:</strong></td>
-                        <td>{{ $appointment->user->bonus_balance }} BYN</td>
-                    </tr>
-
-                    <tr>
                         <td><strong>Ожидаемая к оплате сумма:</strong></td>
                         <td>{{ number_format($appointment->getExpectedTotal(), 2, '.') }} BYN</td>
                     </tr>
@@ -196,17 +187,8 @@
                 <label for="payment_method" class="form-label">Метод оплаты</label>
                 <select name="payment_method" id="payment_method" class="form-control" required>
                     <option value="cash">Наличные</option>
-                    <option value="card">Карта</option>
-                    <option value="balance">Баланс</option>
-                    <option value="bonus">Бонус</option>
-                    <option value="service">Сервис</option>
-                    <option value="other">Другое</option>
+                    <option value="service">Сервис ЕРИП</option>
                 </select>
-            </div>
-
-            <div class="mb-3 form-check">
-                <input type="checkbox" name="use_balance" id="useBalance" class="" value="1">
-                <label for="useBalance" class="form-label">Списать с баланса пользователя ({{ $appointment->user->getBalance() }})</label>
             </div>
 
             <button type="submit" class="btn btn-primary">Провести оплату</button>

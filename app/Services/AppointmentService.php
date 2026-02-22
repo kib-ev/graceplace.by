@@ -321,21 +321,6 @@ final class AppointmentService
         }
     }
 
-    public function payForAppointment(Appointment $appointment, bool $useBalance = true): void
-    {
-        $amount = $amount ?? $this->calculateAppointmentCost($appointment);
-
-        if(!$appointment->isPaid()) {
-            $user = $appointment->user;
-
-            if($amount > 0) {
-                if (!$useBalance) {
-                    $user->deposit($amount, 'Appointment ID: ' . $appointment->id . ' <<< AUTOADD CASH');
-                }
-                $user->withdraw($amount, 'Appointment ID: ' . $appointment->id . ' <<< PLACE RENT');
-            }
-        }
-    }
 
     public function isOverlay(Appointment $appointment, bool $includeTimeBreak = true): bool
     {

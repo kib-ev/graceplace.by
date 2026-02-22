@@ -178,10 +178,6 @@
 
         <div class="col-4">
 {{--            @if(isset($appointment) && is_null($appointment->canceled_at))--}}
-{{--                <h4>Оплата</h4>--}}
-
-{{--                @if($appointment->user)--}}
-{{--                    <h5>Баланс пользователя: {{ number_format($appointment->user->real_balance + $appointment->user->bonus_balance, 2) }}</h5>--}}
 {{--                @endif--}}
 
 {{--                <form action="{{ route('admin.appointments.pay', $appointment) }}" method="post">--}}
@@ -210,7 +206,6 @@
 {{--                    @if(is_null($appointment->price))--}}
 {{--                        <div class="form-check mb-3">--}}
 {{--                            <input class="form-check-input" type="checkbox" value="on" id="useBalance"--}}
-{{--                                   name="use_balance" {{ $appointment->user->getBalance() > 0 ? 'checked' : '' }}>--}}
 {{--                            <label class="form-check-label" for="useBalance">--}}
 {{--                                Списать с баланса пользователя--}}
 {{--                            </label>--}}

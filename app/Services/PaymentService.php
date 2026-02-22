@@ -4,34 +4,13 @@ namespace App\Services;
 
 use App\Models\Payment;
 use App\Models\PaymentRequirement;
-use App\Models\StorageBooking;
-use App\Models\User;
-use App\Models\UserTransaction;
 use Carbon\Carbon;
 
 final class PaymentService
 {
 
-    public function payForStorageBooking(StorageBooking $storageBooking, float $amount, $useBalance = false): void
-    {
-        $user = $storageBooking->user;
 
-        if (!$useBalance) {
-            $user->deposit($amount, 'StorageCell Number: ' . $storageBooking->cell->number . ' <<< ADD CASH');
-        }
-        $user->withdraw($amount, 'StorageCell Number: ' . $storageBooking->cell->number . ' <<< STORAGE CELL RENT');
 
-    }
-
-    public function rollbackTransaction(UserTransaction $transaction)
-    {
-
-    }
-
-    public function getUserBalance(User $user): float
-    {
-        return UserTransaction::where('user_id', $user->id)->sum('amount');
-    }
 
     public function createPaymentRequirement($model, float $amountDue, int $expirationDays = null, Carbon $dateTime = null, array $additionalData = []): PaymentRequirement
     {
@@ -108,7 +87,6 @@ final class PaymentService
 
         $paymentMethod = $payment->payment_method;
         $currentPaymentStatus = $payment->status;
-        $user = User::find($payment->user_id);
 
         // PAYMENT METHOD CACHE
         if ($currentPaymentStatus != $newPaymentStatus) {
@@ -124,23 +102,6 @@ final class PaymentService
                 $this->revertPaymentFromRequirements($payment);
             }
         }
-
-        // PAYMENT METHOD BALANCE
-//        if ($paymentMethod == Payment::METHOD_BALANCE) {
-//
-//            // TO COMPLETE
-//            if ($currentPaymentStatus == Payment::STATUS_PENDING && $newPaymentStatus == Payment::STATUS_COMPLETED) {
-//                $this->changeUserBalance($user, $payment->amount);
-//            }
-//
-//            // TO BACK
-//            if ($currentPaymentStatus == Payment::STATUS_COMPLETED && $newPaymentStatus != $currentPaymentStatus) {
-//                $this->changeUserBalance($user, (-1) * $payment->amount);
-//            }
-//            $result = $payment->update([
-//                'status' => $newPaymentStatus
-//            ]);
-//        }
 
         $payment->mergeGuarded(['status']);
 
@@ -205,22 +166,4 @@ final class PaymentService
         }
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function changeUserBalance(User $user, float $amount)
-    {
-        if ($user->real_balance + $user->bonus_balance  < $amount) {
-            throw new \Exception("Недостаточно средств на балансе");
-        }
-
-        if ($user->real_balance >= $amount) {
-            $user->real_balance -= $amount;
-        } else {
-            $user->bonus_balance -= ($amount - $user->real_balance);
-            $user->real_balance = 0;
-        }
-
-        return $user->save();
-    }
 }

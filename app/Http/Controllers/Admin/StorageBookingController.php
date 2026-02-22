@@ -35,17 +35,10 @@ class StorageBookingController extends Controller
         $data = $request->all();
         $amount = $storageBooking->cell->cost_per_month;
 
-        $useBalance = $request->get('use_balance') == 'on';
-
-        // ***********************
-        // TODO REFACTOR
         if (isset($data['extend']) && isset($data['duration']) && $data['duration'] > $storageBooking->duration) {
-            (new PaymentService())->payForStorageBooking($storageBooking, $storageBooking->cell->cost_per_month, $useBalance);
-
             (new PaymentService())->createPaymentRequirement($storageBooking, $amount, 30, $storageBooking->start_at);
             (new PaymentService())->createPayment($storageBooking, $amount, Payment::METHOD_CASH);
         }
-        // ***********************
 
         $storageBooking->fill($data);
         $storageBooking->save();

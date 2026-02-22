@@ -88,24 +88,6 @@
         </div>
     </div>
 
-{{--    @if(auth()->user() && auth()->user()->hasRole('master') && auth()->user()->getBalance() > 0)--}}
-{{--        <div class="row mb-3 mt-3">--}}
-{{--            <a data-bs-toggle="collapse" href="#collapseBalance" role="button">--}}
-{{--                Баланс--}}
-{{--            </a>--}}
-{{--            <div class="collapse" id="collapseBalance">--}}
-{{--                <div class="card card-body">--}}
-{{--                    <table class="table table-sm table-bordered table-responsive mb-0">--}}
-{{--                        <tr>--}}
-{{--                            <td>Сумма</td>--}}
-{{--                            <td style="text-align: right;">{{ number_format(auth()->user()->getBalance(), 2, '.') }} BYN</td>--}}
-{{--                        </tr>--}}
-{{--                    </table>--}}
-
-{{--                </div>--}}
-{{--            </div>--}}
-{{--        </div>--}}
-{{--    @endif--}}
 
     @section('master-menu')
         @include('public.layouts.includes.master-menu')

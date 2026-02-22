@@ -30,15 +30,6 @@
                     </tr>
 
                     <tr>
-                        <td><strong>Баланс пользователя:</strong></td>
-                        <td>{{ $appointment->user->real_balance }} BYN</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Бонусы:</strong></td>
-                        <td>{{ $appointment->user->bonus_balance }} BYN</td>
-                    </tr>
-
-                    <tr>
                         <td><strong>Ожидаемая к оплате сумма:</strong></td>
                         <td>{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</td>
                     </tr>
@@ -189,8 +180,6 @@
                 <select name="payment_method" id="payment_method" class="form-control" required>
                     <option value="cash">Наличные</option>
                     <option value="card">Карта</option>
-                    <option value="balance">Баланс</option>
-                    <option value="bonus">Бонус</option>
                     <option value="service">Сервис</option>
                     <option value="other">Другое</option>
                 </select>
