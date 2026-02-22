@@ -442,8 +442,6 @@ Route::prefix('admin')
         Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
     });
 
-Route::post('/appointments', [\App\Http\Controllers\Public\AppointmentController::class, 'store'])->name('public.appointments.store');
-
 Route::middleware(['auth'])->group(function () {
     Route::post('/appointments', [\App\Http\Controllers\User\AppointmentController::class, 'store'])->name('user.appointments.store');
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])->name('user.appointments.cancel');
