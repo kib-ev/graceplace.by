@@ -213,21 +213,18 @@ final class AppointmentService
 
     public static function getUserByMasterId(int $masterId): User|null
     {
-        $master = Master::find($masterId);
-        return User::where('phone', $master->getPhoneNumber())->first();
+        return Master::with('user')->find($masterId)?->user;
     }
 
     public function loadAppointmentsByPlaceId(int $placeId, Carbon $date): AppointmentService
     {
         $this->date = $date;
-        $appointments = \App\Models\Appointment::with(['user.master'])->onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
+        $appointments = \App\Models\Appointment::with(['user.master'])->withoutCanceled()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
         return $this->loadAppointments($appointments);
     }
 
     public function getItems($interval = 30)
     {
-        $users = User::all();
-
         $items = [];
         for($i = $interval; $i <= 16*60+$interval; $i+= $interval) {
             unset($item);
@@ -256,7 +253,7 @@ final class AppointmentService
                     'first_name' => $appointment->user->master->first_name,
                 ];
                 $item['user'] = [
-                    'id' => $users->where('phone', $appointment->user->master->getPhoneNumber())->first()?->id
+                    'id' => $appointment->user?->id,
                 ];
 
             } else {

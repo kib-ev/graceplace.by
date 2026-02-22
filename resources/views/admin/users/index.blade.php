@@ -37,7 +37,7 @@
                 {{--                    <td></td>--}}
                 {{--                    <td></td>--}}
                 {{--                </tr>--}}
-                @foreach(\App\Models\User::all() as $user)
+                @foreach($users as $user)
                     <tr>
                         <td style="width: 50px;">{{ $loop->index + 1 }}</td>
                         <td>

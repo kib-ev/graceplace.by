@@ -104,7 +104,7 @@
                     <label for="placeId">Место</label>
                     <select id="placeId" name="place_id" class="form-control" required>
                         <option value=""></option>
-                        @foreach(\App\Models\Place::all()->sortBy('name') as $place)
+                        @foreach($places as $place)
                             <option value="{{ $place->id }}" @selected($place->id == (isset($appointment) ? $appointment->place_id : request('place_id')))>
                                 {{ $place->name }} | {{ $place->description }}
                             </option>

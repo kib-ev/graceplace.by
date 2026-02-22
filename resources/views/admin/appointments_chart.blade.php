@@ -28,14 +28,14 @@
         const datasets = [
                 @foreach ($chartData as $placeId => $hoursData)
             {
-                label: '{{ \App\Models\Place::find($placeId)?->name ?? '0' }}',
+                label: '{{ $placeNames[$placeId] ?? '0' }}',
                 data: [
                     @for ($h = 0; $h < 24; $h++)
                         {{ $hoursData[$h] ?? 0 }},
                     @endfor
                 ],
                 fill: false,
-                borderColor: '{{ string_to_color(\App\Models\Place::find($placeId)?->name ?? '0') }}',
+                borderColor: '{{ string_to_color($placeNames[$placeId] ?? '0') }}',
                 tension: 0.1
             },
             @endforeach

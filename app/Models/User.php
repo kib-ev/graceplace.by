@@ -48,10 +48,6 @@ class User extends Authenticatable
         return $this->hasOne(Master::class);
     }
 
-    public function info()
-    {
-        return $this->hasOne(Master::class);
-    }
 
     public function appointments()
     {

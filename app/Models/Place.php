@@ -19,10 +19,6 @@ class Place extends Model
         return $this->hasMany(Appointment::class);
     }
 
-    public function bookings()
-    {
-        return $this->appointments();
-    }
 
     public function prices()
     {
@@ -159,7 +155,7 @@ class Place extends Model
         ];
 
         // Получаем все бронирования на эту дату
-        $bookings = $this->bookings()->whereDate('start_at', $date)->get();
+        $bookings = $this->appointments()->whereDate('start_at', $date)->get();
 
         // Пройдем по каждому бронированию и вычтем занятые интервалы, включая перерывы
         foreach ($bookings as $booking) {

@@ -7,7 +7,7 @@
             <h1>Logs</h1>
 
             <table class="table table-bordered">
-                @foreach(\App\Models\Appointment::withoutCanceled()->orderByDesc('created_at')->with(['user.master.person.phones', 'place'])->get()->groupBy(function ($a) {  return $a->created_at->format('Y/m/d'); }) as $groupDate => $appointmentsByDate)
+                @foreach($appointments as $groupDate => $appointmentsByDate)
                     <tr>
                         <td colspan="8" style="background: #d7d5d2;"><b>{{ \Carbon\Carbon::parse($groupDate)->format('d.m.Y') }}</b></td>
                     </tr>

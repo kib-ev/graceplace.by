@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Master;
 use App\Models\PaymentRequirement;
+use App\Models\Place;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -54,7 +56,10 @@ class AppointmentController extends Controller
 
         $appointments = $appointments->with(['user.master', 'place', 'paymentRequirements', 'payments'])->get();
 
-        return view('admin.appointments.index', compact('appointments', 'dateFrom', 'dateTo'));
+        $filterPlace  = $request->has('place_id')  ? Place::find($request->get('place_id'))  : null;
+        $filterMaster = $request->has('master_id') ? Master::find($request->get('master_id')) : null;
+
+        return view('admin.appointments.index', compact('appointments', 'dateFrom', 'dateTo', 'filterPlace', 'filterMaster'));
     }
 
     /**
@@ -62,7 +67,8 @@ class AppointmentController extends Controller
      */
     public function create()
     {
-        return view('admin.appointments.create', ['appointment' => null]);
+        $places = Place::all()->sortBy('name');
+        return view('admin.appointments.create', ['appointment' => null, 'places' => $places]);
     }
 
     /**
@@ -96,7 +102,8 @@ class AppointmentController extends Controller
     public function edit(Appointment $appointment)
     {
         $appointment->load('paymentRequirements', 'payments');
-        return view('admin.appointments.edit', compact('appointment'));
+        $places = Place::all()->sortBy('name');
+        return view('admin.appointments.edit', compact('appointment', 'places'));
     }
 
     /**

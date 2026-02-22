@@ -28,7 +28,7 @@ class Payment extends Model
     const METHOD_CASH = 'cash';
     const METHOD_CARD = 'card';
     const METHOD_SERVICE = 'service';
-    const METHOD_BONUS = 'service';
+    const METHOD_BONUS = 'bonus';
     const METHOD_OTHER = 'other';
 
     public function payable()

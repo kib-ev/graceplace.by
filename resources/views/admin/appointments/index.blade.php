@@ -45,11 +45,11 @@
 
             <div class="mb-3 text-right">
                 @if(request('place_id'))
-                    <a class="text-danger me-3" href="{{ route('admin.appointments.index') }}">{{ \App\Models\Place::find(request('place_id'))?->name }} (X)</a>
+                    <a class="text-danger me-3" href="{{ route('admin.appointments.index') }}">{{ $filterPlace?->name }} (X)</a>
                 @endif
 
                 @if(request('master_id'))
-                    <a class="text-danger me-3" href="{{ route('admin.appointments.index') }}">{{ \App\Models\Master::find(request('master_id'))?->full_name }} (X)</a>
+                    <a class="text-danger me-3" href="{{ route('admin.appointments.index') }}">{{ $filterMaster?->full_name }} (X)</a>
                 @endif
 
                 @if(request('date'))

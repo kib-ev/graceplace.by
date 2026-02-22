@@ -82,7 +82,7 @@
                             <label for="place_id" class="form-label">Рабочее место</label>
                             <select class="form-control" id="place_id" name="place_id" required>
                                 <option value="">Выберите рабочее место</option>
-                                @foreach(\App\Models\Place::all() as $place)
+                                @foreach($places as $place)
                                     <option value="{{ $place->id }}" data-price="{{ $place->getCurrentPrice() }}">
                                         {{ $place->name }} ({{ number_format($place->getCurrentPrice(), 0) }} BYN/час)
                                     </option>

@@ -108,7 +108,10 @@ Route::get('/booking', function (Request $request) {
         return redirect()->to('/booking?date=' . now()->format('Y-m-d'));
     }
 
-    return view('public/booking/index', compact('date'));
+    $selectedPlace = \App\Models\Place::where('is_hidden', false)
+        ->when(request('place_id'), fn($q) => $q->where('id', request('place_id')))
+        ->first();
+    return view('public/booking/index', compact('date', 'selectedPlace'));
 });
 
 Route::post('/booking', [\App\Http\Controllers\Public\BookingController::class, 'store'])->name('public.booking.store');
@@ -137,7 +140,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->orderBy('a.place_id')
             ->orderBy('hour_of_day')
             ->get();
-        return view('admin.appointments_stats', compact('stats'));
+        $placeNames = \App\Models\Place::pluck('name', 'id')->all();
+        return view('admin.appointments_stats', compact('stats', 'placeNames'));
     });
 
     Route::get('appointments-chart', function (Request $request) {
@@ -168,7 +172,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             $chartData[$stat->place_id][$stat->hour_of_day] = $stat->total_appointments;
         }
 
-        return view('admin.appointments_chart', compact('chartData'));
+        $placeNames = \App\Models\Place::pluck('name', 'id')->all();
+        return view('admin.appointments_chart', compact('chartData', 'placeNames'));
     });
 
 
@@ -262,7 +267,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // LOGS
     Route::get('logs', function () {
-        return view('admin.logs');
+        $appointments = \App\Models\Appointment::withoutCanceled()
+            ->orderByDesc('created_at')
+            ->with(['user.master', 'place'])
+            ->get()
+            ->groupBy(fn($a) => $a->created_at->format('Y/m/d'));
+        return view('admin.logs', compact('appointments'));
     });
 
     // COMMENTS
@@ -280,7 +290,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 
     Route::get('/users', function () {
-        return view('admin.users.index');
+        $users = \App\Models\User::orderBy('name')->get();
+        return view('admin.users.index', compact('users'));
     })->name('users.index');
     Route::get('users/{user}/login', function ($user) {
         \Illuminate\Support\Facades\Auth::login($user);

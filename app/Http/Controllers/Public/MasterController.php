@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\Place;
 use App\Models\Master;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,8 @@ class MasterController extends Controller
 
     public function show(Master $master)
     {
-        return view('public.masters.show', compact('master'));
+        $places = Place::where('is_hidden', false)->orderBy('name')->get();
+        return view('public.masters.show', compact('master', 'places'));
     }
 
     public function create() {}

@@ -290,8 +290,7 @@
     </div>
 
     @php
-        $selectedPlaceId = request('place_id') ?? \App\Models\Place::where('is_hidden', false)->first()->id;
-        $selectedPlace = \App\Models\Place::find($selectedPlaceId);
+        $selectedPlaceId = request('place_id') ?? $selectedPlace->id;
     @endphp
 
     <div class="row mt-2">

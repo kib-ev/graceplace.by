@@ -35,10 +35,6 @@ class Appointment extends Model
         return $builder->whereNull('canceled_at');
     }
 
-    public function scopeOnlyActive(Builder $builder)
-    {
-        return $builder->whereNull('canceled_at');
-    }
 
     public function scopeWithDebt(Builder $builder)
     {
@@ -126,7 +122,7 @@ class Appointment extends Model
 
         $placeId = $this->place_id;
 
-        $appointments = Appointment::onlyActive()->when(isset($placeId), function (Builder $builder) use ($placeId) {
+        $appointments = Appointment::withoutCanceled()->when(isset($placeId), function (Builder $builder) use ($placeId) {
             $builder->where('place_id', $placeId);
         })->when(isset($masterId), function (Builder $builder) use ($masterId) {
             $builder->where('master_id', $masterId);

@@ -30,7 +30,7 @@
         <tbody>
         @foreach ($places as $place_id)
             <tr>
-                <td><strong>{{ \App\Models\Place::find($place_id)?->name }}</strong></td>
+                <td><strong>{{ $placeNames[$place_id] ?? $place_id }}</strong></td>
                 @foreach ($hours as $hour)
                     @php
                         $count = $data[$place_id][$hour] ?? 0;
