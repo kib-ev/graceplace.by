@@ -144,13 +144,12 @@ class AppointmentController extends Controller
     public function mastersList(): JsonResponse
     {
         try {
-            $masters = Master::with('person')
-                ->select(['id', 'user_id'])
+            $masters = Master::select(['id', 'user_id', 'first_name', 'last_name', 'patronymic'])
                 ->get()
                 ->map(function ($master) {
                     return [
                         'id' => $master->id,
-                        'name' => $master->person->full_name
+                        'name' => $master->full_name
                     ];
                 });
 

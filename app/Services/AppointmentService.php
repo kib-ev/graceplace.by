@@ -220,7 +220,7 @@ final class AppointmentService
     public function loadAppointmentsByPlaceId(int $placeId, Carbon $date): AppointmentService
     {
         $this->date = $date;
-        $appointments = \App\Models\Appointment::with(['user.person', 'user.master'])->onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
+        $appointments = \App\Models\Appointment::with(['user.master'])->onlyActive()->whereDate('start_at', $date)->where('place_id', $placeId)->get();
         return $this->loadAppointments($appointments);
     }
 
@@ -253,7 +253,7 @@ final class AppointmentService
                 $item['master'] = [
                     'id' => $appointment->user->master->id,
                     'full_name' => $appointment->user->master->full_name,
-                    'first_name' => $appointment->user->master->person->first_name,
+                    'first_name' => $appointment->user->master->first_name,
                 ];
                 $item['user'] = [
                     'id' => $users->where('phone', $appointment->user->master->getPhoneNumber())->first()?->id

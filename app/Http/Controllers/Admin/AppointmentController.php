@@ -52,7 +52,7 @@ class AppointmentController extends Controller
             $query->whereDate('start_at', $request->get('date'));
         });
 
-        $appointments = $appointments->with(['user.master.person', 'place', 'paymentRequirements', 'payments'])->get();
+        $appointments = $appointments->with(['user.master', 'place', 'paymentRequirements', 'payments'])->get();
 
         return view('admin.appointments.index', compact('appointments', 'dateFrom', 'dateTo'));
     }

@@ -10,9 +10,4 @@ class Client extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
-
-    public function person()
-    {
-        return $this->belongsTo(Person::class);
-    }
 }

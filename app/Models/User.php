@@ -42,10 +42,6 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function person()
-    {
-        return $this->hasOneThrough(Master::class, Phone::class, 'number', 'person_id', 'phone', 'id');
-    }
 
     public function master()
     {
@@ -85,11 +81,17 @@ class User extends Authenticatable
 
     public function getFullName($addPatronymic = false): string
     {
-        $fullName = [$this->master->person->last_name, $this->master->person->first_name];
-        if($addPatronymic && isset($this->master->person->patronymic)) {
-            $fullName[] = $this->master->person->patronymic;
+        if ($addPatronymic) {
+            return implode(' ', array_filter([
+                $this->master?->last_name,
+                $this->master?->first_name,
+                $this->master?->patronymic,
+            ]));
         }
-        return implode(' ', $fullName);
+        return implode(' ', array_filter([
+            $this->master?->last_name,
+            $this->master?->first_name,
+        ]));
     }
 
     // Метод для пополнения баланса

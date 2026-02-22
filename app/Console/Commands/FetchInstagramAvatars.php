@@ -42,7 +42,7 @@ class FetchInstagramAvatars extends Command
         $this->info("Found {$masters->count()} masters to update.");
 
         foreach ($masters as $master) {
-            $this->line("Processing master: {$master->person->full_name}...");
+            $this->line("Processing master: {$master->full_name}...");
 
             $instagramUsernameRaw = $master->instagram;
             $instagramUsername = '';

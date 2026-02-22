@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Master;
-use App\Models\Person;
-use App\Models\Phone;
 use App\Models\Place;
 use App\Models\User;
 use App\Models\PaymentRequirement;

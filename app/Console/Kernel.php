@@ -16,13 +16,12 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
 //        $schedule->command('app:make-payments')->everyMinute();
 
-        $schedule->call(function () { // TODO TEMP
-            foreach (User::role('master')->with(['master.person'])->get() as $user) {
-                $fullName = implode(' ', [$user->master->person->last_name, $user->master->person->first_name]);
-                if ($user->name != $fullName) {
-                    $user->update([
-                        'name' => implode(' ', [$user->master->person->last_name, $user->master->person->first_name])
-                    ]);
+        $schedule->call(function () {
+            foreach (User::role('master')->with('master')->get() as $user) {
+                if (!$user->master) continue;
+                $fullName = implode(' ', array_filter([$user->master->last_name, $user->master->first_name]));
+                if ($user->name !== $fullName) {
+                    $user->update(['name' => $fullName]);
                 }
             }
         })->everyMinute();

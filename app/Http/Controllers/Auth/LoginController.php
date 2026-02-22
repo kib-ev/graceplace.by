@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Person;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -51,18 +48,10 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $person = Person::whereHas('phones', function (Builder $query) use ($request) {
-            $query->where('number', $request->get('phone'));
-        })->first();
-
-        if(isset($person->master) && $request->get('password') == 'graceplace' . $person->master->id) {
-            User::updateOrCreate([
-                'email' => user_email_from_phone_number($request->get('phone')),
-                'phone' => $request->get('phone'),
-            ], [
-                'name' => $person->master->full_name,
-                'password' => bcrypt($request->get('password'))
-            ]);
+        // Если мастер вводит временный пароль graceplace{id} — обновляем на bcrypt
+        $user = User::where('phone', $request->get('phone'))->first();
+        if ($user?->master && $request->get('password') == 'graceplace' . $user->master->id) {
+            $user->update(['password' => bcrypt($request->get('password'))]);
         }
 
         $result = Auth::attempt([
