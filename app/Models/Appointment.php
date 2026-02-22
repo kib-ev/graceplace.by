@@ -102,7 +102,7 @@ class Appointment extends Model
 
     public static function contains(Appointment $haystack, Appointment $needle): bool
     {
-        $startTime = Carbon::parse($haystack->datstart_ate);
+        $startTime = Carbon::parse($haystack->start_at);
         $endTime = Carbon::parse($haystack->start_at->clone()->addMinutes($haystack->duration));
 
         $appStartTime = Carbon::parse($needle->start_at);

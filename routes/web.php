@@ -18,10 +18,6 @@ if (request()->has('dev') && file_exists(base_path('/routes/_dev.php'))) {
     include_once (base_path('/routes/_dev.php'));
 }
 
-Route::get('/masters/{}', function () {
-    $date = request('date');
-    return view('welcome', compact('date'));
-});
 
 Route::get('/masters/{master}', [\App\Http\Controllers\Public\MasterController::class, 'show'])->name('public.masters.show');
 
@@ -434,7 +430,7 @@ Route::prefix('user')
 
 // Роуты для админки
 Route::prefix('admin')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'role:admin'])
     ->name('admin.tickets.')
     ->group(function () {
         Route::get('tickets', [TicketController::class, 'index'])->name('index');

@@ -37,6 +37,20 @@ trait Payable
         return $this->paymentRequirements()->sum('expected_amount');
     }
 
+    public function createRequirement(float $amount, string $dueDate = null): PaymentRequirement
+    {
+        return PaymentRequirement::create([
+            'user_id'          => $this->user_id,
+            'payable_type'     => static::class,
+            'payable_id'       => $this->id,
+            'amount_due'       => $amount,
+            'expected_amount'  => $amount,
+            'remaining_amount' => $amount,
+            'status'           => PaymentRequirement::STATUS_PENDING,
+            'due_date'         => $dueDate,
+        ]);
+    }
+
     public function getTotalDiscount()
     {
         $expected = $this->getExpectedTotal();

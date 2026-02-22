@@ -394,16 +394,7 @@ final class AppointmentService
 
                             // create fresh payment requirement for merged appointment
                             $expected = $this->calculateAppointmentCost($appointment1->fresh(['place']));
-                            PaymentRequirement::create([
-                                'user_id' => $appointment1->user_id,
-                                'payable_type' => Appointment::class,
-                                'payable_id' => $appointment1->id,
-                                'amount_due' => $expected,
-                                'expected_amount' => $expected,
-                                'remaining_amount' => $expected,
-                                'status' => PaymentRequirement::STATUS_PENDING,
-                                'due_date' => $appointment1->start_at->toDateString(),
-                            ]);
+                            $appointment1->createRequirement($expected, $appointment1->start_at->toDateString());
                         }
                     });
                 });

@@ -72,16 +72,7 @@ class AppointmentController extends Controller
 
         // Create payment requirement instead of storing price column
         $expected = (new AppointmentService())->calculateAppointmentCost($appointment);
-        \App\Models\PaymentRequirement::create([
-            'user_id' => $appointment->user_id,
-            'payable_type' => Appointment::class,
-            'payable_id' => $appointment->id,
-            'amount_due' => $expected,
-            'expected_amount' => $expected,
-            'remaining_amount' => $expected,
-            'status' => \App\Models\PaymentRequirement::STATUS_PENDING,
-            'due_date' => $appointment->start_at->toDateString(),
-        ]);
+        $appointment->createRequirement($expected, $appointment->start_at->toDateString());
 
         \Log::info('Appointment created successfully', [
             'appointment_id' => $appointment->id
