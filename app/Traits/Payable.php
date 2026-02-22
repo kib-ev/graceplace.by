@@ -17,24 +17,33 @@ trait Payable
         return $this->morphMany(PaymentRequirement::class, 'payable');
     }
 
-    public function isPaid()
+    public function isPaid(): bool
     {
-        $existsPaymentRequirements = count($this->paymentRequirements) >= 1;
-        if (!$existsPaymentRequirements) {
-            return false;
+        if ($this->relationLoaded('paymentRequirements')) {
+            return $this->paymentRequirements->isNotEmpty()
+                && $this->paymentRequirements->sum('remaining_amount') == 0;
         }
 
-        return $this->paymentRequirements()->sum('remaining_amount') == 0;
+        return $this->paymentRequirements()->exists()
+            && $this->paymentRequirements()->sum('remaining_amount') == 0;
     }
 
-    public function leftToPay()
+    public function leftToPay(): float
     {
+        if ($this->relationLoaded('paymentRequirements')) {
+            return max(0, $this->paymentRequirements->where('status', 'pending')->sum('remaining_amount'));
+        }
+
         return max(0, $this->paymentRequirements()->where('status', 'pending')->sum('remaining_amount'));
     }
 
-    public function getExpectedTotal()
+    public function getExpectedTotal(): float
     {
-        return $this->paymentRequirements()->sum('expected_amount');
+        if ($this->relationLoaded('paymentRequirements')) {
+            return (float) $this->paymentRequirements->sum('expected_amount');
+        }
+
+        return (float) $this->paymentRequirements()->sum('expected_amount');
     }
 
     public function createRequirement(float $amount, string $dueDate = null): PaymentRequirement

@@ -121,61 +121,70 @@ class MasterController extends Controller
     {
         $master->load([
             'user.appointments' => function ($q) {
-                $q->with(['paymentRequirements', 'payments', 'place']);
+                $q->with(['paymentRequirements', 'place.prices', 'user.master', 'comments.user']);
             },
+            'user.storageBookings.comments.user',
             'comments.user',
         ]);
 
         $userId = $master->user_id;
 
-        // Aggregates
-        $totalCount = \App\Models\Appointment::where('user_id', $userId)->count();
-        $cancelCount = \App\Models\Appointment::where('user_id', $userId)->whereNotNull('canceled_at')->count();
-        $visitCount = \App\Models\Appointment::where('user_id', $userId)->whereNull('canceled_at')->count();
-        $totalMinutes = (int) \App\Models\Appointment::where('user_id', $userId)->whereNull('canceled_at')->sum('duration');
+        // 1 запрос — все счётчики и сумма минут
+        $agg = \App\Models\Appointment::where('user_id', $userId)
+            ->selectRaw('
+                COUNT(*) as total_count,
+                SUM(canceled_at IS NOT NULL) as cancel_count,
+                SUM(canceled_at IS NULL) as visit_count,
+                SUM(IF(canceled_at IS NULL, duration, 0)) as total_minutes
+            ')->first();
+        $totalCount   = (int) $agg->total_count;
+        $cancelCount  = (int) $agg->cancel_count;
+        $visitCount   = (int) $agg->visit_count;
+        $totalMinutes = (int) $agg->total_minutes;
 
-        $sumExpected = \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-            ->whereIn('payable_id', function ($q) use ($userId) {
-                $q->from('appointments')->select('id')->where('user_id', $userId)->whereNull('canceled_at');
-            })->sum('expected_amount');
+        // 1 запрос — ожидаемая сумма и оплачено
+        $payAgg = \App\Models\PaymentRequirement::query()
+            ->join('appointments', 'appointments.id', '=', 'payment_requirements.payable_id')
+            ->where('payment_requirements.payable_type', \App\Models\Appointment::class)
+            ->where('appointments.user_id', $userId)
+            ->whereNull('appointments.canceled_at')
+            ->selectRaw('SUM(payment_requirements.expected_amount) as sum_expected, SUM(payment_requirements.expected_amount - payment_requirements.remaining_amount) as sum_paid')
+            ->first();
+        $sumExpected = (float) ($payAgg->sum_expected ?? 0);
+        $sumPaid     = (float) ($payAgg->sum_paid ?? 0);
 
-        $sumPaid = \App\Models\PaymentRequirement::where('payable_type', \App\Models\Appointment::class)
-            ->whereIn('payable_id', function ($q) use ($userId) {
-                $q->from('appointments')->select('id')->where('user_id', $userId)->whereNull('canceled_at');
-            })->selectRaw('SUM(expected_amount - remaining_amount) as paid_sum')->value('paid_sum');
+        // 1 запрос — помесячная статистика по часам за все годы
+        $durationRows = \App\Models\Appointment::selectRaw('YEAR(start_at) as y, MONTH(start_at) as m, SUM(duration) as s')
+            ->where('user_id', $userId)
+            ->whereNull('canceled_at')
+            ->whereDate('start_at', '<=', now())
+            ->groupBy('y', 'm')
+            ->get();
 
-        // Monthly stats for 2024 and 2025
-        $years = [2024, 2025];
+        // 1 запрос — помесячная статистика по выручке за все годы
+        $expectedRows = \App\Models\PaymentRequirement::selectRaw('YEAR(appointments.start_at) as y, MONTH(appointments.start_at) as m, SUM(payment_requirements.expected_amount) as s')
+            ->join('appointments', 'appointments.id', '=', 'payment_requirements.payable_id')
+            ->where('payment_requirements.payable_type', \App\Models\Appointment::class)
+            ->where('appointments.user_id', $userId)
+            ->whereNull('appointments.canceled_at')
+            ->whereDate('appointments.start_at', '<=', now())
+            ->groupBy('y', 'm')
+            ->get();
+
+        $years = $durationRows->pluck('y')->merge($expectedRows->pluck('y'))->unique()->sort()->values()->toArray();
         $durationByMonth = [];
         $expectedByMonth = [];
-
         foreach ($years as $yr) {
-            $durationRows = \App\Models\Appointment::selectRaw('MONTH(start_at) as m, SUM(duration) as s')
-                ->where('user_id', $userId)
-                ->whereNull('canceled_at')
-                ->whereYear('start_at', $yr)
-                ->whereDate('start_at', '<=', now())
-                ->groupBy('m')
-                ->pluck('s', 'm');
-            $durationByMonth[$yr] = array_replace(array_fill(1, 12, 0), $durationRows->toArray());
-
-            $expectedRows = \App\Models\PaymentRequirement::selectRaw('MONTH(appointments.start_at) as m, SUM(expected_amount) as s')
-                ->join('appointments', 'appointments.id', '=', 'payment_requirements.payable_id')
-                ->where('payment_requirements.payable_type', \App\Models\Appointment::class)
-                ->where('appointments.user_id', $userId)
-                ->whereNull('appointments.canceled_at')
-                ->whereYear('appointments.start_at', $yr)
-                ->whereDate('appointments.start_at', '<=', now())
-                ->groupBy('m')
-                ->pluck('s', 'm');
-            $expectedByMonth[$yr] = array_replace(array_fill(1, 12, 0), $expectedRows->toArray());
+            $durationByMonth[$yr] = array_replace(array_fill(1, 12, 0), $durationRows->where('y', $yr)->pluck('s', 'm')->toArray());
+            $expectedByMonth[$yr] = array_replace(array_fill(1, 12, 0), $expectedRows->where('y', $yr)->pluck('s', 'm')->toArray());
         }
 
-        // Place breakdown for 2025
+        // 2 запроса — разбивка по местам за текущий год
+        $currentYear = now()->year;
         $durationByPlaceMonth2025 = \App\Models\Appointment::selectRaw('place_id, MONTH(start_at) as m, SUM(duration) as s')
             ->where('user_id', $userId)
             ->whereNull('canceled_at')
-            ->whereYear('start_at', 2025)
+            ->whereYear('start_at', $currentYear)
             ->whereDate('start_at', '<=', now())
             ->groupBy('place_id', 'm')
             ->get();
@@ -185,7 +194,7 @@ class MasterController extends Controller
             ->where('payment_requirements.payable_type', \App\Models\Appointment::class)
             ->where('appointments.user_id', $userId)
             ->whereNull('appointments.canceled_at')
-            ->whereYear('appointments.start_at', 2025)
+            ->whereYear('appointments.start_at', $currentYear)
             ->whereDate('appointments.start_at', '<=', now())
             ->groupBy('appointments.place_id', 'm')
             ->get();
@@ -198,7 +207,6 @@ class MasterController extends Controller
         foreach ($expectedByPlaceMonth2025 as $row) {
             $placeExpected[$row->place_id][$row->m] = (float)$row->s;
         }
-
         return view('admin.masters.show', compact(
             'master',
             'totalCount',

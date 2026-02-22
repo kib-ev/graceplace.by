@@ -8,8 +8,8 @@
 
             @php $debtAmount = $master->getDebtAmount(); @endphp
             @if($debtAmount > 0)
-                <div class="bg-danger text-white p-3 mb-3" style="font-size: 1.4em;">
-                    Задолженность: {{ number_format($debtAmount, 2) }}
+                <div class="bg-danger text-white p-3 mb-3">
+                    <span style="font-size: 1.4em;">Задолженность: {{ number_format($debtAmount, 2) }}</span>
                     <table class="table table-sm table-borderless text-white mb-0 mt-2" style="font-size: 0.8em; width: auto;">
                         <thead>
                             <tr>
@@ -25,7 +25,7 @@
                                     <td class="pe-3">{{ $da->start_at->format('d.m.Y H:i') }}</td>
                                     <td class="pe-3">{{ $da->place->name ?? '—' }}</td>
                                     <td class="text-end pe-3">{{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}</td>
-                                    <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-white" style="opacity: 0.8;">→ запись</a></td>
+                                    <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-black" style="opacity: 0.8;">→ запись</a></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -55,9 +55,6 @@
                         <table class="table table-bordered">
                             <tr>
                                 <td>id: {{ $master->id }}</td>
-                            </tr>
-                            <tr>
-                                <td>user_id: {{ \App\Services\AppointmentService::getUserByMasterId($master->id)?->id }}</td>
                             </tr>
                             <tr>
                                 <td>
@@ -216,76 +213,57 @@
 
                 <div id="nav-stats" class="tab-pane fade"  role="tabpanel" tabindex="0">
                     <div class="tab bg-light p-3">
+                        @php
+                            $currentYear = now()->year;
+                            $displayYears = array_reverse(range($currentYear - 2, $currentYear));
+                        @endphp
+
+                        @foreach($displayYears as $yr)
+                            <h6>{{ $yr }}</h6>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th></th>
+                                    @for($i = 1; $i <=12; $i++)
+                                        <th>{{ \Carbon\Carbon::parse('01-'. $i . '-' . $yr)->format('M') }}</th>
+                                    @endfor
+                                </tr>
+                                <tr>
+                                    <td><b>Сумма оплат</b></td>
+                                    @for($i = 1; $i <=12; $i++)
+                                        <td class="text-end">{{ number_format($expectedByMonth[$yr][$i] ?? 0, 2) }}</td>
+                                    @endfor
+                                </tr>
+                                <tr>
+                                    <td><b>Часов аренды</b></td>
+                                    @for($i = 1; $i <=12; $i++)
+                                        <td class="text-end">{{ number_format(($durationByMonth[$yr][$i] ?? 0) / 60, 2) }}</td>
+                                    @endfor
+                                </tr>
+                            </table>
+                            <br>
+                        @endforeach
+
+                        <h6>Текущий год по площадкам ({{ $currentYear }})</h6>
                         <table class="table table-bordered">
                             <tr>
-                                <td></td>
+                                <th></th>
                                 @for($i = 1; $i <=12; $i++)
-                                    <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2024')->format('M-Y') }}</td>
+                                    <th>{{ \Carbon\Carbon::parse('01-'. $i . '-' . $currentYear)->format('M') }}</th>
                                 @endfor
                             </tr>
-                            <tr>
-                                <td><b>Сумма оплат</b></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ number_format($expectedByMonth[2024][$i] ?? 0, 2) }}</td>
-                                @endfor
-                            </tr>
-                            <tr>
-                                <td><b>Часов аренды</b></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ number_format(($durationByMonth[2024][$i] ?? 0) / 60, 2) }}</td>
-                                @endfor
-                            </tr>
-                        </table>
-
-                        <br>
-
-                        <table class="table table-bordered">
-                            <tr>
-                                <td></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2025')->format('M-Y') }}</td>
-                                @endfor
-                            </tr>
-                            <tr>
-                                <td><b>Сумма оплат</b></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ number_format($expectedByMonth[2025][$i] ?? 0, 2) }}</td>
-                                @endfor
-                            </tr>
-                            <tr>
-                                <td><b>Часов аренды</b></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ number_format(($durationByMonth[2025][$i] ?? 0) / 60, 2) }}</td>
-                                @endfor
-                            </tr>
-                        </table>
-
-                        <br>
-                        <table class="table table-bordered">
-
-                            <tr>
-                                <td></td>
-                                @for($i = 1; $i <=12; $i++)
-                                    <td>{{ \Carbon\Carbon::parse('01-'. $i . '-2025')->format('M-Y') }}</td>
-                                @endfor
-                            </tr>
-
-
                             @foreach($master->user->appointments->unique('place_id') as $uniqueAppointment)
                                 <tr>
                                     <th rowspan="2">{{ $uniqueAppointment->place->name }}</th>
                                     @for($i = 1; $i <=12; $i++)
-                                        <td>{{ ($placeDuration[$uniqueAppointment->place_id][$i] ?? 0) / 60 }}</td>
+                                        <td class="text-end">{{ ($placeDuration[$uniqueAppointment->place_id][$i] ?? 0) / 60 }}</td>
                                     @endfor
-
                                 </tr>
                                 <tr>
                                     @for($i = 1; $i <=12; $i++)
-                                        <td>{{ number_format($placeExpected[$uniqueAppointment->place_id][$i] ?? 0, 2) }}</td>
+                                        <td class="text-end">{{ number_format($placeExpected[$uniqueAppointment->place_id][$i] ?? 0, 2) }}</td>
                                     @endfor
                                 </tr>
                             @endforeach
-
                         </table>
 
                     </div>
