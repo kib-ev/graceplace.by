@@ -295,21 +295,38 @@ final class AppointmentService
         return $amount;
     }
 
-    public function cancelAppointment(User $user, Appointment $appointment, ?string $cancellationReason = null): bool
+    public function cancelAppointment(User $user, Appointment $appointment, ?string $cancellationReason = null, ?string $penaltyOverride = null): bool
     {
-        // Проверяем, может ли пользователь отменить запись
-        if (!$appointment->canBeCancelledByUser() && !$user->hasRole('admin')) {
-            throw new \Exception('Вы не можете отменить эту запись. Свяжитесь с администратором.');
+        if ($appointment->payments()->exists()) {
+            throw new \Exception('Запись нельзя отменить — по ней уже есть платежи. Обратитесь к администратору.');
         }
 
         try {
+            $reason = $penaltyOverride ?? $appointment->getCancellationReason();
+
             $appointment->canceled_at = now();
             $appointment->save();
 
-            // Remove any existing payment requirements by default on cancel
-            $appointment->paymentRequirements()->delete();
+            if ($reason === \App\Models\PaymentRequirement::REASON_DEFAULT) {
+                // Отмена без штрафа — удаляем все требования
+                $appointment->paymentRequirements()->delete();
+            } else {
+                // Штрафная отмена — считаем уже оплаченное чтобы не выставить лишнее
+                $alreadyPaid = (float) $appointment->payments()->sum('amount');
+                $expected    = $this->calculateAppointmentCost($appointment);
+                $penaltyAmount = $reason === \App\Models\PaymentRequirement::REASON_PENALTY_50
+                    ? floor($expected * 100 / 2) / 100
+                    : $expected;
+                $remaining = max(0, $penaltyAmount - $alreadyPaid);
 
-            // Добавляем комментарий с причиной отмены
+                // Удаляем старые требования и создаём штрафное
+                $appointment->paymentRequirements()->delete();
+
+                if ($remaining > 0) {
+                    $appointment->createRequirement($penaltyAmount, $appointment->start_at->toDateString(), $reason);
+                }
+            }
+
             if ($cancellationReason) {
                 $appointment->addComment($user, $cancellationReason, Appointment::BOOKING_CANCEL_COMMENT);
             }

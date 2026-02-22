@@ -11,12 +11,12 @@
 <ul class="nav nav-tabs" id="myTab" role="tablist" style="margin-bottom: 1px; border-bottom: none;">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="home" aria-selected="true">
-            Активные ({{ count($appointmentsGroups['active']) }})
+            Предстоящие ({{ count($appointmentsGroups['active']) }})
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#finished" type="button" role="tab" aria-controls="profile" aria-selected="false">
-            Завершенные ({{ count($appointmentsGroups['finished']) }})
+            Прошедшие ({{ count($appointmentsGroups['finished']) }})
         </button>
     </li>
 </ul>

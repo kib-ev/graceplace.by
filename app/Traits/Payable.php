@@ -46,7 +46,7 @@ trait Payable
         return (float) $this->paymentRequirements()->sum('expected_amount');
     }
 
-    public function createRequirement(float $amount, string $dueDate = null): PaymentRequirement
+    public function createRequirement(float $amount, string $dueDate = null, string $reason = PaymentRequirement::REASON_DEFAULT): PaymentRequirement
     {
         return PaymentRequirement::create([
             'user_id'          => $this->user_id,
@@ -57,6 +57,7 @@ trait Payable
             'remaining_amount' => $amount,
             'status'           => PaymentRequirement::STATUS_PENDING,
             'due_date'         => $dueDate,
+            'reason'           => $reason,
         ]);
     }
 

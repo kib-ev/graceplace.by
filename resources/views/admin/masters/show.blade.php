@@ -10,7 +10,7 @@
             @if($debtAmount > 0)
                 <div class="bg-danger text-white p-3 mb-3">
                     <span style="font-size: 1.4em;">Задолженность: {{ number_format($debtAmount, 2) }}</span>
-                    <table class="table table-sm table-borderless text-white mb-0 mt-2" style="font-size: 0.8em; width: auto;">
+                    <table class="table table-sm table-bordered text-white mb-0 mt-2" style="width: auto;">
                         <thead>
                             <tr>
                                 <th class="pe-3">Дата</th>
@@ -21,11 +21,17 @@
                         </thead>
                         <tbody>
                             @foreach($master->getDebtAppointments() as $da)
+                                @php $penaltyReq = $da->paymentRequirements->firstWhere(fn($r) => $r->isPenalty()); @endphp
                                 <tr>
                                     <td class="pe-3">{{ $da->start_at->format('d.m.Y H:i') }}</td>
                                     <td class="pe-3">{{ $da->place->name ?? '—' }}</td>
-                                    <td class="text-end pe-3">{{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}</td>
-                                    <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-black" style="opacity: 0.8;">→ запись</a></td>
+                                    <td class="text-end pe-3">
+                                        @if($penaltyReq)
+                                            <span class="badge bg-warning text-dark me-1">{{ $penaltyReq->getPenaltyLabel() }}</span>
+                                        @endif
+                                        {{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}
+                                    </td>
+                                    <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-black"><i class="fa fa-edit"></i></a></td>
                                 </tr>
                             @endforeach
                         </tbody>

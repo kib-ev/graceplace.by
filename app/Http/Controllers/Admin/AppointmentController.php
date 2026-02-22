@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Master;
-use App\Models\PaymentRequirement;
 use App\Models\Place;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
@@ -113,38 +112,16 @@ class AppointmentController extends Controller
     {
         // CANCEL with penalties
         if ($request->get('cancel') == 1) {
-            $reason = $request->get('cancellation_reason');
+            $penalty = $request->get('cancel_penalty'); // 'penalty_100' | 'penalty_50' | 'default' | null
 
-            // always cancel appointment first
-            (new AppointmentService())->cancelAppointment(user: auth()->user(), appointment: $appointment, cancellationReason: $reason);
+            $penaltyOverride = in_array($penalty, ['penalty_50', 'penalty_100', 'default']) ? $penalty : null;
 
-            // penalty mode
-            $penalty = $request->get('cancel_penalty'); // '100' | '50' | null
-            $expected = $appointment->getExpectedPrice();
-
-            if ($penalty === '100') {
-                // keep or create requirement for 100%
-                $requirement = $appointment->paymentRequirements()->first();
-                if ($requirement) {
-                    $requirement->update([
-                        'amount_due' => $expected,
-                        'expected_amount' => $expected,
-                        'remaining_amount' => $expected,
-                        'status' => PaymentRequirement::STATUS_PENDING,
-                        'due_date' => $appointment->start_at->toDateString(),
-                    ]);
-                } else {
-                    $appointment->createRequirement($expected, $appointment->start_at->toDateString());
-                }
-            } elseif ($penalty === '50') {
-                // recreate requirement with 50% (floor to cents)
-                $appointment->paymentRequirements()->delete();
-                $half = floor($expected * 100 / 2) / 100; // floor to 2 decimals
-                $appointment->createRequirement($half, $appointment->start_at->toDateString());
-            } else {
-                // default cancel: remove payment requirements
-                $appointment->paymentRequirements()->delete();
-            }
+            (new AppointmentService())->cancelAppointment(
+                user: auth()->user(),
+                appointment: $appointment,
+                cancellationReason: $request->get('cancellation_reason'),
+                penaltyOverride: $penaltyOverride,
+            );
 
             return back();
         }

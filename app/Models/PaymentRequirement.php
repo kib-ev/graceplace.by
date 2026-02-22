@@ -21,6 +21,24 @@ class PaymentRequirement extends Model
     const STATUS_PAID = 'paid';
     const STATUS_OVERDUE = 'overdue';
 
+    const REASON_DEFAULT    = 'default';
+    const REASON_PENALTY_50 = 'penalty_50';
+    const REASON_PENALTY_100 = 'penalty_100';
+
+    public function isPenalty(): bool
+    {
+        return in_array($this->reason, [self::REASON_PENALTY_50, self::REASON_PENALTY_100]);
+    }
+
+    public function getPenaltyLabel(): ?string
+    {
+        return match($this->reason) {
+            self::REASON_PENALTY_50  => 'Штраф 50%',
+            self::REASON_PENALTY_100 => 'Штраф 100%',
+            default                  => null,
+        };
+    }
+
     /**
      * Get the owning payable model.
      */

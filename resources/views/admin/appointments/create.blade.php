@@ -283,10 +283,10 @@
                         <label for="">Причина отмены</label>
                         <textarea class="form-control" name="cancellation_reason"></textarea>
                     </div>
-                    <div class="form-group mb-3">
-                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="none">Отменить</button>
-{{--                        <button class="btn btn-warning" type="submit" name="cancel_penalty" value="50">Отменить - штраф 50%</button>--}}
-{{--                        <button class="btn btn-secondary" type="submit" name="cancel_penalty" value="100">Отменить - штраф 100%</button>--}}
+                    <div class="form-group mb-3 d-flex gap-2">
+                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="default">Отменить</button>
+                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="penalty_50">Отменить — штраф 50%</button>
+                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="penalty_100">Отменить — штраф 100%</button>
                     </div>
                 </form>
             @endif

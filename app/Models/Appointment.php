@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\PaymentRequirement;
 use App\Services\AppointmentService;
 use App\Traits\HasComments;
 use App\Traits\Payable;
@@ -149,6 +150,22 @@ class Appointment extends Model
     public function getExpectedPrice(): float
     {
         return (new AppointmentService())->calculateAppointmentCost($this);
+    }
+
+    public function getCancellationReason(): string
+    {
+        // Запись уже началась или прошла — штраф 100%
+        if (now()->greaterThanOrEqualTo($this->start_at)) {
+            return PaymentRequirement::REASON_PENALTY_100;
+        }
+
+        // До начала меньше 24ч — штраф 50%
+        if (now()->addHours(self::CANCELLATION_TIMEOUT)->greaterThan($this->start_at)) {
+            return PaymentRequirement::REASON_PENALTY_50;
+        }
+
+        // Заблаговременная отмена — без штрафа
+        return PaymentRequirement::REASON_DEFAULT;
     }
 
     public function canBeCancelledByUser(): bool
