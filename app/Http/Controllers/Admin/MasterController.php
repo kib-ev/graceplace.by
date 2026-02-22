@@ -45,9 +45,9 @@ class MasterController extends Controller
                 });
             })
             ->when($search && !is_numeric($search), function (Builder $query) use ($search) {
-                $query->whereHas('person', function (Builder $q) use ($search) {
-                    $q->where('first_name', 'like',  '%'. $search .'%')
-                        ->orWhere('last_name', 'like',  '%'. $search .'%');
+                $query->where(function (Builder $q) use ($search) {
+                    $q->where('first_name', 'like', '%'. $search .'%')
+                        ->orWhere('last_name', 'like', '%'. $search .'%');
                 });
             })
             ->when($request->has('tag'), function (Builder $query) use ($request) {
@@ -57,7 +57,7 @@ class MasterController extends Controller
                 });
             })
             // Eager loading only required relations
-            ->with(['person', 'user.settings', 'comments.user'])
+            ->with(['user.settings', 'comments.user'])
             // Aggregates: counts
             ->addSelect([
                 'appointments_total_count' => Appointment::query()
@@ -125,7 +125,6 @@ class MasterController extends Controller
             'user.appointments' => function ($q) {
                 $q->with(['paymentRequirements', 'payments', 'place']);
             },
-            'person',
             'comments.user',
         ]);
 
@@ -230,12 +229,10 @@ class MasterController extends Controller
      */
     public function update(Request $request, Master $master)
     {
-        // Обновляем ФИО в people
-        $master->person->fill($request->only(['first_name', 'last_name', 'patronymic']))->save();
+        $master->fill($request->only(['first_name', 'last_name', 'patronymic']))->save();
 
 
         if ($request->filled('phone')) {
-            $master->person->phones()->updateOrCreate([], ['number' => $request->phone]);
             $master->user->update(['phone' => $request->phone]);
         }
 
@@ -255,8 +252,6 @@ class MasterController extends Controller
     public function destroy(Master $master)
     {
         if ($master->user->appointments()->count() == 0) {
-            $master->person->phones()->delete();
-            $master->person->delete();
             $master->delete();
             $master->user->delete();
         }

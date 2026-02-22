@@ -342,10 +342,10 @@
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
                                                     @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
                                                         <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->full_name }}">
-                                                            {{ $appointment->user?->master?->person?->first_name }}
+                                                            {{ $appointment->user?->master?->first_name }}
                                                         </a>
                                                     @else
-                                                        {{ $appointment->user?->master?->person?->first_name }}
+                                                        {{ $appointment->user?->master?->first_name }}
                                                     @endif
                                                 </span>
                                             @else

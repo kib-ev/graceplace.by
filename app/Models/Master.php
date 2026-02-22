@@ -36,17 +36,17 @@ class Master extends Model
 
     public function getFirstNameAttribute(): string
     {
-        return $this->person?->first_name ?? '';
+        return $this->attributes['first_name'] ?? '';
     }
 
     public function getLastNameAttribute(): string
     {
-        return $this->person?->last_name ?? '';
+        return $this->attributes['last_name'] ?? '';
     }
 
     public function getPatronymicAttribute(): ?string
     {
-        return $this->person?->patronymic;
+        return $this->attributes['patronymic'] ?? null;
     }
 
     public function getFullNameAttribute(): string
@@ -60,7 +60,7 @@ class Master extends Model
 
     public function getBirthDateAttribute(): ?string
     {
-        return $this->person?->birth_date;
+        return $this->attributes['birth_date'] ?? null;
     }
 
     public function getPhoneAttribute(): string

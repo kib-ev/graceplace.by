@@ -62,7 +62,7 @@ class AppointmentController extends Controller
      */
     public function create()
     {
-        return view('admin.appointments.create');
+        return view('admin.appointments.create', ['appointment' => null]);
     }
 
     /**
