@@ -29,6 +29,19 @@
                 Неактивные ({{ $inactiveCount }})
             </a>
 
+            <div style="margin-top: 10px;">
+                @php
+                    $baseParams = array_filter(['is_active' => request('is_active'), 'search' => request('search')]);
+                    $debtorsCount = request('is_active') === '0' ? $debtorsInactiveCount : (request('is_active') === '1' ? $debtorsActiveCount : $debtorsActiveCount + $debtorsInactiveCount);
+                @endphp
+                <a href="{{ route('admin.masters.index', $baseParams) }}" class="{{ !request('debtors') ? 'fw-bold' : '' }}">
+                    Все
+                </a>
+                <a href="{{ route('admin.masters.index', array_merge($baseParams, ['debtors' => 1])) }}" class="{{ request('debtors') == '1' ? 'fw-bold' : '' }}" style="margin-left: 10px;">
+                    Должники ({{ $debtorsCount }})
+                </a>
+            </div>
+
             <table class="table table-bordered mb-5">
                 <tr>
                     <td style="width: 50px;"></td>
@@ -66,7 +79,17 @@
                                 <div class="bg-danger text-white p-2">Задолженность: {{ number_format($master->debt_amount_byn, 2) }} </div>
                             @endif
 
-                            @include('admin.comments.includes.widget', ['model' => $master, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
+                            @php $adminComments = $master->comments->where('type', 'admin'); @endphp
+                            @if($adminComments->count() > 0)
+                                <div class="master-comments-block">
+                                    <span class="master-comments-toggle" style="cursor: pointer; text-decoration: underline; color: #aaaaaa; font-size: 0.9em;" data-target="master-comments-{{ $master->id }}">
+                                        Комментарии ({{ $adminComments->count() }})
+                                    </span>
+                                    <div id="master-comments-{{ $master->id }}" class="master-comments-content" style="display: none; margin-top: 8px;">
+                                        @include('admin.comments.includes.widget', ['model' => $master, 'title' => '', 'type' => 'admin', 'showForm' => false, 'showControl' => false])
+                                    </div>
+                                </div>
+                            @endif
                         </td>
 
                         <td>
@@ -136,7 +159,20 @@
                     @endif
                 @endforeach
             </table>
-            
+
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+document.querySelectorAll('.master-comments-toggle').forEach(function(el) {
+    el.addEventListener('click', function() {
+        var target = document.getElementById(this.getAttribute('data-target'));
+        if (target) {
+            target.style.display = target.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+});
+</script>
 @endsection

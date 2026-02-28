@@ -276,9 +276,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->to('/');
     });
 
-    // TRANSACTIONS
-    Route::resource('transactions', \App\Http\Controllers\UserTransactionController::class)->only(['index', 'destroy', 'store']);
-
     // PERMISSIONS
     Route::get('/permissions', [\App\Http\Controllers\PermissionController::class, 'index'])->name('permissions.index');
     Route::post('/permissions/update-all', [\App\Http\Controllers\PermissionController::class, 'updateAll'])->name('permissions.update-all');
@@ -288,10 +285,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders-epos/create', [\App\Http\Controllers\Admin\OrderController::class, 'create'])->name('orders.create');
     Route::post('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'completeApiRequest'])->name('orders.store');
-
-    // BALANCES
-    Route::get('balances', [\App\Http\Controllers\BalanceController::class, 'index']);
-
 
     // USER SETTINGS ADMIN
     Route::post('/settings', function () {
@@ -355,12 +348,6 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])
         ->middleware('check.cancellation')
         ->name('appointments.cancel');
-
-    // TRANSACTIONS
-    Route::get('/transactions', function () {
-        $transactions = \App\Models\UserTransaction::where('user_id', \Illuminate\Support\Facades\Auth::id())->get();
-        return view('user.transactions.index', compact('transactions'));
-    });
 
     Route::get('/documents/{appointmentId}', function (Request $request, $appointmentId) {
         $appointment = \App\Models\Appointment::find($appointmentId);
@@ -430,7 +417,7 @@ Route::prefix('user')
 
 // Роуты для админки
 Route::prefix('admin')
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'admin'])
     ->name('admin.tickets.')
     ->group(function () {
         Route::get('tickets', [TicketController::class, 'index'])->name('index');

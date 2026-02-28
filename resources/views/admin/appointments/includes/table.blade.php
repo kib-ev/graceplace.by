@@ -30,11 +30,13 @@
                     </tr>
                 </table>
             @else
-                <table class="table table-bordered">
+                <table class="table table-bordered appointments-sortable-table">
                     <thead class="table-light">
                         <tr>
                             <th style="width: 1%; min-width: 30px;">#</th>
-                            <th style="width: 1%; min-width: 30px; white-space: nowrap;">Дата</th>
+                            <th style="width: 1%; min-width: 30px; white-space: nowrap; cursor: pointer; user-select: none;" class="appointments-sort-date" title="Клик для сортировки по дате">
+                                Дата <span class="sort-icon">↕</span>
+                            </th>
                             <th style="width: 1%; min-width: 30px; white-space: nowrap;">День</th>
                             <th style="width: 1%; min-width: 30px; white-space: nowrap;">Время</th>
                             <th style="width: 1%; min-width: 30px;"></th>
@@ -49,7 +51,7 @@
                     <tbody>
                     @foreach($appointmentByStatus as $appointment)
 
-                        <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}">
+                        <tr class="{{ $appointment->canceled_at ? 'canceled' : '' }}" data-date="{{ $appointment->start_at->format('Y-m-d H:i') }}">
                             <td style="width: 1%; min-width: 30px;">
                                 {{ $loop->index + 1 }}
                             </td>
@@ -141,3 +143,33 @@
         </div>
     @endforeach
 </div>
+
+<script>
+(function() {
+    document.querySelectorAll('.appointments-sortable-table').forEach(function(table) {
+        var th = table.querySelector('.appointments-sort-date');
+        if (!th) return;
+        var tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        var rows = Array.from(tbody.querySelectorAll('tr[data-date]'));
+        var sortOrder = 1; // 1 = asc (старые сверху), -1 = desc (свежие сверху)
+        th.addEventListener('click', function() {
+            sortOrder = -sortOrder;
+            var icon = th.querySelector('.sort-icon');
+            icon.textContent = sortOrder === 1 ? '↑' : '↓';
+            rows.sort(function(a, b) {
+                var dateA = a.getAttribute('data-date') || '';
+                var dateB = b.getAttribute('data-date') || '';
+                return sortOrder * (dateA.localeCompare(dateB));
+            });
+            rows.forEach(function(row) {
+                tbody.appendChild(row);
+            });
+            // Обновить номера #
+            tbody.querySelectorAll('tr td:first-child').forEach(function(td, i) {
+                td.textContent = i + 1;
+            });
+        });
+    });
+})();
+</script>

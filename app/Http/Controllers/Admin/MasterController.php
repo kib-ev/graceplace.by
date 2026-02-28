@@ -29,6 +29,15 @@ class MasterController extends Controller
             ->first();
         $activeCount   = (int) $counts->active;
         $inactiveCount = (int) $counts->inactive;
+
+        $debtorsBaseQuery = Master::query()
+            ->select('masters.id')
+            ->join('users', 'users.id', '=', 'masters.user_id')
+            ->addSelect(['debt_amount_byn' => Master::debtAmountSubquery()])
+            ->havingRaw('debt_amount_byn > 0');
+        $debtorsActiveCount = (clone $debtorsBaseQuery)->where('users.is_active', 1)->count();
+        $debtorsInactiveCount = (clone $debtorsBaseQuery)->where('users.is_active', 0)->count();
+
         $masters = Master::query()
             ->select('masters.*')
             ->when($request->has('is_active'), function (Builder $masters) use ($request) {
@@ -53,6 +62,9 @@ class MasterController extends Controller
                     $tag = $request->get('tag');
                     $q->where('text', 'like', "%#{$tag}%");
                 });
+            })
+            ->when($request->get('debtors') == '1', function (Builder $query) {
+                $query->havingRaw('debt_amount_byn > 0');
             })
             // Eager loading only required relations
             ->with(['user.settings', 'comments.user'])
@@ -86,7 +98,7 @@ class MasterController extends Controller
             ->orderBy('masters.created_at')
             ->get();
 
-        return view('admin.masters.index', compact('masters', 'activeCount', 'inactiveCount'));
+        return view('admin.masters.index', compact('masters', 'activeCount', 'inactiveCount', 'debtorsActiveCount', 'debtorsInactiveCount'));
     }
 
     /**
