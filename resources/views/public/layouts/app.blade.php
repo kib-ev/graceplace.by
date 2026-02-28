@@ -64,7 +64,7 @@
 
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="Grace Place Logo"> Grace Place</a>
 
-        @role('admin')
+        @role('admin|manager')
             @include('admin.layouts.includes.menu')
         @endrole
 
@@ -76,11 +76,13 @@
     <div class="row mb-3 mt-3">
         <div class="col-12">
             @if(auth()->user())
-                Вы вошли как: <b title="ID: {{ auth()->id() }}">{{ auth()->user()->name }}</b> <a href="/logout">Выйти</a>
-
-                @role('admin')
-                    <br>(админ)
-                @endrole
+                Вы вошли как: <b title="ID: {{ auth()->id() }}">{{ auth()->user()->name }}</b>
+                @if(auth()->user()->hasRole('admin'))
+                    (admin)
+                @elseif(auth()->user()->hasRole('manager'))
+                    (manager)
+                @endif
+                <a href="/logout">Выйти</a>
 
             @else
                 <a href="{{ route('login') }}">Вход на сайт</a>

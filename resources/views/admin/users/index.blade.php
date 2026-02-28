@@ -32,6 +32,7 @@
                     <th>Имя</th>
                     <th>Телефон</th>
                     <th>Админ</th>
+                    <th>Менеджер</th>
                     <th>Пароль</th>
                 </tr>
                 </thead>
@@ -74,6 +75,25 @@
                                     <input type="hidden" name="admin" value="0">
                                     <input type="checkbox" name="admin" value="1"
                                         {{ $user->hasRole('admin') ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                    <noscript><button type="submit" class="btn btn-sm btn-outline-secondary ms-1">✓</button></noscript>
+                                </form>
+                            @endif
+                        </td>
+                        <td>
+                            @if($user->id === auth()->id() || $user->id === 1)
+                                @if($user->hasRole('manager'))
+                                    <span title="Нельзя изменить">✓</span>
+                                @else
+                                    —
+                                @endif
+                            @else
+                                <form action="{{ route('admin.users.update', $user) }}" method="post" class="d-inline">
+                                    @method('patch')
+                                    @csrf
+                                    <input type="hidden" name="manager" value="0">
+                                    <input type="checkbox" name="manager" value="1"
+                                        {{ $user->hasRole('manager') ? 'checked' : '' }}
                                         onchange="this.form.submit()">
                                     <noscript><button type="submit" class="btn btn-sm btn-outline-secondary ms-1">✓</button></noscript>
                                 </form>

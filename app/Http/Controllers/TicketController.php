@@ -17,18 +17,18 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasAnyRole(['admin', 'manager'])) {
             $tickets = Ticket::latest()->paginate(100);
         } else {
             $tickets = $user->tickets()->latest()->paginate(10);
         }
 
-        return view($user->hasRole('admin') ? 'admin.tickets.index' : 'user.tickets.index', compact('tickets'));
+        return view($user->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.index' : 'user.tickets.index', compact('tickets'));
     }
 
     public function create()
     {
-        return view(Auth::user()->hasRole('admin') ? 'admin.tickets.create' : 'user.tickets.create');
+        return view(Auth::user()->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.create' : 'user.tickets.create');
     }
 
     public function store(Request $request)
@@ -59,20 +59,20 @@ class TicketController extends Controller
             }
         }
 
-        return redirect()->route(Auth::user()->hasRole('admin') ? 'admin.tickets.index' : 'user.tickets.index')
+        return redirect()->route(Auth::user()->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.index' : 'user.tickets.index')
             ->with('success', 'Заявка успешно создана.');
     }
 
     public function show(Ticket $ticket)
     {
         $this->authorizeTicket($ticket);
-        return view(Auth::user()->hasRole('admin') ? 'admin.tickets.show' : 'user.tickets.show', compact('ticket'));
+        return view(Auth::user()->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.show' : 'user.tickets.show', compact('ticket'));
     }
 
     public function edit(Ticket $ticket)
     {
         $this->authorizeTicket($ticket);
-        return view(Auth::user()->hasRole('admin') ? 'admin.tickets.edit' : 'user.tickets.edit', compact('ticket'));
+        return view(Auth::user()->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.edit' : 'user.tickets.edit', compact('ticket'));
     }
 
     public function update(Request $request, Ticket $ticket)
@@ -89,7 +89,7 @@ class TicketController extends Controller
 
         $ticket->update($request->only(['title', 'description', 'category', 'priority', 'status']));
 
-        return redirect()->route(Auth::user()->hasRole('admin') ? 'admin.tickets.index' : 'user.tickets.index')
+        return redirect()->route(Auth::user()->hasAnyRole(['admin', 'manager']) ? 'admin.tickets.index' : 'user.tickets.index')
             ->with('success', 'Заявка обновлена.');
     }
 
@@ -104,7 +104,7 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasAnyRole(['admin', 'manager'])) {
             return true;
         }
 

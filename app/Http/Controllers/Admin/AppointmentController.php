@@ -158,7 +158,10 @@ class AppointmentController extends Controller
     {
         $date = $request->date;
 
-        $appointments = Appointment::whereDate('start_at', Carbon::parse($date))->whereNull('canceled_at')->get();
+        $appointments = Appointment::whereDate('start_at', Carbon::parse($date))
+            ->whereNull('canceled_at')
+            ->with(['place', 'paymentRequirements'])
+            ->get();
 
         (new AppointmentService())->mergeAppointments($appointments);
 

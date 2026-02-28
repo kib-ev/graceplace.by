@@ -21,10 +21,6 @@ if (request()->has('dev') && file_exists(base_path('/routes/_dev.php'))) {
 
 Route::get('/masters/{master}', [\App\Http\Controllers\Public\MasterController::class, 'show'])->name('public.masters.show');
 
-Route::get('/gpt', function () {
-    return view('gpt');
-});
-
 Route::get('/schedule', function () {
     $date = request('date');
 
@@ -138,7 +134,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->get();
         $placeNames = \App\Models\Place::pluck('name', 'id')->all();
         return view('admin.appointments_stats', compact('stats', 'placeNames'));
-    });
+    })->middleware('admin.only');
 
     Route::get('appointments-chart', function (Request $request) {
         $startDate = $request->input('start_date', now()->startOfYear()->toDateString());
@@ -170,7 +166,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
         $placeNames = \App\Models\Place::pluck('name', 'id')->all();
         return view('admin.appointments_chart', compact('chartData', 'placeNames'));
-    });
+    })->middleware('admin.only');
 
 
     Route::get('/appointments/cancel-stats', function (Request $request) {
@@ -192,11 +188,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->get();
 
         return view('admin.appointments_cancel_stats', compact('losses', 'startDate', 'endDate'));
-    });
+    })->middleware('admin.only');
 
-    // REVENUE
+    // REVENUE (admin only)
     Route::get('/revenue/hours', [\App\Http\Controllers\Admin\RevenueController::class, 'byHours'])
-        ->name('revenue.hours');
+        ->name('revenue.hours')->middleware('admin.only');
 
     Route::get('/appointments/merge-closest', [\App\Http\Controllers\Admin\AppointmentController::class, 'mergeClosestAppointments'])
         ->name('appointments.merge-closest');
@@ -223,16 +219,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // OTHER
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');
 
-    Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index']);
+    Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index'])->middleware('admin.only');
 
     Route::get('/download/chrome-extension', [\App\Http\Controllers\Admin\AdminController::class, 'downloadChromeExtension'])->name('download.chrome-extension');
 
     // MASTERS
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
 
-    // PLACES
-    Route::resource('places', \App\Http\Controllers\PlaceController::class);
-    Route::prefix('places/{place}')->name('places.')->group(function () {
+    // PLACES (admin only)
+    Route::middleware('admin.only')->group(function () {
+        Route::resource('places', \App\Http\Controllers\PlaceController::class);
+    });
+    Route::prefix('places/{place}')->name('places.')->middleware('admin.only')->group(function () {
         Route::get('prices', [\App\Http\Controllers\Admin\PlacePriceController::class, 'index'])->name('prices.index');
         Route::get('prices/create', [\App\Http\Controllers\Admin\PlacePriceController::class, 'create'])->name('prices.create');
         Route::post('prices', [\App\Http\Controllers\Admin\PlacePriceController::class, 'store'])->name('prices.store');
@@ -243,15 +241,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::delete('photos/{photo}', [\App\Http\Controllers\PlaceController::class, 'deletePhoto'])->name('photos.destroy');
     });
 
-    // LOGS
+    // LOGS (admin only)
     Route::get('logs', function () {
         $appointments = \App\Models\Appointment::withoutCanceled()
             ->orderByDesc('created_at')
             ->with(['user.master', 'place'])
+            ->limit(500)
             ->get()
             ->groupBy(fn($a) => $a->created_at->format('Y/m/d'));
         return view('admin.logs', compact('appointments'));
-    });
+    })->middleware('admin.only');
 
     // COMMENTS
     Route::resource('comments', \App\Http\Controllers\CommentController::class)->only(['store', 'destroy']);
@@ -260,26 +259,28 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('storage-cells', \App\Http\Controllers\StorageCellController::class);
     Route::resource('storage-bookings', \App\Http\Controllers\Admin\StorageBookingController::class);
 
-    // USERS
-    Route::get('/user/{user}/schedule', function ($user) {
-        $master = $user->master;
-        return view('user.schedule', compact('master'));
-    });
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    // USERS (admin only)
+    Route::middleware('admin.only')->group(function () {
+        Route::get('/user/{user}/schedule', function ($user) {
+            $master = $user->master;
+            return view('user.schedule', compact('master'));
+        });
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 
-    Route::get('/users', function () {
-        $users = \App\Models\User::orderBy('name')->get();
-        return view('admin.users.index', compact('users'));
-    })->name('users.index');
-    Route::get('users/{user}/login', function ($user) {
-        \Illuminate\Support\Facades\Auth::login($user);
-        return redirect()->to('/');
-    });
+        Route::get('/users', function () {
+            $users = \App\Models\User::orderBy('name')->get();
+            return view('admin.users.index', compact('users'));
+        })->name('users.index');
+        Route::get('users/{user}/login', function ($user) {
+            \Illuminate\Support\Facades\Auth::login($user);
+            return redirect()->to('/');
+        });
 
-    // PERMISSIONS
-    Route::get('/permissions', [\App\Http\Controllers\PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/permissions/update-all', [\App\Http\Controllers\PermissionController::class, 'updateAll'])->name('permissions.update-all');
-    Route::post('/permissions/{user}/update', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
+        // PERMISSIONS
+        Route::get('/permissions', [\App\Http\Controllers\PermissionController::class, 'index'])->name('permissions.index');
+        Route::post('/permissions/update-all', [\App\Http\Controllers\PermissionController::class, 'updateAll'])->name('permissions.update-all');
+        Route::post('/permissions/{user}/update', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
+    });
 
     // E-POS
     Route::get('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
@@ -303,11 +304,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/api', function() {
         return view('admin.api');
-    })->name('api');
-});
-
-Route::post('/test', function () {
-    return 123;
+    })->name('api')->middleware('admin.only');
 });
 
 Route::name('public.')->middleware(['auth'])->group(function () {
@@ -350,9 +347,10 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
         ->name('appointments.cancel');
 
     Route::get('/documents/{appointmentId}', function (Request $request, $appointmentId) {
-        $appointment = \App\Models\Appointment::find($appointmentId);
+        $appointment = \App\Models\Appointment::with(['user', 'place', 'paymentRequirements'])
+            ->find($appointmentId);
 
-        if($appointment && (auth()->user()->hasRole(['admin']) || auth()->id() == $appointment->user_id)) {
+        if($appointment && (auth()->user()->hasAnyRole(['admin', 'manager']) || auth()->id() == $appointment->user_id)) {
             if($request->has('html')) {
                 return view('user.documents.show', compact('appointment'));
             } else {
@@ -391,11 +389,6 @@ Route::get('/public-offer/20250101', function () {
 });
 
 // Маршрут акцепта оферты больше не используется, акцепт фиксируется через действия пользователя (регистрация, бронирование, оплата).
-
-
-Route::get('/test', function () {
-    return view('test');
-});
 
 use App\Http\Controllers\TicketController;
 

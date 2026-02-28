@@ -24,6 +24,14 @@ class UserController extends Controller
             }
         }
 
+        if ($request->has('manager') && $user->id !== auth()->id() && $user->id !== 1) {
+            if ($request->boolean('manager')) {
+                $user->assignRole('manager');
+            } else {
+                $user->removeRole('manager');
+            }
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'Обновлено');
     }
 }

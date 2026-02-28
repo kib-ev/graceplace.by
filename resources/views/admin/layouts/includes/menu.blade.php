@@ -25,20 +25,25 @@
                 <span class="badge bg-danger">{{ $mastersWithAppointmentsDebtCount }}</span>
             @endif
         </a>
-        <a class="nav-link" href="{{ route('admin.mandatory-notices.index') }}">Уведомления</a>
-        <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
         <a class="nav-link" href="{{ route('admin.storage-cells.index') }}">
             Локер
             @if(isset($mastersWithStorageBookingDebtCount) && $mastersWithStorageBookingDebtCount > 0)
                 <span class="badge bg-danger">{{ $mastersWithStorageBookingDebtCount }}</span>
             @endif
         </a>
+        <a class="nav-link" href="{{ route('admin.mandatory-notices.index') }}">Уведомления</a>
+        @role('admin')
+        <a class="nav-link" href="{{ route('admin.places.index') }}">Рабочие места</a>
+        @endrole
         <a class="nav-link" href="{{ route('admin.tickets.index') }}">Заявки</a>
+        @role('admin')
         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Права</a>
         <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
-        <a class="nav-link" href="{{ route('admin.download.chrome-extension') }}">Скачать плагин</a>
+        <a class="nav-link" href="{{ route('admin.users.index') }}">Пользователи</a>
+        @endrole
+        <a class="nav-link" href="{{ route('admin.download.chrome-extension') }}">Плагин</a>
         <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
     </div>
 </div>

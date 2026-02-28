@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
 
         // Другие middleware...
         'admin' => \App\Http\Middleware\CheckAdminRole::class,
+        'admin.only' => \App\Http\Middleware\CheckAdminOnlyRole::class,
         'master' => \App\Http\Middleware\CheckMasterRole::class,
         'check.cancellation' => \App\Http\Middleware\CheckCancellationCutoff::class,
         'api_token' => \App\Http\Middleware\ApiTokenMiddleware::class,

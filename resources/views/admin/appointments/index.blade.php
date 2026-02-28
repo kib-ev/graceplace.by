@@ -184,7 +184,7 @@
 
                                         <div class="comments">
                                             @foreach($appointment->comments as $comment)
-                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-1">
+                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasAnyRole(['admin', 'manager']) ? 'admin' : 'master' }} mb-1">
                                                     <div class="label" style="font-size: 0.8em; color: #ccc;">
                                                         {{ $comment->created_at->format('d.m.Y H:i') }} - {{ $comment->user->name }}
                                                     </div>
@@ -343,7 +343,7 @@
 
                                         <div class="comments">
                                             @foreach($appointment->comments as $comment)
-                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasRole('admin') ? 'admin' : 'master' }} mb-1">
+                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasAnyRole(['admin', 'manager']) ? 'admin' : 'master' }} mb-1">
                                                     <div class="label" style="font-size: 0.8em; color: #ccc;">
                                                         {{ $comment->created_at->format('d.m.Y H:i') }} - {{ $comment->user->name }}
                                                     </div>

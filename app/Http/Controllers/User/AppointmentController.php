@@ -32,7 +32,7 @@ class AppointmentController extends Controller
                 'date',
                 function ($attribute, $value, $fail) {
                     // Для обычных пользователей запрещаем создание записей в прошлом
-                    if (!auth()->user()->hasRole('admin')) {
+                    if (!auth()->user()->hasAnyRole(['admin', 'manager'])) {
                         $datetime = Carbon::parse($value);
                         if ($datetime->isPast()) {
                             $fail('Выбранное время уже прошло. Пожалуйста, выберите время в будущем.');
@@ -46,7 +46,7 @@ class AppointmentController extends Controller
         ];
 
         // Добавляем правило для выбора мастера, если пользователь администратор
-        if (auth()->user()->hasRole('admin')) {
+        if (auth()->user()->hasAnyRole(['admin', 'manager'])) {
             $rules['user_id'] = 'required|exists:users,id';
         }
 
@@ -58,7 +58,7 @@ class AppointmentController extends Controller
 
         try {
             // Определяем пользователя для записи
-            $userId = auth()->user()->hasRole('admin') ? $request->get('user_id') : auth()->id();
+            $userId = auth()->user()->hasAnyRole(['admin', 'manager']) ? $request->get('user_id') : auth()->id();
 
             // Проверяем доступность временного слота
             $startAt = Carbon::parse($request->get('datetime'));

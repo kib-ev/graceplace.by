@@ -178,7 +178,7 @@
 
         <a class="navbar-brand" href="{{ url('https://graceplace.by') }}"><img class="logo" src="{{ asset('/images/logo.jpg') }}" alt="GracePlace Logo"> Grace Place</a>
 
-        @role('admin')
+        @role('admin|manager')
             @include('admin.layouts.includes.menu')
         @endrole
 

@@ -17,7 +17,7 @@ class PlaceController extends Controller
      */
     public function index()
     {
-        $places = \App\Models\Place::all();
+        $places = \App\Models\Place::with('prices')->get();
         return view('admin.places.index', compact('places'));
     }
 

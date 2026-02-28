@@ -243,7 +243,7 @@
 @endpush
 
 @section('content')
-    @role('admin')
+    @role('admin|manager')
         {{-- Select Date --}}
         <div class="row mb-2 mt-2">
             <div class="col-12">
@@ -252,7 +252,7 @@
                     <input type="date" name="date" value="{{ $date ? $date->format('Y-m-d') : now()->format('Y-m-d') }}" onchange="document.getElementById('dateForm').submit();">
                 </form>
 
-                <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}"> Записи {{ $date->format('d.m.Y') }}</a></span>
+                <span><a href="{{ route('admin.appointments.index', ['date_from' => $date->format('Y-m-d'), 'date_to' => $date->format('Y-m-d')]) }}">Записи за {{ $date->format('d.m.Y') }}</a></span>
 
             </div>
         </div>
@@ -265,13 +265,27 @@
 
     {{-- Calendar --}}
     @if(isset($date) && (\Carbon\Carbon::parse($date)->greaterThan(now()->startOfDay()->subDays(3)) || is_admin()))
+        @php
+            $places = \App\Models\Place::where('is_hidden', false)
+                ->when(auth()->user() && !is_admin(), function ($query) {
+                    $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
+                    $query->whereIn('id', $visibleWorkspaces);
+                })
+                ->orderBy('sort')
+                ->with('prices')
+                ->get();
+            $dateCarbon = \Carbon\Carbon::parse($date);
+            $appointmentsByPlace = \App\Models\Appointment::with(['user.master'])
+                ->whereNull('canceled_at')
+                ->whereDate('start_at', $dateCarbon)
+                ->whereIn('place_id', $places->pluck('id'))
+                ->get()
+                ->groupBy('place_id');
+        @endphp
         <div class="row mb-3" style="overflow-x: scroll;">
             <div class="col-12">
                 <div id="places" class="overflow-scroll table-drag-scroll">
-                    @foreach(\App\Models\Place::where('is_hidden', false)->when(auth()->user() && !is_admin(), function ($query) {
-                                $visibleWorkspaces = auth()->user()->getSetting('workspace_visibility', []);
-                                $query->whereIn('id', $visibleWorkspaces);
-                        })->orderBy('sort')->get() as $place)
+                    @foreach($places as $place)
 
                         <div class="place" style="width: 200px;">
                             <div class="image">
@@ -310,7 +324,7 @@
 
                                 @php
                                     $calendar = new \App\Services\AppointmentService();
-                                    $calendar->loadAppointmentsByPlaceId($place->id , \Illuminate\Support\Carbon::parse($date));
+                                    $calendar->loadAppointments($appointmentsByPlace->get($place->id, collect()));
                                 @endphp
 
                                 @for($i = 30; $i <= 16*60+30; $i+= \App\Services\AppointmentService::$defaultTimeStep)
@@ -328,7 +342,7 @@
                                         data-place_id="{{ $place->id }}">
 
 
-                                        @if(isset($appointment) && auth()->user() && auth()->user()->hasRole(['admin']))
+                                        @if(isset($appointment) && auth()->user() && auth()->user()->hasAnyRole(['admin', 'manager']))
                                             <a href="{{ route('admin.appointments.edit', $appointment) }}"
                                                title="{{ $appointment->start_at->format('H:i') }} - {{ $appointment->end_at->format('H:i') }} ({{ \Carbon\CarbonInterval::minutes($appointment->duration)->forHumans() }})">
                                                 <span>{{ $nextTime->format('H:i') }} - {{ $nextTime->clone()->addMinutes(30)->format('H:i') }}</span>
@@ -340,7 +354,7 @@
                                         @if(!$calendar->isTimeFree($nextTime))
                                             @if($appointment && auth()->user())
                                                 <span class="js-edit-app info" style="text-overflow: ellipsis; overflow: hidden; margin-left: 5px;">
-                                                    @if(auth()->user()->hasRole(['admin']) && $appointment->user->master)
+                                                    @if(auth()->user()->hasAnyRole(['admin', 'manager']) && $appointment->user->master)
                                                         <a href="{{ route('admin.masters.show', $appointment->user->master) }}" title="{{ $appointment->user->master->full_name }}">
                                                             {{ $appointment->user?->master?->first_name }}
                                                         </a>

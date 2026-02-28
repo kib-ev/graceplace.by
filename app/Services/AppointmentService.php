@@ -480,7 +480,7 @@ final class AppointmentService
 
     public function getMinDuration(): int
     {
-        if (auth()->check() && auth()->user()->hasRole('admin')) {
+        if (auth()->check() && auth()->user()->hasAnyRole(['admin', 'manager'])) {
             return self::$adminMinAppointmentDuration;
         }
         return self::$minAppointmentDuration;

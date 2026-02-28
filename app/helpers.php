@@ -11,7 +11,7 @@ const CANCELLATION_CUTOFF_HOURS = '12';
 function is_admin(): bool
 {
     $user = auth()->user();
-    return $user ? $user->hasRole(['admin']) : false;
+    return $user ? $user->hasAnyRole(['admin', 'manager']) : false;
 }
 
 function short_day_name(\Carbon\Carbon $carbon, bool $uppercase = false): string
@@ -71,7 +71,7 @@ function direct_link($profileLink): ?string
 {
     if(isset($profileLink)) {
         $parts = explode('/', trim($profileLink,'/'));
-        if ($parts > 0) {
+        if (count($parts) > 0) {
             return 'https://ig.me/m/' . end($parts);
         }
     }
