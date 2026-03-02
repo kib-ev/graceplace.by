@@ -366,7 +366,7 @@
                                                 <span class="info">Занято</span>
                                             @endif
                                         @elseif(auth()->id())
-                                            @if(auth()->user()->can('add appointment') && $calendar->getMinutesToNextAppointment($nextTime) != 30)
+                                            @if((auth()->user()->can('add appointment') || is_admin()) && $calendar->getMinutesToNextAppointment($nextTime) != 30)
                                                 <span class="add-app js-add-app">+</span>
                                             @endif
                                         @endif
@@ -494,13 +494,14 @@
                                 <input type="text" class="form-control" id="appointmentTime" disabled>
                             </div>
 
-                            @role('admin')
+                            @role('admin|manager')
                             <div class="mb-3">
                                 <label for="appointmentMaster" class="form-label">Мастер</label>
-                                <select class="form-select" id="appointmentMaster" name="user_id" required>
+                                <select class="form-select" id="appointmentMaster" name="user_id" required
+                                    data-default-user-id="{{ (auth()->user()->hasRole('master') ? auth()->id() : '') }}">
                                     <option value="">Выберите мастера</option>
                                     @foreach(\App\Models\User::role('master')->with('master')->orderBy('name')->get()->filter(fn($u) => $u->master) as $user)
-                                        <option value="{{ $user->id }}">{{ $user->master->full_name }} ({{ $user->master->description }})</option>
+                                        <option value="{{ $user->id }}" @selected(auth()->user()->hasRole('master') && $user->id == auth()->id())>{{ $user->master->full_name }} ({{ $user->master->description }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -566,9 +567,10 @@
                         try {
                             let selectedHour = $(this).parent('.hour');
 
-                            // Сброс выбора мастера для администратора
+                            // Выбор мастера по умолчанию для менеджера-мастера, иначе сброс
                             if ($('#appointmentMaster').length) {
-                                $('#appointmentMaster').val(null).trigger('change');
+                                let defaultUserId = $('#appointmentMaster').data('default-user-id');
+                                $('#appointmentMaster').val(defaultUserId || null).trigger('change');
                             }
 
                             $('#addAppointmentForm #appointmentDuration option').remove();
