@@ -148,7 +148,11 @@
     <h1 class="clear" style="width:720px; text-align: center;">Акт № {{ $appointment->id }} от {{ $appointment->end_at->format('d.m.Y') }}</h1>
     <p>Заказчик: {{ $appointment->user->getFullName(true) }}</p>
     <p>Адрес: , тел.: {{ $appointment->user->phone }}</p>
-    <p>Основание: Публичная оферта, размещённая на сайте https://graceplace.by/public-offer от 01.01.2025</p>
+    <p>Основание: Публичная оферта, размещённая на сайте https://graceplace.by/public-offer от 01.11.2025</p>
+    @php
+        $requirement = $appointment->paymentRequirements->first();
+        $amount = $requirement ? ($requirement->getPaidAmount() > 0 ? $requirement->getPaidAmount() : $requirement->expected_amount) : 0;
+    @endphp
     <br>
     <table class="border" cellpadding="0" cellspacing="0" style="width: 100%;">
         <tbody>
@@ -168,28 +172,28 @@
             <td>Услуги по предоставлению рабочего места для ведения деятельности в сфере бьюти-услуг</td>
             <td>шт</td>
             <td class="right">1</td>
-            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
-            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
+            <td class="right">{{ number_format($amount, 2, '.', '') }}</td>
+            <td class="right">{{ number_format($amount, 2, '.', '') }}</td>
             <td class="right">20%</td>
-            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount() * 0.2, 2, '.', '') }}</td>
-            <td class="right">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</td>
+            <td class="right">{{ number_format($amount * 0.2, 2, '.', '') }}</td>
+            <td class="right">{{ number_format($amount, 2, '.', '') }}</td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>Итого:</b></td>
-            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</b></td>
+            <td class="right"><b>{{ number_format($amount, 2, '.', '') }}</b></td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>В том числе НДС:</b></td>
-            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount() * 0.2, 2, '.', '') }}</b></td>
+            <td class="right"><b>{{ number_format($amount * 0.2, 2, '.', '') }}</b></td>
         </tr>
         <tr>
             <td class="right" colspan="8"><b>Всего с НДС:</b></td>
-            <td class="right"><b>{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.', '') }}</b></td>
+            <td class="right"><b>{{ number_format($amount, 2, '.', '') }}</b></td>
         </tr>
         </tbody>
     </table>
     <br>
-    <p>Всего оказано услуг 1, на сумму: {{ num2str($appointment->paymentRequirements->first()->getPaidAmount()) }}, <br>в т.ч. НДС: {{ num2str($appointment->paymentRequirements->first()->getPaidAmount() * 0.2) }}.</p>
+    <p>Всего оказано услуг 1, на сумму: {{ num2str($amount) }}, <br>в т.ч. НДС: {{ num2str($amount * 0.2) }}.</p>
     <br>
     <p>Вышеперечисленные услуги выполнены полностью и в срок. <br>Заказчик претензий по объему, качеству и срокам оказания услуг не имеет.</p>
     <br>

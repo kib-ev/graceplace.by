@@ -356,7 +356,7 @@ Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
             } else {
                 $mpdf = new \Mpdf\Mpdf();
                 $html = view('user.documents.show', compact('appointment'))->render();
-                $filename = 'doc_' . $appointmentId;
+                $filename = 'doc_' . $appointmentId . '.pdf';
 
                 $mpdf->WriteHTML($html);
                 $mpdf->Output($filename, 'I');
