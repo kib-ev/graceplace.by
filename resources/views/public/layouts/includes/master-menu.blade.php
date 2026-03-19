@@ -1,6 +1,14 @@
 @if(auth()->user() && auth()->user()->hasRole('master'))
     @php
-        $masterAppointments = auth()->user()->appointments()->whereNull('canceled_at')->where('start_at', '>=', now())->get();
+        $masterAppointments = auth()->user()->appointments()
+            ->whereNull('canceled_at')
+            ->where(function ($q) {
+                $q->where('start_at', '>=', now())
+                    ->orWhereHas('paymentRequirements', function ($q2) {
+                        $q2->where('remaining_amount', '>', 0);
+                    });
+            })
+            ->get();
     @endphp
 
     <div class="row mb-3 mt-3">
@@ -58,7 +66,9 @@
                                         </td>
 
                                         <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}">
-                                            @if(auth()->user() && auth()->user()->can('cancel appointment') && $nextAppointment->canBeCancelledByUser())
+                                            @if(\Carbon\Carbon::parse($nextAppointment->start_at)->addMinutes($nextAppointment->duration)->lte(now()))
+                                                Завершена
+                                            @elseif(auth()->user() && auth()->user()->can('cancel appointment') && $nextAppointment->canBeCancelledByUser())
                                                 <a class="btn btn-sm btn-danger js_cancel-appointment" style="line-height: 13px;">
                                                     Отменить
                                                 </a>
@@ -318,15 +328,15 @@
                                 <tr>
                                     <td style="width: 1%; white-space: nowrap;">Стоимость продления</td>
                                     <td>
-                                        {{ $bookings->first()->cell->cost_per_month }} BYN / 30 дней
+                                        {{ $booking->cell->cost_per_month }} BYN / 30 дней
                                     </td>
                                 </tr>
 
-                                @if(isset($bookings->first()->cell->secret))
+                                @if(isset($booking->cell->secret))
                                     <tr>
                                         <td style="width: 1%; white-space: nowrap;">Код</td>
                                         <td>
-                                            {{ $bookings->first()->cell->secret }}
+                                            {{ $booking->cell->secret }}
                                         </td>
                                     </tr>
                                 @endif
