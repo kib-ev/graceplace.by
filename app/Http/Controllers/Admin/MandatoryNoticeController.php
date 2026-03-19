@@ -101,7 +101,7 @@ class MandatoryNoticeController extends Controller
         $recipients = $mandatoryNotice->users()
             ->select('users.id', 'users.name', 'users.email', 'mandatory_notice_user.confirmed_at')
             ->latest('mandatory_notice_user.confirmed_at')
-            ->paginate(20);
+            ->get();
 
         return view('admin.mandatory-notices.show', compact('notice', 'recipients'));
     }

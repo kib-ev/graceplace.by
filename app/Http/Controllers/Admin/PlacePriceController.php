@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\PaymentRequirement;
 use App\Models\Place;
 use App\Models\PlacePrice;
+use App\Services\AppointmentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -77,5 +80,40 @@ class PlacePriceController extends Controller
 
         return redirect()->route('admin.places.prices.index', $place)
             ->with('success', 'Цена успешно удалена');
+    }
+
+    public function recalculate(Place $place)
+    {
+        $appointmentService = new AppointmentService();
+        $updated = 0;
+
+        $appointments = Appointment::query()
+            ->where('place_id', $place->id)
+            ->whereNull('canceled_at')
+            ->where('start_at', '>', now())
+            ->with(['paymentRequirements', 'place'])
+            ->get();
+
+        foreach ($appointments as $appointment) {
+            $req = $appointment->paymentRequirements->first();
+            if (!$req || $req->isPenalty()) {
+                continue;
+            }
+
+            $paidAmount = $req->expected_amount - $req->remaining_amount;
+            $newExpected = $appointmentService->calculateAppointmentCost($appointment);
+            $newRemaining = max(0, round($newExpected - $paidAmount, 2));
+
+            $req->update([
+                'expected_amount' => round($newExpected, 2),
+                'remaining_amount' => $newRemaining,
+                'amount_due' => $newRemaining,
+                'status' => $newRemaining <= 0 ? PaymentRequirement::STATUS_PAID : $req->status,
+            ]);
+            $updated++;
+        }
+
+        return redirect()->route('admin.places.prices.index', $place)
+            ->with('success', "Пересчитано записей: {$updated}");
     }
 }

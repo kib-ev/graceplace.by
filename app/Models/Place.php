@@ -32,20 +32,20 @@ class Place extends Model
 
     public function getPriceForDate(Carbon $date): float
     {
-        // Normalize the date to start of day for consistent comparison
-        $dateNormalized = $date->copy()->startOfDay();
-        
+        // Compare using full datetime to support both date-only and datetime effective_from
+        // (e.g. scheduled changes that may have a time component in DB).
+        $datePoint = $date->copy();
+
         if ($this->relationLoaded('prices')) {
             $price = $this->prices
-                ->filter(function($price) use ($dateNormalized) {
-                    return $price->effective_from->startOfDay()->lte($dateNormalized);
+                ->filter(function($price) use ($datePoint) {
+                    return $price->effective_from->lte($datePoint);
                 })
                 ->sortByDesc('effective_from')
                 ->first();
         } else {
-            // Use toDateString() to ensure proper date comparison
             $price = $this->prices()
-                ->where('effective_from', '<=', $dateNormalized->toDateString())
+                ->where('effective_from', '<=', $datePoint)
                 ->orderBy('effective_from', 'desc')
                 ->first();
         }

@@ -6,19 +6,25 @@ use App\Models\Master;
 use App\Models\Place;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class UserService
 {
     public function createUserMaster($phone, $firstName, $lastName, $patronymic, $description = null, $instagram = null, $direct = null): Master
     {
-        return DB::transaction(function () use ($phone, $firstName, $lastName, $patronymic, $description, $instagram, $direct) {
-            /* @var $user User */
-            $user = User::updateOrCreate([
-                'email' => Str::replace(['+'], '', $phone . '@graceplace.by'),
-            ], [
-                'phone' => $phone,
-                'name'  => implode(' ', array_filter([$lastName, $firstName])),
+        $email = user_email_from_phone_number($phone);
+
+        if (User::where('email', $email)->exists()) {
+            throw ValidationException::withMessages([
+                'phone' => ['Пользователь с таким номером телефона уже зарегистрирован.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($phone, $firstName, $lastName, $patronymic, $description, $instagram, $direct, $email) {
+            $user = User::create([
+                'email'    => $email,
+                'phone'    => $phone,
+                'name'     => implode(' ', array_filter([$lastName, $firstName])),
                 'password' => '-',
             ]);
 

@@ -4,6 +4,7 @@
     <div class="row">
         <div class="col">
             <h1>Мастер - {{ $master->full_name }}</h1>
+            <div class=""><span style="background: #fff; color: #ccc; padding: 3px 8px; font-size: 12px;">master_id: {{ $master->id }}; user_id: {{ $master->user_id }}</span></div>
             <hr>
 
             @php $debtAmount = $master->getDebtAmount(); @endphp
@@ -59,9 +60,6 @@
                 <div id="nav-info" class="tab-pane fade show active" role="tabpanel" tabindex="0">
                     <div class="tab bg-light p-3">
                         <table class="table table-bordered">
-                            <tr>
-                                <td>id: {{ $master->id }}</td>
-                            </tr>
                             <tr>
                                 <td>
                                     <ul style="list-style-type: none; margin: 0px; padding: 0px;">

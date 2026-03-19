@@ -51,9 +51,6 @@
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer">
-                {{ $recipients->links() }}
-            </div>
         </div>
     </div>
 @endsection

@@ -34,7 +34,7 @@
                                         </td>
                                         <td style="width: 1%;">
                                             <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $storageBooking) }}">
-                                                продление
+                                                управлять
                                             </a>
                                         </td>
                                     </tr>

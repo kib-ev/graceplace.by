@@ -97,6 +97,6 @@ class RegisterController extends Controller
      */
     private function fillEmail(&$data)
     {
-        $data['email'] = Str::replace(['+', '-', '(', ')', ' '], '', $data['phone']) . '@' . 'graceplace.by'; // todo domain
+        $data['email'] = user_email_from_phone_number($data['phone']);
     }
 }

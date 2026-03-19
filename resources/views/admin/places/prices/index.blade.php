@@ -75,6 +75,15 @@
         </table>
 
         {{ $prices->links() }}
+
+        <form action="{{ route('admin.places.prices.recalculate', $place) }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-outline-primary">Пересчитать суммы</button>
+            <p class="text-muted small mt-3 mb-2">
+                Будут пересчитаны суммы платёжных требований для существующих не завершенных записей. Используется при добавлении запланированной цены.
+            </p>
+        </form>
+
     </div>
 @endsection
 
