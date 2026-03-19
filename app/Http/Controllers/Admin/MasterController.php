@@ -18,15 +18,23 @@ class MasterController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
+        $categoryId = $request->get('category_id');
 
-        $counts = Master::query()
+        $categoryFilter = function (Builder $q) use ($categoryId) {
+            $q->whereHas('serviceCategories', fn (Builder $cq) => $cq->where('service_categories.id', $categoryId));
+        };
+
+        $baseQuery = Master::query()
+            ->when($categoryId, $categoryFilter);
+
+        $counts = (clone $baseQuery)
             ->join('users', 'users.id', '=', 'masters.user_id')
             ->selectRaw('SUM(users.is_active = 1) as active, SUM(users.is_active = 0) as inactive')
             ->first();
         $activeCount   = (int) $counts->active;
         $inactiveCount = (int) $counts->inactive;
 
-        $debtorsBaseQuery = Master::query()
+        $debtorsBaseQuery = (clone $baseQuery)
             ->select('masters.id')
             ->join('users', 'users.id', '=', 'masters.user_id')
             ->addSelect(['debt_amount_byn' => Master::debtAmountSubquery()])
@@ -34,7 +42,7 @@ class MasterController extends Controller
         $debtorsActiveCount = (clone $debtorsBaseQuery)->where('users.is_active', 1)->count();
         $debtorsInactiveCount = (clone $debtorsBaseQuery)->where('users.is_active', 0)->count();
 
-        $masters = Master::query()
+        $masters = (clone $baseQuery)
             ->select('masters.*')
             ->when($request->has('is_active'), function (Builder $masters) use ($request) {
                 $masters->whereHas('user', function (Builder $user) use ($request) {
@@ -94,7 +102,9 @@ class MasterController extends Controller
             ->orderBy('masters.created_at')
             ->get();
 
-        return view('admin.masters.index', compact('masters', 'activeCount', 'inactiveCount', 'debtorsActiveCount', 'debtorsInactiveCount'));
+        $currentCategory = $categoryId ? ServiceCategory::find($categoryId) : null;
+
+        return view('admin.masters.index', compact('masters', 'activeCount', 'inactiveCount', 'debtorsActiveCount', 'debtorsInactiveCount', 'currentCategory'));
     }
 
     /**

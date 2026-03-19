@@ -65,7 +65,6 @@ class ServiceCategoryController extends Controller
 
     public function destroy(ServiceCategory $service_category)
     {
-        $service_category->masters()->detach();
         $service_category->delete();
 
         return redirect()->route('admin.service-categories.index')->with('success', 'Категория удалена');

@@ -39,7 +39,9 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td>{{ $category->masters_count }}</td>
+                            <td>
+                                <a href="{{ route('admin.masters.index', ['category_id' => $category->id]) }}">{{ $category->masters_count }}</a>
+                            </td>
                             <td class="text-end">
                                 <a href="{{ route('admin.service-categories.edit', $category) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fa fa-edit"></i> Редактировать

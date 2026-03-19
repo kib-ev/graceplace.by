@@ -7,13 +7,16 @@
 
             <div class="form">
                 <form id="searchMaster" method="get" autocomplete="off">
+                    @if(request('category_id'))
+                        <input type="hidden" name="category_id" value="{{ request('category_id') }}">
+                    @endif
                     <div class="form-group" style="width: 300px; display: inline-block;">
                         <input class="form-control"  type="text" name="search" value="{{ request('search') }}" placeholder="Имя, Фамилия, ID диркет">
                     </div>
                     <input class="btn btn-primary" type="submit" value="Найти">
 
                     @if(request('search'))
-                        <a class="btn btn-danger" href="{{ route('admin.masters.index') }}" >X</a>
+                        <a class="btn btn-danger" href="{{ route('admin.masters.index', array_filter(['category_id' => request('category_id'), 'is_active' => request('is_active')])) }}" >X</a>
                     @endif
                 </form>
             </div>
@@ -22,16 +25,24 @@
             <a href="{{ route('admin.masters.create') }}" class="btn btn-primary">Создать</a>
             <hr>
 
-            <a href="?is_active=1" class="{{ request('is_active') === '1' ? 'fw-bold' : '' }}">
+            @if(isset($currentCategory))
+                <div class="alert alert-info py-2 mb-2">
+                    Категория: <strong>{{ $currentCategory->name }}</strong>
+                    <a href="{{ route('admin.masters.index', array_filter(['is_active' => request('is_active'), 'search' => request('search')])) }}" class="btn btn-sm btn-outline-secondary ms-2">Показать всех</a>
+                </div>
+            @endif
+
+            @php $filterParams = array_filter(['category_id' => request('category_id'), 'is_active' => request('is_active'), 'search' => request('search')]); @endphp
+            <a href="{{ route('admin.masters.index', array_merge($filterParams, ['is_active' => 1])) }}" class="{{ request('is_active') === '1' ? 'fw-bold' : '' }}">
                 Активные ({{ $activeCount }})
             </a>
-            <a href="?is_active=0" class="{{ request('is_active') === '0' ? 'fw-bold' : '' }}" style="margin-left: 10px;">
+            <a href="{{ route('admin.masters.index', array_merge($filterParams, ['is_active' => 0])) }}" class="{{ request('is_active') === '0' ? 'fw-bold' : '' }}" style="margin-left: 10px;">
                 Неактивные ({{ $inactiveCount }})
             </a>
 
             <div style="margin-top: 10px;">
                 @php
-                    $baseParams = array_filter(['is_active' => request('is_active'), 'search' => request('search')]);
+                    $baseParams = array_filter(['category_id' => request('category_id'), 'is_active' => request('is_active'), 'search' => request('search')]);
                     $debtorsCount = request('is_active') === '0' ? $debtorsInactiveCount : (request('is_active') === '1' ? $debtorsActiveCount : $debtorsActiveCount + $debtorsInactiveCount);
                 @endphp
                 <a href="{{ route('admin.masters.index', $baseParams) }}" class="{{ !request('debtors') ? 'fw-bold' : '' }}">

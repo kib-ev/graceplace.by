@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ServiceCategory extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = ['name', 'sort', 'keywords'];
 
@@ -28,7 +29,19 @@ class ServiceCategory extends Model
         $categories = self::whereNotNull('keywords')->get();
 
         return $categories
-            ->filter(fn (self $cat) => ! empty($cat->keywords) && collect($cat->keywords)->contains(fn ($kw) => self::keywordMatchesText($kw, $lower)))
+            ->filter(function (self $cat) use ($lower) {
+                if (empty($cat->keywords)) {
+                    return false;
+                }
+                $positiveMatch = collect($cat->keywords)
+                    ->reject(fn ($kw) => is_string($kw) && str_starts_with(trim($kw), '-'))
+                    ->contains(fn ($kw) => self::keywordMatchesText($kw, $lower));
+                $minusMatch = collect($cat->keywords)
+                    ->filter(fn ($kw) => is_string($kw) && str_starts_with(trim($kw), '-'))
+                    ->contains(fn ($kw) => self::keywordMatchesText(ltrim(trim($kw), '-'), $lower));
+
+                return $positiveMatch && ! $minusMatch;
+            })
             ->pluck('id')
             ->values()
             ->toArray();
@@ -37,6 +50,7 @@ class ServiceCategory extends Model
     /**
      * Check if keyword matches text. Supports * as wildcard for any characters.
      * E.g. "реконструкц* волос" matches "мастер по реконструкции волос".
+     * Minus words (format -перм*) exclude the category when they match.
      */
     public static function keywordMatchesText(string $keyword, string $text): bool
     {
