@@ -30,6 +30,12 @@ class Master extends Model
         return $this->hasOne(MasterSchedule::class);
     }
 
+    public function serviceCategories()
+    {
+        return $this->belongsToMany(ServiceCategory::class, 'master_service_category')
+            ->withTimestamps();
+    }
+
     public function getFirstNameAttribute(): string
     {
         return $this->attributes['first_name'] ?? '';

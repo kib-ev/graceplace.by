@@ -41,6 +41,7 @@
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Права</a>
         <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
+        <a class="nav-link" href="{{ route('admin.service-categories.index') }}">Категории</a>
         <a class="nav-link" href="{{ route('admin.users.index') }}">Пользователи</a>
         @endrole
         <a class="nav-link" href="{{ route('admin.download.chrome-extension') }}">Плагин</a>

@@ -73,6 +73,30 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td>
+                                    <strong>Категории услуг:</strong>
+                                    <form action="{{ route('admin.masters.service-categories.update', $master) }}" method="post" class="mt-2">
+                                        @csrf
+                                        <div class="row">
+                                            @foreach($serviceCategories as $category)
+                                                @php $isRecommended = in_array($category->id, $recommendedCategoryIds ?? []); @endphp
+                                                <div class="col-md-6 col-lg-4 mb-1">
+                                                    <div class="form-check {{ $isRecommended ? 'text-success' : '' }}" title="{{ $isRecommended ? 'Рекомендовано по описанию' : '' }}">
+                                                        <input class="form-check-input" type="checkbox" name="service_category_ids[]" value="{{ $category->id }}" id="cat-{{ $category->id }}"
+                                                            {{ $master->serviceCategories->contains($category) ? 'checked' : '' }}>
+                                                        <label class="form-check-label" for="cat-{{ $category->id }}">
+                                                            {{ $category->name }}
+                                                            @if($isRecommended)<span class="badge bg-success bg-opacity-25 ms-1">рекомендуется</span>@endif
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <button class="btn btn-primary btn-sm mt-2" type="submit">Сохранить</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>{{ $master->instagram }}</td>
                             </tr>
 

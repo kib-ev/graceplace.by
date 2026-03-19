@@ -224,7 +224,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/download/chrome-extension', [\App\Http\Controllers\Admin\AdminController::class, 'downloadChromeExtension'])->name('download.chrome-extension');
 
     // MASTERS
+    Route::post('masters/{master}/service-categories', [\App\Http\Controllers\Admin\MasterController::class, 'updateServiceCategories'])->name('masters.service-categories.update');
     Route::resource('masters', \App\Http\Controllers\Admin\MasterController::class);
+
+    Route::resource('service-categories', \App\Http\Controllers\Admin\ServiceCategoryController::class)->except(['show']);
 
     // PLACES (admin only)
     Route::middleware('admin.only')->group(function () {

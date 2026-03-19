@@ -5,14 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Master;
-use App\Models\Place;
-use App\Models\User;
-use App\Models\PaymentRequirement;
+use App\Models\ServiceCategory;
 use App\Services\UserService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class MasterController extends Controller
 {
@@ -132,6 +128,7 @@ class MasterController extends Controller
     public function show(Master $master)
     {
         $master->load([
+            'serviceCategories',
             'user.appointments' => function ($q) {
                 $q->with(['paymentRequirements', 'place.prices', 'user.master', 'comments.user']);
             },
@@ -219,8 +216,13 @@ class MasterController extends Controller
         foreach ($expectedByPlaceMonth2025 as $row) {
             $placeExpected[$row->place_id][$row->m] = (float)$row->s;
         }
+        $serviceCategories = ServiceCategory::orderBy('sort')->get();
+        $recommendedCategoryIds = ServiceCategory::getRecommendedIdsForText($master->description);
+
         return view('admin.masters.show', compact(
             'master',
+            'serviceCategories',
+            'recommendedCategoryIds',
             'totalCount',
             'cancelCount',
             'visitCount',
@@ -261,7 +263,17 @@ class MasterController extends Controller
         }
 
         return back();
+    }
 
+    /**
+     * Update master's service categories.
+     */
+    public function updateServiceCategories(Request $request, Master $master)
+    {
+        $ids = $request->input('service_category_ids', []);
+        $master->serviceCategories()->sync($ids);
+
+        return back();
     }
 
     /**
