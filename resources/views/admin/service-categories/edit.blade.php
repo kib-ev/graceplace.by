@@ -21,6 +21,19 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="parent_id" class="form-label">Родительская категория</label>
+                        <select name="parent_id" id="parent_id" class="form-select @error('parent_id') is-invalid @enderror">
+                            <option value="">— Без родителя (верхний уровень) —</option>
+                            @foreach($parentCategories as $p)
+                                <option value="{{ $p->id }}" {{ old('parent_id', $category->parent_id) == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('parent_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="sort" class="form-label">Сортировка *</label>
                         <input type="number" name="sort" id="sort" min="0"
                                class="form-control @error('sort') is-invalid @enderror"

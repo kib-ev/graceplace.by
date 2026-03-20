@@ -10,14 +10,21 @@ class ServiceCategoryController extends Controller
 {
     public function index()
     {
-        $categories = ServiceCategory::orderBy('sort')->withCount('masters')->get();
+        $categories = ServiceCategory::with(['children' => fn ($q) => $q->withCount('masters')])
+            ->withCount('masters')
+            ->whereNull('parent_id')
+            ->orderBy('sort')
+            ->get();
 
         return view('admin.service-categories.index', compact('categories'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.service-categories.create');
+        $parentCategories = ServiceCategory::whereNull('parent_id')->orderBy('sort')->get();
+        $preselectedParentId = $request->get('parent_id');
+
+        return view('admin.service-categories.create', compact('parentCategories', 'preselectedParentId'));
     }
 
     public function store(Request $request)
@@ -25,6 +32,7 @@ class ServiceCategoryController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'sort' => ['required', 'integer', 'min:0'],
+            'parent_id' => ['nullable', 'integer', 'exists:service_categories,id'],
             'keywords' => ['nullable', 'string'],
         ]);
 
@@ -33,6 +41,7 @@ class ServiceCategoryController extends Controller
         ServiceCategory::create([
             'name' => $data['name'],
             'sort' => (int) $data['sort'],
+            'parent_id' => $data['parent_id'] ?? null,
             'keywords' => $keywords,
         ]);
 
@@ -41,7 +50,12 @@ class ServiceCategoryController extends Controller
 
     public function edit(ServiceCategory $service_category)
     {
-        return view('admin.service-categories.edit', ['category' => $service_category]);
+        $parentCategories = ServiceCategory::whereNull('parent_id')
+            ->where('id', '!=', $service_category->id)
+            ->orderBy('sort')
+            ->get();
+
+        return view('admin.service-categories.edit', ['category' => $service_category, 'parentCategories' => $parentCategories]);
     }
 
     public function update(Request $request, ServiceCategory $service_category)
@@ -49,14 +63,21 @@ class ServiceCategoryController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'sort' => ['required', 'integer', 'min:0'],
+            'parent_id' => ['nullable', 'integer', 'exists:service_categories,id'],
             'keywords' => ['nullable', 'string'],
         ]);
+
+        $parentId = $data['parent_id'] ?? null;
+        if ($parentId == $service_category->id) {
+            $parentId = null;
+        }
 
         $keywords = $this->parseKeywords($data['keywords'] ?? '');
 
         $service_category->update([
             'name' => $data['name'],
             'sort' => (int) $data['sort'],
+            'parent_id' => $parentId,
             'keywords' => $keywords,
         ]);
 

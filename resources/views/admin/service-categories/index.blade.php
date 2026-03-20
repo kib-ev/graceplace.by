@@ -25,28 +25,29 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach($categories as $category)
+                    @foreach($categories as $parent)
                         <tr>
-                            <td>{{ $category->id }}</td>
-                            <td>{{ $category->name }}</td>
-                            <td>{{ $category->sort }}</td>
+                            <td>{{ $parent->id }}</td>
+                            <td><strong>{{ $parent->name }}</strong></td>
+                            <td>{{ $parent->sort }}</td>
                             <td>
-                                @if(!empty($category->keywords))
-                                    <span class="text-muted" title="{{ implode(', ', $category->keywords) }}">
-                                        {{ count($category->keywords) }} шт.
+                                @if(!empty($parent->keywords))
+                                    <span class="text-muted" title="{{ implode(', ', $parent->keywords) }}">
+                                        {{ count($parent->keywords) }} шт.
                                     </span>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('admin.masters.index', ['category_id' => $category->id]) }}">{{ $category->masters_count }}</a>
+                                <a href="{{ route('admin.masters.index', ['category_id' => $parent->id]) }}">{{ $parent->masters_count }}</a>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('admin.service-categories.edit', $category) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('admin.service-categories.create', ['parent_id' => $parent->id]) }}" class="btn btn-sm btn-outline-secondary" title="Добавить подкатегорию">+</a>
+                                <a href="{{ route('admin.service-categories.edit', $parent) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fa fa-edit"></i> Редактировать
                                 </a>
-                                <form action="{{ route('admin.service-categories.destroy', $category) }}" method="POST" class="d-inline" onsubmit="return confirm('Удалить категорию? Связи с мастерами будут сняты.')">
+                                <form action="{{ route('admin.service-categories.destroy', $parent) }}" method="POST" class="d-inline" onsubmit="return confirm('Удалить категорию?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -55,6 +56,37 @@
                                 </form>
                             </td>
                         </tr>
+                        @foreach($parent->children as $child)
+                            <tr>
+                                <td>{{ $child->id }}</td>
+                                <td class="ps-4">↳ {{ $child->name }}</td>
+                                <td>{{ $child->sort }}</td>
+                                <td>
+                                    @if(!empty($child->keywords))
+                                        <span class="text-muted" title="{{ implode(', ', $child->keywords) }}">
+                                            {{ count($child->keywords) }} шт.
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.masters.index', ['category_id' => $child->id]) }}">{{ $child->masters_count }}</a>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.service-categories.edit', $child) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-edit"></i> Редактировать
+                                    </a>
+                                    <form action="{{ route('admin.service-categories.destroy', $child) }}" method="POST" class="d-inline" onsubmit="return confirm('Удалить категорию?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
                     @endforeach
                     </tbody>
                 </table>

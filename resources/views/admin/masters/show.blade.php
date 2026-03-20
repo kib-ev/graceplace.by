@@ -78,18 +78,31 @@
                                     <form action="{{ route('admin.masters.service-categories.update', $master) }}" method="post" class="mt-2">
                                         @csrf
                                         <div class="row">
-                                            @foreach($serviceCategories as $category)
-                                                @php $isRecommended = in_array($category->id, $recommendedCategoryIds ?? []); @endphp
+                                            @foreach($serviceCategories as $parent)
+                                                @php $isRecommended = in_array($parent->id, $recommendedCategoryIds ?? []); @endphp
                                                 <div class="col-md-6 col-lg-4 mb-1">
                                                     <div class="form-check {{ $isRecommended ? 'text-success' : '' }}" title="{{ $isRecommended ? 'Рекомендовано по описанию' : '' }}">
-                                                        <input class="form-check-input" type="checkbox" name="service_category_ids[]" value="{{ $category->id }}" id="cat-{{ $category->id }}"
-                                                            {{ $master->serviceCategories->contains($category) ? 'checked' : '' }}>
-                                                        <label class="form-check-label" for="cat-{{ $category->id }}">
-                                                            {{ $category->name }}
+                                                        <input class="form-check-input" type="checkbox" name="service_category_ids[]" value="{{ $parent->id }}" id="cat-{{ $parent->id }}"
+                                                            {{ $master->serviceCategories->contains($parent) ? 'checked' : '' }}>
+                                                        <label class="form-check-label" for="cat-{{ $parent->id }}">
+                                                            {{ $parent->name }}
                                                             @if($isRecommended)<span class="badge bg-success bg-opacity-25 ms-1">рекомендуется</span>@endif
                                                         </label>
                                                     </div>
                                                 </div>
+                                                @foreach($parent->children as $child)
+                                                    @php $childRecommended = in_array($child->id, $recommendedCategoryIds ?? []); @endphp
+                                                    <div class="col-md-6 col-lg-4 mb-1 ps-4">
+                                                        <div class="form-check {{ $childRecommended ? 'text-success' : '' }}" title="{{ $childRecommended ? 'Рекомендовано по описанию' : '' }}">
+                                                            <input class="form-check-input" type="checkbox" name="service_category_ids[]" value="{{ $child->id }}" id="cat-{{ $child->id }}"
+                                                                {{ $master->serviceCategories->contains($child) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="cat-{{ $child->id }}">
+                                                                {{ $child->name }}
+                                                                @if($childRecommended)<span class="badge bg-success bg-opacity-25 ms-1">рекомендуется</span>@endif
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                             @endforeach
                                         </div>
                                         <button class="btn btn-primary btn-sm mt-2" type="submit">Сохранить</button>
@@ -146,7 +159,11 @@
                             <tr>
                                 <td>
 
-                                    <span style="background: #f7f7cd; padding: 5px 10px;">Ваш логин: {{ $master->user->phone }} пароль: graceplace{{ $master->id }}</span>
+                                    @php $loginText = "Ваш логин: {$master->user->phone} пароль: graceplace{$master->id}"; @endphp
+                                    <span style="background: #f7f7cd; padding: 5px 10px;">{{ $loginText }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-login-btn" data-copy="{{ e($loginText) }}" title="Копировать логин и пароль">
+                                        <i class="fa fa-copy"></i> <span class="copy-text">Копировать</span>
+                                    </button>
 
                                     <span style="float: right"><a href="{{ url('/admin/users/' . $master->user->id . '/login') }}"><i class="fa fa-sign-in"></i></a></span>
                                 </td>
@@ -369,6 +386,19 @@
 @section('scripts')
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
+        document.querySelectorAll('.copy-login-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const text = this.getAttribute('data-copy');
+                navigator.clipboard.writeText(text).then(function() {
+                    const span = btn.querySelector('.copy-text');
+                    if (span) {
+                        span.textContent = 'Скопировано';
+                        setTimeout(function() { span.textContent = 'Копировать'; }, 1500);
+                    }
+                });
+            });
+        });
+
         let scannerModal = null;
         let html5QrCode = null;
 

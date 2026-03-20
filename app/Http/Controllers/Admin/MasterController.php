@@ -226,7 +226,7 @@ class MasterController extends Controller
         foreach ($expectedByPlaceMonth2025 as $row) {
             $placeExpected[$row->place_id][$row->m] = (float)$row->s;
         }
-        $serviceCategories = ServiceCategory::orderBy('sort')->get();
+        $serviceCategories = ServiceCategory::getTreeForSelection();
         $recommendedCategoryIds = ServiceCategory::getRecommendedIdsForText($master->description);
 
         return view('admin.masters.show', compact(

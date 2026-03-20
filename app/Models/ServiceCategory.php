@@ -10,7 +10,28 @@ class ServiceCategory extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'sort', 'keywords'];
+    protected $fillable = ['name', 'sort', 'keywords', 'parent_id'];
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort');
+    }
+
+    /**
+     * Get all categories for selection, grouped by parent (tree structure).
+     */
+    public static function getTreeForSelection(): \Illuminate\Support\Collection
+    {
+        return self::with(['children' => fn ($q) => $q->orderBy('sort')])
+            ->whereNull('parent_id')
+            ->orderBy('sort')
+            ->get();
+    }
 
     protected $casts = [
         'keywords' => 'array',
