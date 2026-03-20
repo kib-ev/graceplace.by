@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Place;
 use App\Models\Master;
 use App\Models\Appointment;
+use App\Models\StorageBooking;
+use App\Models\Payment;
+use Illuminate\Support\Facades\DB;
 
 class StatsController extends Controller
 {
@@ -39,113 +42,71 @@ class StatsController extends Controller
             })
             ->count();
 
-        // 3. Месячная статистика 2024
-        $monthlyStats2024 = Appointment::selectRaw('
-            MONTH(appointments.start_at) as month,
-            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
-            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
-        ')
-            ->leftJoin('payment_requirements', function($join) {
-                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
-                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+        // Локер: выручка из Payments (completed) — фактически полученные деньги
+        $totalLockerRevenue = DB::table('payments')
+            ->join('storage_bookings', function ($join) {
+                $join->on('storage_bookings.id', '=', 'payments.payable_id')
+                    ->where('payments.payable_type', '=', StorageBooking::class);
             })
-            ->whereYear('appointments.start_at', 2024)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+            ->where('payments.status', Payment::STATUS_COMPLETED)
+            ->selectRaw('COALESCE(SUM(payments.amount), 0) as total')
+            ->value('total') ?? 0;
 
-        // 4. Месячная статистика 2025
-        $monthlyStats2025 = Appointment::selectRaw('
-            MONTH(appointments.start_at) as month,
-            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
-            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
-        ')
-            ->leftJoin('payment_requirements', function($join) {
-                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
-                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
-            })
-            ->whereYear('appointments.start_at', 2025)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+        // 3-11. Месячная статистика: текущий год и два предыдущих
+        $currentYear = now()->year;
+        $years = [$currentYear, $currentYear - 1, $currentYear - 2];
 
-        // 5. Месячная статистика 2026
-        $monthlyStats2026 = Appointment::selectRaw('
-            MONTH(appointments.start_at) as month,
-            COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
-            SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
-        ')
-            ->leftJoin('payment_requirements', function($join) {
-                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
-                     ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
-            })
-            ->whereYear('appointments.start_at', 2026)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+        $monthlyStats = [];
+        $newMasters = [];
+        $uniqueMasters = [];
 
-        // 6. Новые мастера по месяцам 2024
-        $newMasters2024 = Master::selectRaw('
-            MONTH(created_at) as month,
-            COUNT(*) as count
-        ')
-            ->whereYear('created_at', 2024)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+        foreach ($years as $year) {
+            $monthlyStats[$year] = Appointment::selectRaw('
+                MONTH(appointments.start_at) as month,
+                COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as revenue,
+                SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as hours
+            ')
+                ->leftJoin('payment_requirements', function($join) {
+                    $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                         ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+                })
+                ->whereYear('appointments.start_at', $year)
+                ->groupBy('month')
+                ->get()
+                ->keyBy('month');
 
-        // 7. Новые мастера по месяцам 2025
-        $newMasters2025 = Master::selectRaw('
-            MONTH(created_at) as month,
-            COUNT(*) as count
-        ')
-            ->whereYear('created_at', 2025)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+            $newMasters[$year] = Master::selectRaw('
+                MONTH(created_at) as month,
+                COUNT(*) as count
+            ')
+                ->whereYear('created_at', $year)
+                ->groupBy('month')
+                ->get()
+                ->keyBy('month');
 
-        // 8. Новые мастера по месяцам 2026
-        $newMasters2026 = Master::selectRaw('
-            MONTH(created_at) as month,
-            COUNT(*) as count
-        ')
-            ->whereYear('created_at', 2026)
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+            $uniqueMasters[$year] = Appointment::selectRaw('
+                MONTH(start_at) as month,
+                COUNT(DISTINCT user_id) as count
+            ')
+                ->whereYear('start_at', $year)
+                ->whereNull('canceled_at')
+                ->groupBy('month')
+                ->get()
+                ->keyBy('month');
 
-        // 9. Уникальные мастера по месяцам (2024)
-        $uniqueMasters2024 = Appointment::selectRaw('
-            MONTH(start_at) as month,
-            COUNT(DISTINCT user_id) as count
-        ')
-            ->whereYear('start_at', 2024)
-            ->whereNull('canceled_at')
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
-
-        // 10. Уникальные мастера по месяцам (2025)
-        $uniqueMasters2025 = Appointment::selectRaw('
-            MONTH(start_at) as month,
-            COUNT(DISTINCT user_id) as count
-        ')
-            ->whereYear('start_at', 2025)
-            ->whereNull('canceled_at')
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
-
-        // 11. Уникальные мастера по месяцам (2026)
-        $uniqueMasters2026 = Appointment::selectRaw('
-            MONTH(start_at) as month,
-            COUNT(DISTINCT user_id) as count
-        ')
-            ->whereYear('start_at', 2026)
-            ->whereNull('canceled_at')
-            ->groupBy('month')
-            ->get()
-            ->keyBy('month');
+            // Локер: выручка из Payments (completed), группировка по start_at бронирования
+            $lockerStats[$year] = DB::table('payments')
+                ->join('storage_bookings', function ($join) {
+                    $join->on('storage_bookings.id', '=', 'payments.payable_id')
+                        ->where('payments.payable_type', '=', StorageBooking::class);
+                })
+                ->where('payments.status', Payment::STATUS_COMPLETED)
+                ->whereYear('storage_bookings.start_at', $year)
+                ->selectRaw('MONTH(storage_bookings.start_at) as month, COALESCE(SUM(payments.amount), 0) as locker_revenue')
+                ->groupBy('month')
+                ->get()
+                ->keyBy('month');
+        }
 
         // 12. Недели за прошлый и текущий год (выручка и часы)
         $weeklyStats = function($year) {
@@ -195,11 +156,9 @@ class StatsController extends Controller
 
         return view('admin.stats', compact(
             'placesCount', 'mastersCount', 'appointmentsStats',
-            'monthlyStats2024', 'monthlyStats2025', 'monthlyStats2026',
-            'newMasters2024', 'newMasters2025', 'newMasters2026',
-            'uniqueMasters2024', 'uniqueMasters2025', 'uniqueMasters2026',
+            'years', 'monthlyStats', 'newMasters', 'uniqueMasters', 'lockerStats',
             'weeklyStatsPrev', 'weeklyStatsCurr',
-            'canceledWithPaymentCount'
+            'canceledWithPaymentCount', 'totalLockerRevenue'
         ));
     }
 } 

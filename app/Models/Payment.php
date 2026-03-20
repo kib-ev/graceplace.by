@@ -25,6 +25,17 @@ class Payment extends Model
         ];
     }
 
+    public static function getPaymentMethods(): array
+    {
+        return [
+            self::METHOD_CASH => 'Наличные',
+            self::METHOD_CARD => 'Карта',
+            self::METHOD_SERVICE => 'ЕРИП',
+            self::METHOD_BONUS => 'Бонус',
+            self::METHOD_OTHER => 'Другое',
+        ];
+    }
+
     const METHOD_CASH = 'cash';
     const METHOD_CARD = 'card';
     const METHOD_SERVICE = 'service';
@@ -34,6 +45,11 @@ class Payment extends Model
     public function payable()
     {
         return $this->morphTo();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function isRefundable()

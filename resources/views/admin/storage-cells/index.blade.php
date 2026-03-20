@@ -9,9 +9,11 @@
             <table id="appointmentsList" class="table table-bordered mb-5 tr-td-bg">
                 @foreach($storageCells as $storageCell)
                     <tr style="background: {{ $storageCell->bookings->whereNull('finished_at')->count() == 0 ? '#91c791' : '' }} !important;">
-                        <td>{{ $storageCell->number }}</td>
                         <td>
-                            <table class="table table-bordered">
+                            <a href="{{ route('admin.storage-cells.show', $storageCell) }}">{{ $storageCell->number }}</a>
+                        </td>
+                        <td>
+                            <table class="table table-bordered mb-0">
                                 @foreach($storageCell->bookings->whereNull('finished_at') as $storageBooking)
                                     <tr>
                                         <td style="text-align: center; width: 10px; background: {{ $storageBooking->daysLeft() > 0 ? 'green' : 'red' }} ">
@@ -32,11 +34,6 @@
                                         <td>
                                             {{ $storageCell->cost_per_month }}
                                         </td>
-                                        <td style="width: 1%;">
-                                            <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $storageBooking) }}">
-                                                управлять
-                                            </a>
-                                        </td>
                                     </tr>
                                 @endforeach
                             </table>
@@ -44,7 +41,8 @@
                         <td style="width: 100px;"><input style="width: 100%;" value="{{ $storageCell->secret }}" disabled></td>
                         <td style="color: #ccc; width: 200px;">{{ $storageCell->description }}</td>
                         <td style="width: 1%;">
-                            <a href="{{ route('admin.storage-cells.edit', $storageCell) }}"><i class="fa fa-gear"></i></a>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.storage-cells.show', $storageCell) }}">Просмотреть бронь</a>
+                            <a href="{{ route('admin.storage-cells.edit', $storageCell) }}" title="Настройки"><i class="fa fa-gear"></i></a>
                         </td>
                     </tr>
                 @endforeach

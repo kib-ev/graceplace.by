@@ -14,6 +14,13 @@ class StorageCellController extends Controller
         return view('admin.storage-cells.index', compact('storageCells'));
     }
 
+    public function show(StorageCell $storageCell)
+    {
+        $bookings = $storageCell->bookings()->with(['user.master', 'paymentRequirements', 'payments', 'cell'])->reorder('start_at', 'desc')->get();
+
+        return view('admin.storage-cells.show', compact('storageCell', 'bookings'));
+    }
+
     public function create()
     {
         return view('admin.storage-cells.create');

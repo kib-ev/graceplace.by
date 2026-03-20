@@ -206,6 +206,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // APPOINTMENTS PAYMENTS
     Route::get('/payments', [\App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
     Route::patch('/payments/{payment}/update-status', [\App\Http\Controllers\PaymentController::class, 'updateStatus'])->name('payments.update-status');
+    Route::patch('/payments/{payment}/update-method', [\App\Http\Controllers\PaymentController::class, 'updateMethod'])->name('payments.update-method');
+    Route::patch('/payments/{payment}', [\App\Http\Controllers\PaymentController::class, 'update'])->name('payments.update');
     Route::get('/payments/{payment}/delete', [\App\Http\Controllers\PaymentController::class, 'destroy'])->name('payments.destroy'); // todo refactor
     Route::post('/appointments/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('appointments.payments.store'); // todo refactor
     // APPOINTMENTS REQUIREMENTS
@@ -262,6 +264,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // STORAGE CELLS BOOKING
     Route::resource('storage-cells', \App\Http\Controllers\StorageCellController::class);
     Route::resource('storage-bookings', \App\Http\Controllers\Admin\StorageBookingController::class);
+    Route::get('storage-bookings/{storage_booking}/payments', [\App\Http\Controllers\Admin\StorageBookingController::class, 'payments'])->name('storage-bookings.payments.show');
+    Route::post('storage-bookings/payment-requirements', [\App\Http\Controllers\StorageBookingPaymentController::class, 'storeRequirement'])->name('storage-bookings.payment-requirements.store');
+    Route::post('storage-bookings/payments', [\App\Http\Controllers\StorageBookingPaymentController::class, 'storePayment'])->name('storage-bookings.payments.store');
 
     // USERS (admin only)
     Route::middleware('admin.only')->group(function () {
