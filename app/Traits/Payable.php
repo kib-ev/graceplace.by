@@ -70,4 +70,22 @@ trait Payable
 
         return max(0, $expected - $actuallyPaid);
     }
+
+    /**
+     * Ожидаемая сумма к оплате (до создания требований).
+     * Каждая модель переопределяет под свою логику.
+     */
+    public function getExpectedAmount(): float
+    {
+        throw new \BadMethodCallException(static::class . ' must implement getExpectedAmount()');
+    }
+
+    /**
+     * Подпись для отображения в интерфейсе платежей.
+     * Каждая модель переопределяет под свою логику.
+     */
+    public function getPaymentContextLabel(): string
+    {
+        throw new \BadMethodCallException(static::class . ' must implement getPaymentContextLabel()');
+    }
 }

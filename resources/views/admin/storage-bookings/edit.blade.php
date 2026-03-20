@@ -126,6 +126,9 @@
         <div class="row mt-4" id="payments">
             <div class="col-12">
                 <h3>Управление оплатами</h3>
+                <p class="mb-2">
+                    <a href="{{ route('admin.payments.manage', ['payable_type' => \App\Models\StorageBooking::class, 'payable_id' => $storageBooking->id]) }}">Общая форма управления платежами →</a>
+                </p>
                 <p class="text-muted">
                     Ожидаемая: {{ number_format($storageBooking->getExpectedTotal(), 2, '.') }} BYN
                     | Остаток: {{ number_format($storageBooking->leftToPay(), 2, '.') }} BYN

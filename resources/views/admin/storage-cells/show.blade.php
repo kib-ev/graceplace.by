@@ -119,7 +119,7 @@
                                 </td>
                                 <td style="white-space: nowrap; text-align: right;">
                                     @if($booking->paymentRequirements->isEmpty())
-                                        <span style="color: #c1bebe;">{{ number_format($booking->cell->cost_per_month ?? 0, 2, '.') }} BYN</span>
+                                        <span style="color: #c1bebe;">{{ number_format($booking->getExpectedAmount(), 2, '.') }} BYN</span>
                                     @elseif($booking->isPaid())
                                         <b style="color: #000;">{{ number_format($booking->paymentRequirements->first()->getPaidAmount(), 2, '.') }} BYN</b>
                                         @if($booking->payments->where('status', 'completed')->where('amount', '>', 0)->isNotEmpty())
@@ -140,7 +140,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.storage-bookings.edit', $booking) }}#payments">Платежи</a>
+                                    <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $booking) }}">Редактировать</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.payments.manage', ['payable_type' => \App\Models\StorageBooking::class, 'payable_id' => $booking->id]) }}">Платежи</a>
                                 </td>
                             </tr>
                         @empty

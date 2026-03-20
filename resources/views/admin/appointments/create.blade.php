@@ -270,6 +270,9 @@
             <div class="col-12">
                 <hr>
                 <h3>Управление оплатами</h3>
+                <p class="mb-2">
+                    <a href="{{ route('admin.payments.manage', ['payable_type' => \App\Models\Appointment::class, 'payable_id' => $appointment->id]) }}">Общая форма управления платежами →</a>
+                </p>
 
                 @if($appointment->paymentRequirements->count() > 0 && $appointment->leftToPay() == 0)
                     <div class="alert alert-success mb-3">

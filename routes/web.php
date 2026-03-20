@@ -205,6 +205,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // APPOINTMENTS PAYMENTS
     Route::get('/payments', [\App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/manage', [\App\Http\Controllers\Admin\PayablePaymentController::class, 'show'])->name('payments.manage');
+    Route::post('/payables/payment-requirements', [\App\Http\Controllers\Admin\PayablePaymentController::class, 'storeRequirement'])->name('payables.payment-requirements.store');
+    Route::post('/payables/payments', [\App\Http\Controllers\Admin\PayablePaymentController::class, 'storePayment'])->name('payables.payments.store');
     Route::patch('/payments/{payment}/update-status', [\App\Http\Controllers\PaymentController::class, 'updateStatus'])->name('payments.update-status');
     Route::patch('/payments/{payment}/update-method', [\App\Http\Controllers\PaymentController::class, 'updateMethod'])->name('payments.update-method');
     Route::patch('/payments/{payment}', [\App\Http\Controllers\PaymentController::class, 'update'])->name('payments.update');

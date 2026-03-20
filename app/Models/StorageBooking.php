@@ -54,4 +54,25 @@ class StorageBooking extends Model
             'duration' => $this->duration + $daysCount
         ]);
     }
+
+    public function getExpectedAmount(): float
+    {
+        $this->loadMissing('cell');
+        return (float) (($this->cell->cost_per_month ?? 0) * ($this->duration / 30));
+    }
+
+    public function getPaymentContextLabel(): string
+    {
+        $cell = $this->cell ?? null;
+        $master = $this->user?->master ?? null;
+        $result = implode(', ', [
+            'Ячейка',
+            $cell?->number ?? '—',
+            $master?->full_name ?? '—',
+            $this->duration . ' ' . 'дней',
+            $this->start_at->format('d.m.Y') . '-' . $this->start_at->addDays($this->duration)->format('d.m.Y')
+
+        ]);
+        return $result;
+    }
 }

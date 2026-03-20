@@ -149,7 +149,19 @@ class Appointment extends Model
 
     public function getExpectedPrice(): float
     {
+        return $this->getExpectedAmount();
+    }
+
+    public function getExpectedAmount(): float
+    {
         return (new AppointmentService())->calculateAppointmentCost($this);
+    }
+
+    public function getPaymentContextLabel(): string
+    {
+        $place = $this->place ?? null;
+        $master = $this->user?->master ?? null;
+        return 'Запись ' . ($place?->name ?? '—') . ', ' . ($master?->full_name ?? '—') . ', ' . $this->start_at->format('d.m.Y');
     }
 
     public function getCancellationReason(): string
