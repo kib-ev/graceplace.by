@@ -59,6 +59,15 @@ class StorageBookingController extends Controller
     {
         $data = $request->all();
 
+        if (isset($data['activate'])) {
+            StorageBooking::where('model_id', $storageBooking->model_id)
+                ->where('model_class', $storageBooking->model_class)
+                ->whereNull('finished_at')
+                ->update(['finished_at' => now()]);
+            $storageBooking->update(['finished_at' => null]);
+            return redirect()->route('admin.storage-bookings.edit', $storageBooking)->with('success', 'Бронь активирована.');
+        }
+
         if (isset($data['extend'])) {
             // Продление = новая запись на 30 дней (вместо +30 к текущей)
             $amount = $storageBooking->cell->cost_per_month;

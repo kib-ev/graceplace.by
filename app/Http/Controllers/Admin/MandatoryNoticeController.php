@@ -99,6 +99,7 @@ class MandatoryNoticeController extends Controller
         ]);
 
         $recipients = $mandatoryNotice->users()
+            ->with('master')
             ->select('users.id', 'users.name', 'users.email', 'mandatory_notice_user.confirmed_at')
             ->latest('mandatory_notice_user.confirmed_at')
             ->get();

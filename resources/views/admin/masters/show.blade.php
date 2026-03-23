@@ -48,9 +48,8 @@
                     <button id="nav-comments-tab" data-bs-target="#nav-comments" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Комментарии ({{ $master->comments()->count() }})</button>
                     <button id="nav-payment-tab" data-bs-target="#nav-payment" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Ссылки ЕРИП ({{ !empty($master->user->getSetting('payment_link.place')) + !empty($master->user->getSetting('payment_link.storage'))  }})</button>
 
-                    @if(count($master->user->storageBookings))
-                        <button id="nav-storage-tab" data-bs-target="#nav-storage" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Локер ({{ count($master->user->storageBookings) }})</button>
-                    @endif
+                    @php $activeStorageBookings = $master->user->storageBookings->whereNull('finished_at'); @endphp
+                    <button id="nav-storage-tab" data-bs-target="#nav-storage" class="nav-link" data-bs-toggle="tab" type="button" role="tab">Локер ({{ $activeStorageBookings->count() }})</button>
 
                     <button id="nav-permissions-tab" data-bs-target="#nav-permissions" class="nav-link"  data-bs-toggle="tab" type="button" role="tab">Права ({{ $master->user->getAllPermissions()->count() }}/2)</button>
 
@@ -329,12 +328,11 @@
                     </div>
                 </div>
 
-                @if(count($master->user->storageBookings))
-                    <div id="nav-storage" class="tab-pane fade" role="tabpanel" tabindex="0">
-                        <div class="tab bg-light p-3">
-                            <div class="storageBookings">
-                                <table class="table table-bordered">
-                                    @foreach($master->user->storageBookings as $storageBooking)
+                <div id="nav-storage" class="tab-pane fade" role="tabpanel" tabindex="0">
+                    <div class="tab bg-light p-3">
+                        <div class="storageBookings">
+                            <table class="table table-bordered">
+                                @foreach($activeStorageBookings as $storageBooking)
                                         <tr>
                                             <td><a href="{{ route('admin.storage-bookings.edit', $storageBooking) }}">{{ $storageBooking->cell->number }}</a></td>
                                         </tr>
@@ -351,13 +349,11 @@
                                         <tr>
                                             <td>Код: {{ $storageBooking->cell->secret }}</td>
                                         </tr>
-                                    @endforeach
-                                </table>
-
-                            </div>
+                                @endforeach
+                            </table>
                         </div>
                     </div>
-                @endif
+                </div>
 
                 <div class="tab-pane fade" id="nav-permissions" role="tabpanel" tabindex="0">
                     <div class="tab bg-light p-3">

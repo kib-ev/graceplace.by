@@ -41,7 +41,13 @@
                     @foreach($recipients as $user)
                         <tr>
                             <td>{{ $user->id }}</td>
-                            <td>{{ $user->name }}</td>
+                            <td>
+                                @if($user->master)
+                                    <a href="{{ route('admin.masters.show', $user->master) }}">{{ $user->name }}</a>
+                                @else
+                                    {{ $user->name }}
+                                @endif
+                            </td>
                             <td>{{ $user->email }}</td>
                             <td>
                                 {{ $user->pivot->confirmed_at ? \Carbon\Carbon::parse($user->pivot->confirmed_at)->format('d.m.Y H:i') : '—' }}

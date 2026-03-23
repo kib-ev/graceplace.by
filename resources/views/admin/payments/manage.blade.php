@@ -14,12 +14,6 @@
             <p class="mb-0"><strong>{{ $payable->getPaymentContextLabel() }}</strong></p>
             <hr>
 
-            <p class="text-muted">
-                Ожидаемая: {{ number_format($payable->getExpectedTotal(), 2, '.') }} BYN
-                | Остаток: {{ number_format($payable->leftToPay(), 2, '.') }} BYN
-                | {{ $payable->isPaid() ? 'Оплачено' : 'Не оплачено' }}
-            </p>
-
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
@@ -33,183 +27,169 @@
                 </div>
             @endif
 
-            <div class="card mb-3">
-                <div class="card-header"><strong>Создать требование на оплату</strong></div>
-                <div class="card-body">
-                    <form action="{{ route('admin.payables.payment-requirements.store') }}" method="POST" class="row g-2 align-items-end">
+            @if($payable->paymentRequirements->count() > 0 && $payable->leftToPay() == 0)
+                <div class="alert alert-success mb-3">
+                    <i class="fa fa-check-circle"></i> Оплачено полностью
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 col-sm-12">
+            <h4>Платежные требования</h4>
+
+            <div class="overflow-scroll">
+                @if($payable->paymentRequirements->count() === 0)
+                    <form action="{{ route('admin.payables.payment-requirements.store') }}" method="POST" class="mb-3">
                         @csrf
                         <input type="hidden" name="payable_type" value="{{ get_class($payable) }}">
                         <input type="hidden" name="payable_id" value="{{ $payable->id }}">
-                        <div class="col-md-2">
-                            <label class="form-label">Сумма</label>
-                            <input type="number" name="amount" class="form-control form-control-sm" step="0.01" required min="0"
-                                   value="{{ number_format($payable->getExpectedAmount(), 2, '.', '') }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Срок действия</label>
-                            <select name="expiration_days" class="form-control form-control-sm">
-                                <option value="30">30 дней</option>
-                                <option value="14">14 дней</option>
-                                <option value="7">7 дней</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Дата создания</label>
-                            <input type="datetime-local" name="created_at" class="form-control form-control-sm"
-                                   value="{{ now()->format('Y-m-d\TH:i') }}">
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary btn-sm">Создать требование</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                        <input type="hidden" name="created_at" value="{{ ($payable->start_at ?? $payable->created_at ?? now())->format('Y-m-d H:i:s') }}">
+                        <input type="hidden" name="expiration_days" value="30">
 
-            <div class="card mb-3">
-                <div class="card-header"><strong>Требования на оплату</strong></div>
-                <div class="card-body p-0">
-                    <table class="table table-bordered table-sm mb-0">
+                        <div class="input-group">
+                            <input type="number" name="amount" id="amount" class="form-control" step="0.01" required value="{{ number_format($payable->getExpectedAmount(), 2, '.', '') }}" placeholder="Expected: {{ number_format($payable->getExpectedAmount(), 2) }} BYN">
+                            <button type="submit" class="btn btn-primary">Создать</button>
+                        </div>
+                        <small class="text-muted">Ожидаемая расчетная плата: {{ number_format($payable->getExpectedAmount(), 2) }} BYN</small>
+                    </form>
+                @else
+                    <table class="table table-sm table-responsive">
                         <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Мастер</th>
-                            <th>Создано</th>
                             <th>Ожидаемая</th>
+                            <th>К оплате</th>
                             <th>Остаток</th>
+                            <th>Статус</th>
                             <th>Срок</th>
-                            <th>Статус</th>
                             <th></th>
                         </tr>
                         </thead>
                         <tbody>
-                        @forelse($payable->paymentRequirements as $req)
+                        @foreach($payable->paymentRequirements as $requirement)
                             <tr>
-                                <td>{{ $req->id }}</td>
+                                <td>{{ $requirement->id }}</td>
+                                <td>{{ number_format($requirement->expected_amount, 2) }}</td>
+                                <td>{{ number_format($requirement->amount_due, 2) }}</td>
                                 <td>
-                                    @if($req->user?->master)
-                                        <a href="{{ route('admin.masters.show', $req->user->master) }}">{{ $req->user->master->full_name }}</a>
+                                    <strong>{{ number_format($requirement->remaining_amount, 2) }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $requirement->status === 'paid' ? 'success' : ($requirement->status === 'overdue' ? 'danger' : 'warning') }}">
+                                        {{ $requirement->status }}
+                                    </span>
+                                </td>
+                                <td>{{ $requirement->due_date?->format('d.m.Y') }}</td>
+                                <td>
+                                    @php
+                                        $hasCompletedPayments = $payable->payments->where('status', \App\Models\Payment::STATUS_COMPLETED)->count() > 0;
+                                    @endphp
+                                    @if($hasCompletedPayments)
+                                        <span class="text-muted" title="Нельзя удалить: есть завершенные платежи" style="cursor: help;">🔒</span>
                                     @else
-                                        —
+                                        <a href="{{ route('admin.payment-requirements.destroy', $requirement->id) }}" class="text-danger" onclick="return confirm('Удалить требование?')">×</a>
                                     @endif
-                                </td>
-                                <td>{{ $req->created_at->format('d.m.Y H:i') }}</td>
-                                <td>{{ number_format($req->expected_amount ?? 0, 2) }} BYN</td>
-                                <td>{{ number_format($req->remaining_amount ?? 0, 2) }} BYN</td>
-                                <td>{{ $req->due_date?->format('d.m.Y') ?? '—' }}</td>
-                                <td>{{ $req->status }}</td>
-                                <td>
-                                    <a href="{{ route('admin.payment-requirements.destroy', $req->id) }}"
-                                       onclick="return confirm('Удалить требование?')">удалить</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="8" class="text-muted">Нет требований</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            @php $hasUnpaidRequirements = $payable->paymentRequirements->isNotEmpty() && $payable->leftToPay() > 0; @endphp
-            <div class="card mb-3" id="payments">
-                <div class="card-header"><strong>Новый платеж</strong>@if(!$hasUnpaidRequirements) <span class="text-muted">(требуются незакрытые платежные требования)</span>@endif</div>
-                <div class="card-body">
-                    <form action="{{ route('admin.payables.payments.store') }}" method="POST" class="row g-2 align-items-end">
-                        @csrf
-                        <input type="hidden" name="payable_type" value="{{ get_class($payable) }}">
-                        <input type="hidden" name="payable_id" value="{{ $payable->id }}">
-                        <div class="col-md-2">
-                            <label class="form-label">Дата</label>
-                            <input type="datetime-local" name="created_at" class="form-control form-control-sm" required
-                                   value="{{ now()->format('Y-m-d\TH:i') }}" @disabled(!$hasUnpaidRequirements)>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Сумма</label>
-                            <input type="number" name="amount" class="form-control form-control-sm @error('amount') is-invalid @enderror" step="0.01" required min="0.01"
-                                   max="{{ $hasUnpaidRequirements ? $payable->leftToPay() : 0 }}"
-                                   value="{{ old('amount', $payable->leftToPay()) }}" @disabled(!$hasUnpaidRequirements)>
-                            @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Метод</label>
-                            <select name="payment_method" class="form-control form-control-sm" required @disabled(!$hasUnpaidRequirements)>
-                                @foreach(\App\Models\Payment::getPaymentMethods() as $v => $n)
-                                    <option value="{{ $v }}">{{ $n }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Примечание</label>
-                            <input type="text" name="note" class="form-control form-control-sm" placeholder="Необязательно" @disabled(!$hasUnpaidRequirements)>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary btn-sm" @disabled(!$hasUnpaidRequirements)>Провести оплату</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header"><strong>Платежи</strong></div>
-                <div class="card-body p-0">
-                    <table class="table table-bordered table-sm mb-0">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Мастер</th>
-                            <th>Дата</th>
-                            <th>Сумма</th>
-                            <th>Метод</th>
-                            <th>Статус</th>
-                            <th>Примечание</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($payable->payments as $payment)
-                            <tr>
-                                <td>{{ $payment->id }}</td>
-                                <td>
-                                    @if($payment->user?->master)
-                                        <a href="{{ route('admin.masters.show', $payment->user->master) }}">{{ $payment->user->master->full_name }}</a>
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>{{ $payment->created_at->format('d.m.Y H:i') }}</td>
-                                <td>{{ number_format($payment->amount, 2) }} BYN</td>
-                                <td>
-                                    <form action="{{ route('admin.payments.update', $payment) }}" method="post" id="payment-form-{{ $payment->id }}">
-                                        @csrf @method('patch')
-                                        <select name="payment_method" class="form-select form-select-sm" style="width:auto; min-width: 90px;">
-                                            @foreach(\App\Models\Payment::getPaymentMethods() as $v => $n)
-                                                <option value="{{ $v }}" @selected($payment->payment_method == $v)>{{ $n }}</option>
-                                            @endforeach
-                                        </select>
-                                    </form>
-                                </td>
-                                <td>
-                                    <select name="status" form="payment-form-{{ $payment->id }}" class="form-select form-select-sm" style="width:auto; min-width: 100px;">
-                                        @foreach(\App\Models\Payment::getPaymentStatuses() as $v => $n)
-                                            <option value="{{ $v }}" @selected($payment->status == $v)>{{ $n }}</option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="note" form="payment-form-{{ $payment->id }}" class="form-control form-control-sm" value="{{ $payment->note ?? '' }}" placeholder="—" style="min-width: 120px;">
-                                </td>
-                                <td>
-                                    <button type="submit" form="payment-form-{{ $payment->id }}" class="btn btn-sm btn-primary">Сохранить</button>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.payments.destroy', $payment) }}" onclick="return confirm('Удалить платеж?')">удалить</a>
                                 </td>
                             </tr>
                         @endforeach
                         </tbody>
+                        <tfoot>
+                        <tr>
+                            <th colspan="3">Итого к оплате:</th>
+                            <th colspan="4"><strong>{{ number_format($payable->leftToPay(), 2) }} BYN</strong></th>
+                        </tr>
+                        </tfoot>
                     </table>
-                </div>
+                @endif
             </div>
+        </div>
+
+        <div class="col-lg-6 col-sm-12">
+            <h4>Платежи</h4>
+
+            @if($payable->paymentRequirements->count() > 0 && $payable->leftToPay() > 0)
+                <form action="{{ route('admin.payables.payments.store') }}" method="POST" autocomplete="off" class="mb-3">
+                    @csrf
+                    <input type="hidden" name="payable_type" value="{{ get_class($payable) }}">
+                    <input type="hidden" name="payable_id" value="{{ $payable->id }}">
+
+                    <div class="input-group mb-2">
+                        <input type="datetime-local" name="created_at" class="form-control" required value="{{ old('created_at', now()->format('Y-m-d\TH:i')) }}" title="Дата платежа" style="max-width: 180px;">
+                        <input type="number" name="amount" id="payment_amount" class="form-control @error('amount') is-invalid @enderror" step="0.01" required value="{{ number_format($payable->leftToPay(), 2, '.', '') }}" placeholder="Amount">
+                        <input type="text" name="note" class="form-control" placeholder="Комментарий">
+
+                        <select name="payment_method" id="payment_method" class="form-select" required style="max-width: 150px;">
+                            <option value="service">Сервис ЕРИП</option>
+                            <option value="cash">Наличные</option>
+                        </select>
+                        <button type="submit" class="btn btn-success">Добавить</button>
+                    </div>
+                    <small class="text-muted">Осталось к оплате: {{ number_format($payable->leftToPay(), 2) }} BYN</small>
+                    @error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </form>
+            @endif
+
+            @if($payable->payments->count() > 0)
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Метод</th>
+                        <th>Комментарий</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($payable->payments as $payment)
+                        <tr>
+                            <td>{{ $payment->id }}</td>
+                            <td>{{ $payment->created_at->format('d.m.Y H:i') }}</td>
+                            <td>{{ number_format($payment->amount, 2) }}</td>
+                            <td>{{ \App\Models\Payment::getPaymentMethods()[$payment->payment_method] ?? $payment->payment_method }}</td>
+                            <td>
+                                <small class="text-muted">{{ $payment->note ? Str::limit($payment->note, 30) : '' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'cancelled' ? 'danger' : 'warning') }}">
+                                    {{ $payment->status }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($payment->status == \App\Models\Payment::STATUS_CANCELLED)
+                                    <a href="{{ route('admin.payments.destroy', $payment) }}" class="text-danger" onclick="return confirm('Удалить платеж?')" title="Удалить">×</a>
+                                @else
+                                    <form action="{{ route('admin.payments.update-status', $payment) }}" method="post" style="display: inline;" onsubmit="return confirm('Отменить платеж?')">
+                                        @csrf
+                                        @method('patch')
+                                        <input type="hidden" name="status" value="cancelled">
+                                        <button type="submit" class="btn btn-link btn-sm text-warning p-0" title="Отменить">⊘</button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th colspan="2">Оплачено:</th>
+                        <th colspan="5"><strong>{{ number_format($payable->payments->where('status', 'completed')->sum('amount'), 2) }} BYN</strong></th>
+                    </tr>
+                    </tfoot>
+                </table>
+            @else
+                @if($payable->paymentRequirements->count() > 0)
+                    <p class="text-muted">Нет платежей</p>
+                @else
+                    <div class="text-muted">
+                        Для добавления платежей сначала создайте платежное требование в левой колонке
+                    </div>
+                @endif
+            @endif
         </div>
     </div>
 @endsection

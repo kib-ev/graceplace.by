@@ -161,7 +161,15 @@ class Appointment extends Model
     {
         $place = $this->place ?? null;
         $master = $this->user?->master ?? null;
-        return 'Запись ' . ($place?->name ?? '—') . ', ' . ($master?->full_name ?? '—') . ', ' . $this->start_at->format('d.m.Y');
+
+        return implode(', ', [
+            'Запись',
+            $place?->name ?? '—',
+            $master?->full_name ?? '—',
+            $this->duration . ' ' . 'минут',
+            $this->start_at->format('d.m.Y H:i') . '-' . $this->start_at->addMinutes($this->duration)->format('d.m.Y H:i')
+
+        ]);
     }
 
     public function getCancellationReason(): string

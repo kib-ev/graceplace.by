@@ -48,9 +48,9 @@
                     <td>Часов аренды</td>
                     <td>{{ $appointmentsStats->total_duration / 60 }}</td>
                 </tr>
-                <tr>
+                <tr>    
                     <td>Локер</td>
-                    <td>{{ number_format($totalLockerRevenue ?? 0, 2) }}</td>
+                    <td>{{ number_format($totalLockerRevenue ?? 0, 2) }} BYN</td>
                 </tr>
                 <tr>
                     <td>Записей более 8 часов</td>
@@ -63,15 +63,15 @@
                 </tr>
                 <tr>
                     <td>Средний чек</td>
-                    <td>{{ $appointmentsStats->visited ? number_format($appointmentsStats->total_price / $appointmentsStats->visited, 2) : 0 }}</td>
+                    <td>{{ $appointmentsStats->visited ? number_format($appointmentsStats->total_price / $appointmentsStats->visited, 2) : 0 }} BYN</td>
                 </tr>
                 <tr>
                     <td>Средняя стоимость часа</td>
-                    <td>{{ $appointmentsStats->total_duration ? number_format($appointmentsStats->total_price / ($appointmentsStats->total_duration / 60), 2) : 0 }}</td>
+                    <td>{{ $appointmentsStats->total_duration ? number_format($appointmentsStats->total_price / ($appointmentsStats->total_duration / 60), 2) : 0 }} BYN</td>
                 </tr>
                 <tr>
                     <td>Штрафы</td>
-                    <td>{{ $canceledWithPaymentCount }}</td>
+                    <td>{{ number_format($canceledWithPaymentCount, 2, '.', ',') }} BYN</td>
                 </tr>
             </table>
 
@@ -89,31 +89,15 @@
                         <td>Выручка</td>
                         @php $totalYear = 0; @endphp
                         @for($i = 1; $i <=12; $i++)
-                            @php $revenue = $monthlyStats[$year][$i]->revenue ?? 0; @endphp
-                            <td style="text-align: right;">{{ number_format($revenue, 2) }}</td>
-                            @php $totalYear += $revenue; @endphp
+                            @php
+                                $revenue = $monthlyStats[$year][$i]->revenue ?? 0;
+                                $lockerRevenue = $lockerStats[$year][$i]->locker_revenue ?? 0;
+                                $totalMonth = $revenue + $lockerRevenue;
+                                $totalYear += $totalMonth;
+                            @endphp
+                            <td style="text-align: right;">{{ number_format($totalMonth, 2) }}</td>
                         @endfor
                         <td style="text-align: right;"><b>{{ number_format($totalYear, 2) }}</b></td>
-                    </tr>
-                    <tr>
-                        <td>Часы аренды</td>
-                        @php $hoursYear = 0; @endphp
-                        @for($i = 1; $i <=12; $i++)
-                            @php $hours = $monthlyStats[$year][$i]->hours ?? 0; @endphp
-                            <td style="text-align: right;">{{ number_format($hours / 60, 2) }}</td>
-                            @php $hoursYear += $hours; @endphp
-                        @endfor
-                        <td style="text-align: right;"><b>{{ number_format($hoursYear / 60, 2) }}</b></td>
-                    </tr>
-                    <tr>
-                        <td>Локер</td>
-                        @php $lockerYear = 0; @endphp
-                        @for($i = 1; $i <=12; $i++)
-                            @php $lockerRevenue = $lockerStats[$year][$i]->locker_revenue ?? 0; @endphp
-                            <td style="text-align: right;">{{ number_format($lockerRevenue, 2) }}</td>
-                            @php $lockerYear += $lockerRevenue; @endphp
-                        @endfor
-                        <td style="text-align: right;"><b>{{ number_format($lockerYear, 2) }}</b></td>
                     </tr>
                     <tr>
                         <td>Мастера</td>

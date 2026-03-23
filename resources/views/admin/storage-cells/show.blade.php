@@ -88,8 +88,9 @@
                             <th>Период</th>
                             <th>Дней</th>
                             <th>Осталось</th>
-                            <th>Оплата</th>
                             <th>Статус</th>
+                            <th>Комментарий</th>
+                            <th>Сумма</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -117,6 +118,23 @@
                                         —
                                     @endif
                                 </td>
+                                <td>
+                                    @if(is_null($booking->finished_at))
+                                        <span class="badge bg-success">Активна</span>
+                                    @else
+                                        <span class="badge bg-secondary">Завершена</span>
+                                    @endif
+                                </td>
+                                <td style="max-width: 200px;">
+                                    @if($booking->comments->isNotEmpty())
+                                        <span title="{{ $booking->comments->last()->text }}">{{ Str::limit($booking->comments->last()->text, 50) }}</span>
+                                        @if($booking->comments->count() > 1)
+                                            <small class="text-muted">({{ $booking->comments->count() }})</small>
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td style="white-space: nowrap; text-align: right;">
                                     @if($booking->paymentRequirements->isEmpty())
                                         <span style="color: #c1bebe;">{{ number_format($booking->getExpectedAmount(), 2, '.') }} BYN</span>
@@ -133,20 +151,21 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if(is_null($booking->finished_at))
-                                        <span class="badge bg-success">Активна</span>
-                                    @else
-                                        <span class="badge bg-secondary">Завершена</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $booking) }}">Редактировать</a>
                                     <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.payments.manage', ['payable_type' => \App\Models\StorageBooking::class, 'payable_id' => $booking->id]) }}">Платежи</a>
+                                    @if($booking->paymentRequirements->isEmpty() && $booking->payments->isEmpty())
+                                        <form action="{{ route('admin.storage-bookings.destroy', $booking) }}" method="post" class="d-inline" onsubmit="return confirm('Удалить запись?')">
+                                            @csrf
+                                            @method('delete')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                        </form>
+                                    @endif
+                                    <a class="btn btn-sm btn-primary" href="{{ route('admin.storage-bookings.edit', $booking) }}"><i class="fa fa-edit"></i></a>
+
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-muted">Нет записей</td>
+                                <td colspan="9" class="text-muted">Нет записей</td>
                             </tr>
                         @endforelse
                         </tbody>

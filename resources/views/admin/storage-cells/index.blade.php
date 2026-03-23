@@ -6,20 +6,20 @@
         <div class="col">
             <h1>Ячейки для хранения</h1>
             <hr>
-            <table id="appointmentsList" class="table table-bordered mb-5 tr-td-bg">
+            <table id="appointmentsList" class="table table-sm table-bordered mb-5 tr-td-bg">
                 @foreach($storageCells as $storageCell)
                     <tr style="background: {{ $storageCell->bookings->whereNull('finished_at')->count() == 0 ? '#91c791' : '' }} !important;">
                         <td>
                             <a href="{{ route('admin.storage-cells.show', $storageCell) }}">{{ $storageCell->number }}</a>
                         </td>
                         <td>
-                            <table class="table table-bordered mb-0">
+                            <table class="table table-responsive table-sm table-bordered mb-0">
                                 @foreach($storageCell->bookings->whereNull('finished_at') as $storageBooking)
                                     <tr>
                                         <td style="text-align: center; width: 10px; background: {{ $storageBooking->daysLeft() > 0 ? 'green' : 'red' }} ">
 
                                         </td>
-                                        <td style="width: 200px;">
+                                        <td style="width: 400px;">
                                             @if($storageBooking->user->master)
                                                 <a href="{{ route('admin.masters.show', $storageBooking->user->master->id) }}">{{ $storageBooking->user->master->full_name }}</a>
                                             @endif
@@ -28,10 +28,10 @@
                                             c {{ $storageBooking->start_at->format('d.m.Y') }}
                                             до {{ $storageBooking->start_at->addDays($storageBooking->duration)->subDay()->format('d.m.Y') }}
                                         </td>
-                                        <td>
+                                        <td style="width: 50px;">
                                             {{ $storageBooking->daysLeft() }}
                                         </td>
-                                        <td>
+                                        <td style="width: 50px;">
                                             {{ $storageCell->cost_per_month }}
                                         </td>
                                     </tr>
@@ -40,8 +40,8 @@
                         </td>
                         <td style="width: 100px;"><input style="width: 100%;" value="{{ $storageCell->secret }}" disabled></td>
                         <td style="color: #ccc; width: 200px;">{{ $storageCell->description }}</td>
-                        <td style="width: 1%;">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.storage-cells.show', $storageCell) }}">Просмотреть бронь</a>
+                        <td style="width: 1%; white-space: nowrap;">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.storage-cells.show', $storageCell) }}">Подробнее</a>
                             <a href="{{ route('admin.storage-cells.edit', $storageCell) }}" title="Настройки"><i class="fa fa-gear"></i></a>
                         </td>
                     </tr>

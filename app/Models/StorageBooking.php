@@ -65,7 +65,8 @@ class StorageBooking extends Model
     {
         $cell = $this->cell ?? null;
         $master = $this->user?->master ?? null;
-        $result = implode(', ', [
+
+        return implode(', ', [
             'Ячейка',
             $cell?->number ?? '—',
             $master?->full_name ?? '—',
@@ -73,6 +74,5 @@ class StorageBooking extends Model
             $this->start_at->format('d.m.Y') . '-' . $this->start_at->addDays($this->duration)->format('d.m.Y')
 
         ]);
-        return $result;
     }
 }
