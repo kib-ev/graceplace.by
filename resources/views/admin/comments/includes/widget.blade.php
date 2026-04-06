@@ -39,7 +39,7 @@
                                     {{ $comment->created_at->format('d.m.Y H:i') }}
                                 </div>
                                 <div class="comment__author">
-                                    {{ $comment->user->name }}
+                                    {{ $comment->user?->name ?? 'Удаленный пользователь' }}
                                 </div>
 
                                 @if($showControl ?? 1)

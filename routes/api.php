@@ -104,6 +104,7 @@ Route::get('/places', function (Request $request) {
 });
 
 Route::middleware(['api_token'])->group(function() {
+    Route::get('/appointments', [AppointmentController::class, 'index']);
     Route::post('/appointments', [AppointmentController::class, 'store']);
     Route::get('/places/{place}/free-slots', [AppointmentController::class, 'freeSlots']);
     Route::get('/places/free-slots', [AppointmentController::class, 'freeSlots']);

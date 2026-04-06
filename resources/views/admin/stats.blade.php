@@ -48,9 +48,34 @@
                     <td>Часов аренды</td>
                     <td>{{ $appointmentsStats->total_duration / 60 }}</td>
                 </tr>
+                <tr>
+                    <td>Среднее время аренды</td>
+                    <td>
+                        @if($appointmentsStats->visited > 0)
+                            @php
+                                $avgMinutes = $appointmentsStats->total_duration / $appointmentsStats->visited;
+                                $hours = floor($avgMinutes / 60);
+                                $minutes = round($avgMinutes % 60);
+                            @endphp
+                            {{ $hours > 0 ? $hours . ' ч ' : '' }}{{ $minutes }} мин
+                            ({{ number_format($avgMinutes / 60, 1) }} ч)
+                        @else
+                            —
+                        @endif
+                    </td>
+                </tr>
                 <tr>    
                     <td>Локер</td>
                     <td>{{ number_format($totalLockerRevenue ?? 0, 2) }} BYN</td>
+                </tr>
+                <tr>
+                    <td>Записей 1 час</td>
+                    <td>
+                        {{ $appointmentsStats->duration_1_hour }}
+                        @if($appointmentsStats->visited > 0)
+                            ({{ round($appointmentsStats->duration_1_hour / $appointmentsStats->visited * 100, 1) }} %)
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td>Записей более 8 часов</td>
@@ -73,6 +98,47 @@
                     <td>Штрафы</td>
                     <td>{{ number_format($canceledWithPaymentCount, 2, '.', ',') }} BYN</td>
                 </tr>
+            </table>
+
+            <h3 class="mt-4">Распределение по продолжительности</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Продолжительность</th>
+                        <th>Количество</th>
+                        <th>Процент</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $totalDurationRevenue = $durationStats->sum(fn($s) => (float)$s->revenue) + (float)$durationOtherRevenue; @endphp
+                    @foreach($durationBuckets as $minutes)
+                        @php
+                            $stat = $durationStats[$minutes] ?? null;
+                            $count = $stat?->count ?? 0;
+                            $revenue = (float)($stat?->revenue ?? 0);
+                            $percent = $visited > 0 ? round($count / $visited * 100, 1) : 0;
+                            $revenuePercent = $totalDurationRevenue > 0 ? round($revenue / $totalDurationRevenue * 100, 1) : 0;
+                            $hours = $minutes / 60;
+                            $label = $hours == (int) $hours ? (int) $hours . ' ч' : number_format($hours, 1) . ' ч';
+                        @endphp
+                        <tr>
+                            <td>{{ $label }}</td>
+                            <td>{{ $count }}</td>
+                            <td>{{ $percent }}%</td>
+                            <td style="text-align: right;">{{ number_format($revenue, 2) }} BYN ({{ $revenuePercent }}%)</td>
+                        </tr>
+                    @endforeach
+                    @if($durationOtherCount > 0)
+                        @php $revenuePercentOther = $totalDurationRevenue > 0 ? round($durationOtherRevenue / $totalDurationRevenue * 100, 1) : 0; @endphp
+                        <tr>
+                            <td>Другое</td>
+                            <td>{{ $durationOtherCount }}</td>
+                            <td>{{ $visited > 0 ? round($durationOtherCount / $visited * 100, 1) : 0 }}%</td>
+                            <td style="text-align: right;">{{ number_format($durationOtherRevenue, 2) }} BYN ({{ $revenuePercentOther }}%)</td>
+                        </tr>
+                    @endif
+                </tbody>
             </table>
 
             @foreach($years as $year)

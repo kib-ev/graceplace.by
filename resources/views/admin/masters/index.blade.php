@@ -134,6 +134,9 @@
                             {{ $totalCount = (int)($master->appointments_total_count ?? 0) }} /
                             {{ $visitCount = (int)($master->appointments_visit_count ?? 0) }} /
                             {{ $cancelCount = (int)($master->appointments_cancel_count ?? 0) }}
+                            @if($visitCount > 0 && $master->appointments_avg_duration)
+                                <br>{{ number_format((float)$master->appointments_avg_duration / 60, 2) }} ч
+                            @endif
 
                             <br>
                             @if($totalCount > 10)

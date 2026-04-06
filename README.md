@@ -1,5 +1,50 @@
 # API бронирования рабочих мест
 
+## Получить записи за период
+
+**GET** `/api/appointments?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+
+Возвращает все записи (включая отменённые) за выбранный промежуток времени в формате JSON. Требует авторизацию через `api_token`.
+
+### Параметры:
+- `start_date` (string, required) — начало периода в формате `YYYY-MM-DD`
+- `end_date` (string, required) — конец периода в формате `YYYY-MM-DD` (должна быть не раньше start_date)
+
+### Пример запроса
+```
+GET /api/appointments?start_date=2024-06-01&end_date=2024-06-30
+```
+
+### Пример ответа
+```json
+{
+  "status": "ok",
+  "data": [
+    {
+      "id": 123,
+      "user_id": 1,
+      "place_id": 2,
+      "client_id": null,
+      "start_at": "2024-06-20 10:00:00",
+      "duration": 60,
+      "end_at": "2024-06-20 11:00:00",
+      "description": null,
+      "canceled_at": null,
+      "created_at": "2024-06-19 15:30:00",
+      "place": { "id": 2, "name": "Кабинет 1" },
+      "user": { "id": 1, "name": "Иван Иванов", "email": "ivan@example.com" }
+    }
+  ],
+  "meta": {
+    "start_date": "2024-06-01",
+    "end_date": "2024-06-30",
+    "total": 1
+  }
+}
+```
+
+---
+
 ## Создать бронирование
 
 **POST** `/api/appointments`

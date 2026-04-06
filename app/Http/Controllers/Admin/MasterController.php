@@ -97,6 +97,10 @@ class MasterController extends Controller
                         $q->whereRaw('TIMESTAMPDIFF(HOUR, canceled_at, start_at) < 24')
                           ->orWhereColumn('canceled_at', '>=', 'start_at');
                     }),
+                'appointments_avg_duration' => Appointment::query()
+                    ->selectRaw('AVG(duration)')
+                    ->whereColumn('appointments.user_id', 'masters.user_id')
+                    ->whereNull('canceled_at'),
                 'debt_amount_byn' => Master::debtAmountSubquery(),
             ])
             ->orderBy('masters.created_at')

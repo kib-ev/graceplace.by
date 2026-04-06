@@ -34,10 +34,17 @@ return [
     'api' => [
         // Токен, используемый внешними клиентами (например, расширением Instagram Info)
         'token' => env('INSTAGRAM_INFO_API_TOKEN'),
+        // Временно отключить проверку API токена (true = отключено)
+        'token_disabled' => env('API_TOKEN_DISABLED', false),
     ],
 
     'instagram' => [
         'session_id' => env('INSTAGRAM_SESSION_ID'),
+    ],
+
+    'webkassa' => [
+        'token' => env('WEBKASSA_API_TOKEN'),
+        'base_url' => env('WEBKASSA_BASE_URL', 'https://cabinet.webkassa.by'),
     ],
 
 ];

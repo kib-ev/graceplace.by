@@ -27,7 +27,8 @@ class StatsController extends Controller
             SUM(CASE WHEN appointments.is_created_by_user = 1 THEN 1 ELSE 0 END) as self_added,
             SUM(CASE WHEN appointments.canceled_at IS NULL THEN appointments.duration ELSE 0 END) as total_duration,
             COALESCE(SUM(CASE WHEN appointments.canceled_at IS NULL THEN (payment_requirements.expected_amount - payment_requirements.remaining_amount) ELSE 0 END), 0) as total_price,
-            SUM(CASE WHEN appointments.canceled_at IS NULL AND appointments.duration >= 480 THEN 1 ELSE 0 END) as over_8_hours
+            SUM(CASE WHEN appointments.canceled_at IS NULL AND appointments.duration >= 480 THEN 1 ELSE 0 END) as over_8_hours,
+            SUM(CASE WHEN appointments.canceled_at IS NULL AND appointments.duration = 60 THEN 1 ELSE 0 END) as duration_1_hour
         ')
         ->leftJoin('payment_requirements', function($join) {
             $join->on('appointments.id', '=', 'payment_requirements.payable_id')
@@ -154,11 +155,37 @@ class StatsController extends Controller
         $weeklyStatsPrev = $weeklyStats(now()->subYear()->year);
         $weeklyStatsCurr = $weeklyStats(now()->year);
 
+        // Распределение по продолжительности (0.5ч — 12ч), только актуальные записи
+        $durationBuckets = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600, 630, 660, 690, 720];
+        $durationStats = Appointment::whereNull('canceled_at')
+            ->whereIn('duration', $durationBuckets)
+            ->leftJoin('payment_requirements', function ($join) {
+                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                    ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+            })
+            ->selectRaw('appointments.duration, COUNT(*) as count, COALESCE(SUM(payment_requirements.expected_amount - payment_requirements.remaining_amount), 0) as revenue')
+            ->groupBy('appointments.duration')
+            ->get()
+            ->keyBy('duration');
+        $durationOtherCount = Appointment::whereNull('canceled_at')
+            ->whereNotIn('duration', $durationBuckets)
+            ->count();
+        $durationOtherRevenue = Appointment::whereNull('canceled_at')
+            ->whereNotIn('duration', $durationBuckets)
+            ->leftJoin('payment_requirements', function ($join) {
+                $join->on('appointments.id', '=', 'payment_requirements.payable_id')
+                    ->where('payment_requirements.payable_type', '=', 'App\Models\Appointment');
+            })
+            ->selectRaw('COALESCE(SUM(payment_requirements.expected_amount - payment_requirements.remaining_amount), 0) as revenue')
+            ->value('revenue') ?? 0;
+        $visited = $appointmentsStats->visited;
+
         return view('admin.stats', compact(
             'placesCount', 'mastersCount', 'appointmentsStats',
             'years', 'monthlyStats', 'newMasters', 'uniqueMasters', 'lockerStats',
             'weeklyStatsPrev', 'weeklyStatsCurr',
-            'canceledWithPaymentCount', 'totalLockerRevenue'
+            'canceledWithPaymentCount', 'totalLockerRevenue',
+            'durationBuckets', 'durationStats', 'durationOtherCount', 'durationOtherRevenue', 'visited'
         ));
     }
 } 

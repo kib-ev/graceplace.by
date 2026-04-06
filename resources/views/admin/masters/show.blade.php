@@ -157,10 +157,10 @@
 
                             <tr>
                                 <td>
-
                                     @php $loginText = "Ваш логин: {$master->user->phone} пароль: graceplace{$master->id}"; @endphp
                                     <span style="background: #f7f7cd; padding: 5px 10px;">{{ $loginText }}</span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-login-btn" data-copy="{{ e($loginText) }}" title="Копировать логин и пароль">
+
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-login-btn" data-copy="{{ e($loginText) }}">
                                         <i class="fa fa-copy"></i> <span class="copy-text">Копировать</span>
                                     </button>
 
@@ -169,13 +169,21 @@
                             </tr>
 
                             <tr>
-                                <td style="background: lightgoldenrodyellow">
-                                    <input class="form-control" type="text" value="{{ $master->phone }} {{ $master->full_name }}" readonly>
+                                <td>
+                                    @php $phoneLoginText = "{$master->phone} {$master->full_name}"; @endphp
+                                    <span style="background: #f7f7cd; padding: 5px 10px;">{{ $phoneLoginText }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-login-btn" data-copy="{{ e($phoneLoginText) }}">
+                                        <i class="fa fa-copy"></i> <span class="copy-text">Копировать</span>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="background: lightgoldenrodyellow">
-                                    <input class="form-control" type="text" value="{{ $master->user->email }}" readonly>
+                                <td>
+                                    @php $emailLoginText = "{$master->user->email}"; @endphp
+                                    <span style="background: #f7f7cd; padding: 5px 10px;">{{ $emailLoginText }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-login-btn" data-copy="{{ e($emailLoginText) }}">
+                                        <i class="fa fa-copy"></i> <span class="copy-text">Копировать</span>
+                                    </button>
                                 </td>
                             </tr>
 

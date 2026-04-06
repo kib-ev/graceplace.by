@@ -33,23 +33,14 @@ Route::get('/schedule', function () {
 
 // PUBLIC
 Route::get('/', function (Request $request) {
-    if (auth()->check()) {
-        $dateParam = $request->get('date');
-        $dateStr = $dateParam ? \Illuminate\Support\Carbon::parse($dateParam)->toDateString() : now()->format('Y-m-d');
-        return redirect()->route('user.schedule', ['date' => $dateStr]);
+    if (!auth()->check()) {
+        return redirect()->route('login');
     }
 
-    $request->validate([
-        'date'  => 'date',
-    ]);
+    $dateParam = $request->get('date');
+    $dateStr = $dateParam ? \Illuminate\Support\Carbon::parse($dateParam)->toDateString() : now()->format('Y-m-d');
 
-    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
-
-    if(is_null($date)) {
-        return redirect()->to('https://graceplace.by?date=' . now()->format('Y-m-d'));
-    }
-
-    return view('public/index', compact('date'));
+    return redirect()->route('user.schedule', ['date' => $dateStr]);
 });
 
 // USER
@@ -296,6 +287,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // E-POS
     Route::get('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders-epos/by-date', [\App\Http\Controllers\Admin\OrderController::class, 'invoicesByDate'])->name('orders.by-date');
+    Route::get('/orders-epos/payers', [\App\Http\Controllers\Admin\OrderController::class, 'payers'])->name('orders.payers');
     Route::get('/orders-epos/create', [\App\Http\Controllers\Admin\OrderController::class, 'create'])->name('orders.create');
     Route::post('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'completeApiRequest'])->name('orders.store');
 
