@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceCategory;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -42,6 +44,13 @@ class RegisterController extends Controller
         $this->middleware('guest');
     }
 
+    public function showRegistrationForm()
+    {
+        $categoriesTree = ServiceCategory::getTreeForSelection();
+
+        return view('auth.register', compact('categoriesTree'));
+    }
+
     /**
      * Get a validator for an incoming registration request.
      *
@@ -57,6 +66,8 @@ class RegisterController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'patronymic' => ['required', 'string', 'max:255'],
             'phone' => ['required',' phone:BY', 'unique:users'], // todo correct validation
+            'category_ids' => ['required', 'array', 'min:1'],
+            'category_ids.*' => ['integer', 'exists:service_categories,id'],
 //            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
 //            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -86,7 +97,16 @@ class RegisterController extends Controller
             $data['instagram']
         );
 
+        $master->serviceCategories()->sync($data['category_ids'] ?? []);
+
         return $master->user;
+    }
+
+    protected function registered(Request $request, $user)
+    {
+        $user->update(['is_active' => 0]);
+
+        return redirect()->route('user.pending-approval');
     }
 
     /**

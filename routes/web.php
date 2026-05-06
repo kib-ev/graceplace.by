@@ -19,22 +19,15 @@ if (request()->has('dev') && file_exists(base_path('/routes/_dev.php'))) {
 }
 
 
-Route::get('/masters/{master}', [\App\Http\Controllers\Public\MasterController::class, 'show'])->name('public.masters.show');
-
-Route::get('/schedule', function () {
-    $date = request('date');
-
-    if(is_null($date)) {
-        return redirect()->to('https://graceplace.by/schedule?date=' . now()->format('Y-m-d'));
-    }
-
-    return view('public/index', compact('date'));
-});
 
 // PUBLIC
 Route::get('/', function (Request $request) {
     if (!auth()->check()) {
         return redirect()->route('login');
+    }
+
+    if (!auth()->user()->hasAnyRole(['admin', 'manager']) && !auth()->user()->is_active) {
+        return redirect()->route('user.pending-approval');
     }
 
     $dateParam = $request->get('date');
@@ -44,7 +37,7 @@ Route::get('/', function (Request $request) {
 });
 
 // USER
-Route::prefix('user')->name('user.')->middleware(['auth', 'notice.required'])->group(function () { // notice.required
+Route::prefix('user')->name('user.')->middleware(['auth', 'active.user', 'notice.required'])->group(function () { // notice.required
 
     Route::get('/schedule', function (Request $request) {
         $request->validate([
@@ -70,6 +63,12 @@ Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(fun
     Route::get('/notices/history', [\App\Http\Controllers\User\MandatoryNoticeController::class, 'history'])->name('notices.history');
 });
 
+Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
+    Route::get('/pending-approval', function () {
+        return view('user.pending-approval');
+    })->name('pending-approval');
+});
+
 // Маршруты расписания (требуют роль мастера)
 //Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(function () {
 //    Route::get('/schedule', [App\Http\Controllers\User\ScheduleController::class, 'index'])->name('schedule.index');
@@ -78,26 +77,6 @@ Route::name('user.')->prefix('/user')->middleware(['auth', 'master'])->group(fun
 //    Route::get('/schedule/all-intervals', [App\Http\Controllers\User\ScheduleController::class, 'getAllIntervals'])->name('schedule.all-intervals');
 //    Route::get('/schedule/csrf', [App\Http\Controllers\User\ScheduleController::class, 'refreshCsrf'])->name('schedule.csrf');
 //});
-
-Route::get('/booking', function (Request $request) {
-    $request->validate([
-        'date'  => 'date',
-    ]);
-
-    $date = \Illuminate\Support\Carbon::parse($request->get('date'));
-
-    if(is_null($date)) {
-        // todo change
-        return redirect()->to('/booking?date=' . now()->format('Y-m-d'));
-    }
-
-    $selectedPlace = \App\Models\Place::where('is_hidden', false)
-        ->when(request('place_id'), fn($q) => $q->where('id', request('place_id')))
-        ->first();
-    return view('public/booking/index', compact('date', 'selectedPlace'));
-});
-
-Route::post('/booking', [\App\Http\Controllers\Public\BookingController::class, 'store'])->name('public.booking.store');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
 
@@ -292,6 +271,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/orders-epos/create', [\App\Http\Controllers\Admin\OrderController::class, 'create'])->name('orders.create');
     Route::post('/orders-epos', [\App\Http\Controllers\Admin\OrderController::class, 'completeApiRequest'])->name('orders.store');
 
+    // ERIP IMPORTS
+    Route::get('/erip-imports', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'index'])->name('erip-imports.index');
+    Route::post('/erip-imports', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'store'])->name('erip-imports.store');
+    Route::get('/erip-imports/{eripImport}', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'show'])->name('erip-imports.show');
+
     // USER SETTINGS ADMIN
     Route::post('/settings', function () {
         $user = \App\Models\User::find(request('user_id'));
@@ -312,26 +296,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     })->name('api')->middleware('admin.only');
 });
 
-Route::name('public.')->middleware(['auth'])->group(function () {
-    // MASTERS
-    Route::resource('masters', \App\Http\Controllers\Public\MasterController::class)->only(['show', 'index']);
-
-    // APPOINTMENTS
-//    Route::resource('appointments', \App\Http\Controllers\Public\AppointmentController::class)->only(['store']);
-//    Route::any('/appointments/{appointment}/cancel', [\App\Http\Controllers\Public\AppointmentController::class, 'cancelAppointment'])->name('appointments.cancel');
-
+Route::name('public.')->middleware(['auth', 'active.user'])->group(function () {
     Route::resource('places', \App\Http\Controllers\Public\PlaceController::class)->only('show');
 
 });
 
-// Страница мастера для клиентов
-Route::get('/book/{master}', [\App\Http\Controllers\Public\BookingController::class, 'show'])->name('booking.show');
 
-// Обработка бронирования
-Route::post('/book/{master}/reserve', [\App\Http\Controllers\Public\BookingController::class, 'reserve'])->name('booking.reserve');
-
-
-Route::name('user.')->prefix('/user')->middleware(['auth'])->group(function () {
+Route::name('user.')->prefix('/user')->middleware(['auth', 'active.user'])->group(function () {
     // USER SETTINGS
     Route::post('/settings', function () {
         $user = auth()->user();
@@ -379,19 +350,15 @@ Route::get('/logout', function () {
     return redirect('/');
 })->name('user.logout');
 
-Route::get('/pay', function () {
-    return redirect()->to('https://pay.raschet.by/#00020132520010by.raschet01074440631101722420-2-i20250128120211530393354040.006304BAE7');
-});
-
 Route::get('/public-offer', function () {
     return view('public.offers.offer-20251101');
-});
+})->middleware('auth');
 Route::get('/public-offer/20251101', function () {
     return view('public.offers.offer-20251101');
-});
+})->middleware('auth');
 Route::get('/public-offer/20250101', function () {
     return view('public.offers.offer-20250101');
-});
+})->middleware('auth');
 
 // Маршрут акцепта оферты больше не используется, акцепт фиксируется через действия пользователя (регистрация, бронирование, оплата).
 
@@ -401,7 +368,7 @@ use App\Http\Controllers\TicketController;
 
 // Роуты для пользователей (мастеров)
 Route::prefix('user')
-    ->middleware(['auth']) // или другая роль по твоей системе
+    ->middleware(['auth', 'active.user']) // или другая роль по твоей системе
     ->name('user.tickets.')
     ->group(function () {
         Route::get('tickets', [TicketController::class, 'index'])->name('index');
@@ -427,7 +394,7 @@ Route::prefix('admin')
         Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
     });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active.user'])->group(function () {
     Route::post('/appointments', [\App\Http\Controllers\User\AppointmentController::class, 'store'])->name('user.appointments.store');
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])->name('user.appointments.cancel');
 });

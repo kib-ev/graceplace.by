@@ -9,7 +9,7 @@
                 <div class="card-header">{{ __('Register') }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('register') }}">
+                    <form method="POST" action="{{ route('register') }}" autocomplete="off">
                         @csrf
 
                         <div class="row mb-3">
@@ -83,6 +83,45 @@
                         </div>
 
                         <div class="row mb-3">
+                            <label class="col-md-4 col-form-label text-md-end">Категории</label>
+
+                            <div class="col-md-6">
+                                <div class="border rounded p-2">
+                                    @foreach(($categoriesTree ?? collect()) as $parent)
+                                        <div class="mb-2">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input me-1" type="checkbox" name="category_ids[]" value="{{ $parent->id }}"
+                                                    {{ in_array($parent->id, old('category_ids', [])) ? 'checked' : '' }}>
+                                                {{ $parent->name }}
+                                            </label>
+
+                                            @foreach($parent->children as $child)
+                                                <div class="ms-4 mt-1">
+                                                    <label class="form-check-label">
+                                                        <input class="form-check-input me-1" type="checkbox" name="category_ids[]" value="{{ $child->id }}"
+                                                            {{ in_array($child->id, old('category_ids', [])) ? 'checked' : '' }}>
+                                                        {{ $child->name }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @error('category_ids')
+                                <span class="invalid-feedback d-block" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                                @enderror
+                                @error('category_ids.*')
+                                <span class="invalid-feedback d-block" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
                             <label for="instagram" class="col-md-4 col-form-label text-md-end">Ссылка на профиль Instagram</label>
 
                             <div class="col-md-6">
@@ -100,50 +139,26 @@
 
 
                         <div class="row mb-3">
-                            <label for="description" class="col-md-4 col-form-label text-md-end">Ваша специализация</label>
+                            <label for="description" class="col-md-4 col-form-label text-md-end">Подробнее об оказываемых услугах</label>
 
                             <div class="col-md-6">
                                 <textarea id="description" type="description"
-                                          placeholder="Перечистите все оказываемые вами услуги"
+                                          placeholder="Опишите услуги подробно"
                                           class="form-control @error('description') is-invalid @enderror"
                                           name="description" required>{{ old('description') }}</textarea>
 
 
-                                @error('instagram')
+                                @error('description')
                                 <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
                                 @enderror
                             </div>
                         </div>
-
-
-{{--                        <div class="row mb-3">--}}
-{{--                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>--}}
-
-{{--                            <div class="col-md-6">--}}
-{{--                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">--}}
-
-{{--                                @error('password')--}}
-{{--                                    <span class="invalid-feedback" role="alert">--}}
-{{--                                        <strong>{{ $message }}</strong>--}}
-{{--                                    </span>--}}
-{{--                                @enderror--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
-
-{{--                        <div class="row mb-3">--}}
-{{--                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>--}}
-
-{{--                            <div class="col-md-6">--}}
-{{--                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
-
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ __('Register') }}
+                                    Регистрация
                                 </button>
                             </div>
                         </div>
@@ -154,3 +169,4 @@
     </div>
 </div>
 @endsection
+

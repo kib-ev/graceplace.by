@@ -318,6 +318,40 @@
                             @endforeach
                         </table>
 
+                        <h6 class="mt-4">Предпочтительные часы мастера</h6>
+                        <p class="text-muted mb-2">Распределение посещений по часу начала записи (неотменённые записи).</p>
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                            <tr>
+                                <th style="width: 110px;">Час</th>
+                                <th>Записей</th>
+                                <th style="width: 120px;" class="text-end">Доля</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @php $totalHourVisits = array_sum($visitsByHour ?? []); @endphp
+                            @for($hour = 0; $hour < 24; $hour++)
+                                @php
+                                    $count = $visitsByHour[$hour] ?? 0;
+                                    $percent = $totalHourVisits > 0 ? ($count / $totalHourVisits) * 100 : 0;
+                                    $barWidth = ($maxHourVisits ?? 0) > 0 ? ($count / $maxHourVisits) * 100 : 0;
+                                @endphp
+                                <tr>
+                                    <td>{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00–{{ str_pad(($hour + 1) % 24, 2, '0', STR_PAD_LEFT) }}:00</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span style="min-width: 30px;">{{ $count }}</span>
+                                            <div style="flex: 1; max-width: 260px; height: 10px; background: #f0f0f0; border-radius: 999px; overflow: hidden;">
+                                                <div style="height: 10px; width: {{ number_format($barWidth, 2, '.', '') }}%; background: {{ $count > 0 ? '#0d6efd' : '#d9d9d9' }};"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">{{ number_format($percent, 1) }}%</td>
+                                </tr>
+                            @endfor
+                            </tbody>
+                        </table>
+
                     </div>
                 </div>
 

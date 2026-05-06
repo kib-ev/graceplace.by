@@ -73,5 +73,6 @@ class Kernel extends HttpKernel
         'check.cancellation' => \App\Http\Middleware\CheckCancellationCutoff::class,
         'api_token' => \App\Http\Middleware\ApiTokenMiddleware::class,
         'notice.required' => \App\Http\Middleware\RequireNoticeConfirmation::class,
+        'active.user' => \App\Http\Middleware\EnsureUserIsActive::class,
     ];
 }

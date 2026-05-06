@@ -230,6 +230,22 @@ class MasterController extends Controller
         foreach ($expectedByPlaceMonth2025 as $row) {
             $placeExpected[$row->place_id][$row->m] = (float)$row->s;
         }
+
+        // 1 запрос — распределение посещений по часу начала записи
+        $hourRows = \App\Models\Appointment::query()
+            ->selectRaw('HOUR(start_at) as h, COUNT(*) as c')
+            ->where('user_id', $userId)
+            ->whereNull('canceled_at')
+            ->whereDate('start_at', '<=', now())
+            ->groupBy('h')
+            ->orderBy('h')
+            ->get();
+        $visitsByHour = array_fill(0, 24, 0);
+        foreach ($hourRows as $row) {
+            $hour = (int) $row->h;
+            $visitsByHour[$hour] = (int) $row->c;
+        }
+        $maxHourVisits = max($visitsByHour);
         $serviceCategories = ServiceCategory::getTreeForSelection();
         $recommendedCategoryIds = ServiceCategory::getRecommendedIdsForText($master->description);
 
@@ -246,7 +262,9 @@ class MasterController extends Controller
             'durationByMonth',
             'expectedByMonth',
             'placeDuration',
-            'placeExpected'
+            'placeExpected',
+            'visitsByHour',
+            'maxHourVisits'
         ));
     }
 

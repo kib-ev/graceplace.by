@@ -38,6 +38,7 @@
         <a class="nav-link" href="{{ route('admin.tickets.index') }}">Заявки</a>
         @role('admin')
         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
+        <a class="nav-link" href="{{ route('admin.erip-imports.index') }}">ЕРИП импорт</a>
         <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Права</a>
         <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
