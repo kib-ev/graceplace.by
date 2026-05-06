@@ -38,14 +38,22 @@
         <a class="nav-link" href="{{ route('admin.tickets.index') }}">Заявки</a>
         @role('admin')
         <a class="nav-link" href="{{ url('/admin/stats') }}">Статистика</a>
-        <a class="nav-link" href="{{ route('admin.erip-imports.index') }}">ЕРИП импорт</a>
-        <a class="nav-link" href="{{ url('/admin/logs') }}">Лог</a>
         <a class="nav-link" href="{{ route('admin.permissions.index') }}">Права</a>
-        <a class="nav-link" href="{{ url('/admin/api') }}">API</a>
         <a class="nav-link" href="{{ route('admin.service-categories.index') }}">Категории</a>
-        <a class="nav-link" href="{{ route('admin.users.index') }}">Пользователи</a>
+        <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="systemMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Система
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="systemMenuDropdown">
+                <li><a class="dropdown-item" href="{{ route('admin.erip-imports.index') }}">ЕРИП</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.migrations.index') }}">Миграции</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Пользователи</a></li>
+                <li><a class="dropdown-item" href="{{ url('/admin/api') }}">API</a></li>
+                <li><a class="dropdown-item" href="{{ url('/admin/logs') }}">Лог</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.plugin.index') }}">Плагин</a></li>
+            </ul>
+        </div>
         @endrole
-        <a class="nav-link" href="{{ route('admin.download.chrome-extension') }}">Плагин</a>
         <a class="nav-link" href="{{ url('/logout') }}">Выйти</a>
     </div>
 </div>

@@ -197,6 +197,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index'])->middleware('admin.only');
 
     Route::get('/download/chrome-extension', [\App\Http\Controllers\Admin\AdminController::class, 'downloadChromeExtension'])->name('download.chrome-extension');
+    Route::get('/plugin', [\App\Http\Controllers\Admin\PluginController::class, 'index'])
+        ->name('plugin.index')
+        ->middleware('admin.only');
+    Route::post('/plugin/regenerate-api-token', [\App\Http\Controllers\Admin\PluginController::class, 'regenerateApiToken'])
+        ->name('plugin.regenerate-api-token')
+        ->middleware('admin.only');
 
     // MASTERS
     Route::post('masters/{master}/service-categories', [\App\Http\Controllers\Admin\MasterController::class, 'updateServiceCategories'])->name('masters.service-categories.update');
@@ -294,6 +300,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/api', function() {
         return view('admin.api');
     })->name('api')->middleware('admin.only');
+
+    Route::get('/migrations', [\App\Http\Controllers\Admin\MigrationController::class, 'index'])
+        ->name('migrations.index')
+        ->middleware('admin.only');
+    Route::post('/migrations', [\App\Http\Controllers\Admin\MigrationController::class, 'migrate'])
+        ->name('migrations.run')
+        ->middleware('admin.only');
 });
 
 Route::name('public.')->middleware(['auth', 'active.user'])->group(function () {
