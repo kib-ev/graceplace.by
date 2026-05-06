@@ -58,7 +58,9 @@
                 </tbody>
             </table>
 
-            {{ $payments->links() }}
+            <div class="mt-3">
+                {{ $payments->links('pagination::bootstrap-5') }}
+            </div>
         </div>
     </div>
 @endsection

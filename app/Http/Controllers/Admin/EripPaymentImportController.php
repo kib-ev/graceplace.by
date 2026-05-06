@@ -28,7 +28,17 @@ class EripPaymentImportController extends Controller
     public function store(Request $request, EripMonthlyReportParser $parser)
     {
         $request->validate([
-            'report' => ['required', 'file', 'mimes:xlsx', 'max:20480'],
+            'report' => [
+                'required',
+                'file',
+                'max:20480',
+                function ($attribute, $value, $fail) {
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    if ($extension !== 'xlsx') {
+                        $fail('The report field must be a file of type: xlsx.');
+                    }
+                },
+            ],
         ]);
 
         $uploaded = $request->file('report');
