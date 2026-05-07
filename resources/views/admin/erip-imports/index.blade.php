@@ -30,48 +30,80 @@
                 </div>
             </div>
 
-            <div class="mb-3">
-                <span class="badge bg-secondary">Всего импортировано строк: {{ $totalPayments }}</span>
-                @if($latestPaidAt)
-                    <span class="badge bg-light text-dark border">Последняя оплата: {{ \Carbon\Carbon::parse($latestPaidAt)->format('d.m.Y H:i') }}</span>
-                @endif
-            </div>
+            <form method="GET" action="{{ route('admin.erip-imports.index') }}" class="row g-2 mb-3">
+                <div class="col-auto">
+                    <label for="erip_date" class="col-form-label">Дата оплат:</label>
+                </div>
+                <div class="col-auto">
+                    <input
+                        type="date"
+                        id="erip_date"
+                        name="erip_date"
+                        class="form-control form-control-sm"
+                        value="{{ $eripDate }}"
+                    >
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Показать</button>
+                </div>
+            </form>
 
-            <h5>История импортов</h5>
-            <table class="table table-bordered table-sm">
+            <h5>Платежи за {{ \Carbon\Carbon::parse($eripDate)->format('d.m.Y') }}</h5>
+            <table class="table table-bordered table-sm js-persist-highlight-table" data-highlight-key="erip-imports-row-highlight">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Дата загрузки</th>
-                    <th>Файл</th>
-                    <th>Месяц отчета</th>
-                    <th>Всего строк</th>
-                    <th>Добавлено</th>
-                    <th>Дубли</th>
-                    <th>Кто загрузил</th>
-                    <th></th>
+                    <th>Дата оплаты</th>
+                    <th>Номер счета</th>
+                    <th>Мастер</th>
+                    <th>Сумма</th>
+                    <th>№ операции</th>
+                    <th>Статус</th>
+{{--                    <th></th>--}}
                 </tr>
                 </thead>
                 <tbody>
-                @forelse($imports as $import)
+                @forelse($payments as $payment)
+                    @php $isClosed = ($payment->allocations_count ?? 0) > 0 && (float) $payment->unallocated_amount <= 0; @endphp
                     <tr>
-                        <td>{{ $import->id }}</td>
-                        <td>{{ $import->created_at?->format('d.m.Y H:i') }}</td>
-                        <td>{{ $import->original_filename }}</td>
-                        <td>{{ $import->report_month?->format('m.Y') ?? '—' }}</td>
-                        <td>{{ $import->rows_total }}</td>
-                        <td>{{ $import->rows_inserted }}</td>
-                        <td>{{ $import->rows_skipped }}</td>
-                        <td>{{ $import->importedBy->name ?? '—' }}</td>
-                        <td><a href="{{ route('admin.erip-imports.show', $import) }}">Открыть</a></td>
+                        <td>{{ $payment->id }}</td>
+                        <td>{{ $payment->paid_at?->format('d.m.Y H:i') ?? '—' }}</td>
+                        <td>{{ $payment->account_number ?? '—' }}</td>
+                        <td>
+                            @if($payment->matchedMaster)
+                                <a href="{{ route('admin.masters.show', $payment->matchedMaster) }}" target="_blank">
+                                    {{ $payment->payer_phone ?? '—' }} {{ $payment->matchedMaster->full_name }}
+                                </a>
+                            @else
+                                {{ $payment->payer_phone ?? '—' }}
+                            @endif
+                        </td>
+                        <td style="background: {{ $isClosed ? '#9fe3a6' : '#ff9595' }};">{{ number_format((float) $payment->amount, 2) }}</td>
+                        <td>{{ $payment->operation_number ?? '—' }}</td>
+                        <td>{{ $payment->status ?? '—' }}</td>
+{{--                        <td style="width: 1%; white-space: nowrap;">--}}
+{{--                            @if(($payment->allocations_count ?? 0) > 0)--}}
+{{--                                <span class="text-muted" title="Платеж уже привязан">🔒</span>--}}
+{{--                            @else--}}
+{{--                                <form method="POST" action="{{ route('admin.erip-imports.destroy', $payment) }}" onsubmit="return confirm('Удалить платеж?')">--}}
+{{--                                    @csrf--}}
+{{--                                    @method('DELETE')--}}
+{{--                                    <input type="hidden" name="erip_date" value="{{ $eripDate }}">--}}
+{{--                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>--}}
+{{--                                </form>--}}
+{{--                            @endif--}}
+{{--                        </td>--}}
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted">Импортов пока нет</td>
+                        <td colspan="7" class="text-center text-muted">Платежей за выбранную дату нет</td>
                     </tr>
                 @endforelse
                 </tbody>
             </table>
+
+            {{ $payments->links('pagination::bootstrap-5') }}
         </div>
     </div>
 @endsection
+

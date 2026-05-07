@@ -9,14 +9,14 @@
             <table id="appointmentsList" class="table table-sm table-bordered mb-5 tr-td-bg">
                 @foreach($storageCells as $storageCell)
                     <tr style="background: {{ $storageCell->bookings->whereNull('finished_at')->count() == 0 ? '#91c791' : '' }} !important;">
-                        <td>
+                        <td style="white-space: nowrap;">
                             <a href="{{ route('admin.storage-cells.show', $storageCell) }}">{{ $storageCell->number }}</a>
                         </td>
                         <td>
                             <table class="table table-responsive table-sm table-bordered mb-0">
                                 @foreach($storageCell->bookings->whereNull('finished_at') as $storageBooking)
                                     <tr>
-                                        <td style="text-align: center; width: 10px; background: {{ $storageBooking->daysLeft() > 0 ? 'green' : 'red' }} ">
+                                        <td style="width: 10px; padding: 0; background-color: {{ $storageBooking->adminCellListMarkerHexColor() }} !important;">
 
                                         </td>
                                         <td style="width: 400px;">
@@ -26,13 +26,22 @@
                                         </td>
                                         <td>
                                             c {{ $storageBooking->start_at->format('d.m.Y') }}
-                                            до {{ $storageBooking->start_at->addDays($storageBooking->duration)->subDay()->format('d.m.Y') }}
+                                            до {{ $storageBooking->start_at->copy()->addDays($storageBooking->duration)->subDay()->format('d.m.Y') }}
                                         </td>
                                         <td style="width: 50px;">
                                             {{ $storageBooking->daysLeft() }}
                                         </td>
                                         <td style="width: 50px;">
                                             {{ $storageCell->cost_per_month }}
+                                        </td>
+                                        <td style="width: 170px;">
+                                            @if($storageBooking->leftToPay() > 0)
+                                                <span class="badge bg-danger">
+                                                    Неоплачено: {{ number_format($storageBooking->leftToPay(), 2, '.', ' ') }} BYN
+                                                </span>
+                                            @else
+                                                <span class="badge bg-success">Оплачено</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

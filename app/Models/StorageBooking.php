@@ -12,17 +12,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StorageBooking extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
-    use Payable;
+    public const ADMIN_CELL_MARKER_ENDING_SOON_DAYS = 3;
+
     use HasComments;
+    use HasFactory;
+    use Payable;
+    use SoftDeletes;
 
     protected $guarded = ['id'];
 
     protected $casts = [
         'start_at' => 'datetime',
         'finished_at' => 'datetime',
-        'duration' => 'integer'
+        'duration' => 'integer',
+        'auto_renewal' => 'boolean',
     ];
 
     public function user()
@@ -35,29 +38,62 @@ class StorageBooking extends Model
         return $this->hasOne(StorageCell::class, 'id', 'model_id');
     }
 
-    public function scopeWithDebt(Builder $builder)
+    public function scopeWithUnpaidLockerRequirement(Builder $builder): Builder
     {
-        return $builder->where('start_at', '<=', now())
+        return $builder
+            ->where('start_at', '<=', now())
             ->whereNull('finished_at')
-            ->whereRaw('DATE_ADD(start_at, INTERVAL (duration - 2) DAY) < NOW()');
+            ->whereHas('paymentRequirements', fn ($q) => $q
+                ->where('status', 'pending')
+                ->where('remaining_amount', '>', 0)
+            );
     }
 
     public function daysLeft(): int
     {
         $endDate = Carbon::parse($this->start_at)->addDays($this->duration);
-        return now()->diffInDays($endDate,false);
+
+        return now()->diffInDays($endDate, false);
+    }
+
+    public function lockerPaymentOverdueCalendarDays(): int
+    {
+        if (! $this->start_at) {
+            return 0;
+        }
+
+        $start = $this->start_at->copy()->startOfDay();
+        $today = now()->copy()->startOfDay();
+
+        return $today->lessThan($start)
+            ? 0
+            : (int) $start->diffInDays($today);
+    }
+
+    public function adminCellListMarkerHexColor(int $endingSoonWithinDays = self::ADMIN_CELL_MARKER_ENDING_SOON_DAYS): string
+    {
+        if ($this->leftToPay() > 0) {
+            return '#dc3545';
+        }
+
+        if ($this->daysLeft() <= $endingSoonWithinDays) {
+            return '#fd7e14';
+        }
+
+        return '#198754';
     }
 
     public function extend($daysCount = 30): bool
     {
         return $this->update([
-            'duration' => $this->duration + $daysCount
+            'duration' => $this->duration + $daysCount,
         ]);
     }
 
     public function getExpectedAmount(): float
     {
         $this->loadMissing('cell');
+
         return (float) (($this->cell->cost_per_month ?? 0) * ($this->duration / 30));
     }
 
@@ -70,8 +106,8 @@ class StorageBooking extends Model
             'Ячейка',
             $cell?->number ?? '—',
             $master?->full_name ?? '—',
-            $this->duration . ' ' . 'дней',
-            $this->start_at->format('d.m.Y') . '-' . $this->start_at->addDays($this->duration)->format('d.m.Y')
+            $this->duration.' '.'дней',
+            $this->start_at->format('d.m.Y').'-'.$this->start_at->addDays($this->duration)->format('d.m.Y'),
 
         ]);
     }

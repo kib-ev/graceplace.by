@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\EripPayment;
 use App\Models\Master;
 use App\Models\ServiceCategory;
+use App\Models\StorageBooking;
 use App\Services\UserService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -31,7 +33,7 @@ class MasterController extends Controller
             ->join('users', 'users.id', '=', 'masters.user_id')
             ->selectRaw('SUM(users.is_active = 1) as active, SUM(users.is_active = 0) as inactive')
             ->first();
-        $activeCount   = (int) $counts->active;
+        $activeCount = (int) $counts->active;
         $inactiveCount = (int) $counts->inactive;
 
         $debtorsBaseQuery = (clone $baseQuery)
@@ -51,14 +53,14 @@ class MasterController extends Controller
             })
             ->when($search && is_numeric($search), function (Builder $query) use ($search) {
                 $query->where(function (Builder $q) use ($search) {
-                    $q->where('direct', 'like', '%'. $search .'%')
-                        ->orWhere('instagram', 'like', '%'. $search .'%');
+                    $q->where('direct', 'like', '%'.$search.'%')
+                        ->orWhere('instagram', 'like', '%'.$search.'%');
                 });
             })
-            ->when($search && !is_numeric($search), function (Builder $query) use ($search) {
+            ->when($search && ! is_numeric($search), function (Builder $query) use ($search) {
                 $query->where(function (Builder $q) use ($search) {
-                    $q->where('first_name', 'like', '%'. $search .'%')
-                        ->orWhere('last_name', 'like', '%'. $search .'%');
+                    $q->where('first_name', 'like', '%'.$search.'%')
+                        ->orWhere('last_name', 'like', '%'.$search.'%');
                 });
             })
             ->when($request->has('tag'), function (Builder $query) use ($request) {
@@ -95,7 +97,7 @@ class MasterController extends Controller
                     ->whereNotNull('canceled_at')
                     ->where(function ($q) {
                         $q->whereRaw('TIMESTAMPDIFF(HOUR, canceled_at, start_at) < 24')
-                          ->orWhereColumn('canceled_at', '>=', 'start_at');
+                            ->orWhereColumn('canceled_at', '>=', 'start_at');
                     }),
                 'appointments_avg_duration' => Appointment::query()
                     ->selectRaw('AVG(duration)')
@@ -125,13 +127,13 @@ class MasterController extends Controller
     public function store(Request $request)
     {
         $master = (new UserService())->createUserMaster(
-                $request->phone,
-                $request->first_name,
-                $request->last_name,
-                $request->patronymic,
-                $request->description,
-                $request->instagram,
-                $request->direct);
+            $request->phone,
+            $request->first_name,
+            $request->last_name,
+            $request->patronymic,
+            $request->description,
+            $request->instagram,
+            $request->direct);
 
         return redirect()->route('admin.masters.show', $master);
     }
@@ -160,9 +162,9 @@ class MasterController extends Controller
                 SUM(canceled_at IS NULL) as visit_count,
                 SUM(IF(canceled_at IS NULL, duration, 0)) as total_minutes
             ')->first();
-        $totalCount   = (int) $agg->total_count;
-        $cancelCount  = (int) $agg->cancel_count;
-        $visitCount   = (int) $agg->visit_count;
+        $totalCount = (int) $agg->total_count;
+        $cancelCount = (int) $agg->cancel_count;
+        $visitCount = (int) $agg->visit_count;
         $totalMinutes = (int) $agg->total_minutes;
 
         // 1 запрос — ожидаемая сумма и оплачено
@@ -174,7 +176,7 @@ class MasterController extends Controller
             ->selectRaw('SUM(payment_requirements.expected_amount) as sum_expected, SUM(payment_requirements.expected_amount - payment_requirements.remaining_amount) as sum_paid')
             ->first();
         $sumExpected = (float) ($payAgg->sum_expected ?? 0);
-        $sumPaid     = (float) ($payAgg->sum_paid ?? 0);
+        $sumPaid = (float) ($payAgg->sum_paid ?? 0);
 
         // 1 запрос — помесячная статистика по часам за все годы
         $durationRows = \App\Models\Appointment::selectRaw('YEAR(start_at) as y, MONTH(start_at) as m, SUM(duration) as s')
@@ -224,11 +226,11 @@ class MasterController extends Controller
 
         $placeDuration = [];
         foreach ($durationByPlaceMonth2025 as $row) {
-            $placeDuration[$row->place_id][$row->m] = (int)$row->s;
+            $placeDuration[$row->place_id][$row->m] = (int) $row->s;
         }
         $placeExpected = [];
         foreach ($expectedByPlaceMonth2025 as $row) {
-            $placeExpected[$row->place_id][$row->m] = (float)$row->s;
+            $placeExpected[$row->place_id][$row->m] = (float) $row->s;
         }
 
         // 1 запрос — распределение посещений по часу начала записи
@@ -248,9 +250,63 @@ class MasterController extends Controller
         $maxHourVisits = max($visitsByHour);
         $serviceCategories = ServiceCategory::getTreeForSelection();
         $recommendedCategoryIds = ServiceCategory::getRecommendedIdsForText($master->description);
+        $debtAppointments = $master->getFinishedDebtAppointments();
+        $storageDebtBookings = $master->getStorageDebtBookings();
+        $storageDebtAmount = $master->getStorageDebtAmount();
+
+        $normalizedMasterPhone = preg_replace('/\D+/', '', (string) ($master->user?->phone ?? ''));
+        $eripPaymentsForBinding = EripPayment::query()
+            ->with('allocations')
+            ->latest('paid_at')
+            ->latest('id')
+            ->limit(1000)
+            ->get()
+            ->filter(function (EripPayment $payment) use ($normalizedMasterPhone) {
+                $normalizedPayerPhone = preg_replace('/\D+/', '', (string) ($payment->payer_phone ?? ''));
+
+                return $normalizedMasterPhone !== '' && $normalizedPayerPhone === $normalizedMasterPhone;
+            })
+            ->values();
+
+        $debtAppointments = $debtAppointments->map(function (Appointment $appointment) use ($eripPaymentsForBinding) {
+            $appointment->payment_options = $eripPaymentsForBinding
+                ->filter(function (EripPayment $payment) use ($appointment) {
+                    return $payment->paid_at
+                        && $appointment->start_at
+                        && $payment->paid_at->toDateString() >= $appointment->start_at->toDateString();
+                })
+                ->map(fn (EripPayment $payment) => (object) [
+                    'id' => $payment->id,
+                    'label' => $payment->getBindingLabel(),
+                    'unallocated_amount' => (float) $payment->unallocated_amount,
+                ])
+                ->values();
+
+            return $appointment;
+        });
+
+        $storageDebtBookings = $storageDebtBookings->map(function (StorageBooking $booking) use ($eripPaymentsForBinding) {
+            $eripPaidNotBefore = now()->copy()->startOfDay()->subDays(StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS);
+
+            $booking->payment_options = $eripPaymentsForBinding
+                ->filter(function (EripPayment $payment) use ($eripPaidNotBefore) {
+                    return $payment->paid_at && $payment->paid_at->greaterThanOrEqualTo($eripPaidNotBefore);
+                })
+                ->map(fn (EripPayment $payment) => (object) [
+                    'id' => $payment->id,
+                    'label' => $payment->getBindingLabel(),
+                    'unallocated_amount' => (float) $payment->unallocated_amount,
+                ])
+                ->values();
+
+            return $booking;
+        });
 
         return view('admin.masters.show', compact(
             'master',
+            'debtAppointments',
+            'storageDebtBookings',
+            'storageDebtAmount',
             'serviceCategories',
             'recommendedCategoryIds',
             'totalCount',
@@ -282,7 +338,6 @@ class MasterController extends Controller
     public function update(Request $request, Master $master)
     {
         $master->fill($request->only(['first_name', 'last_name', 'patronymic']))->save();
-
 
         if ($request->filled('phone')) {
             $master->user->update(['phone' => $request->phone]);

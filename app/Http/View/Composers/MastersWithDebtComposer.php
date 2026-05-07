@@ -14,13 +14,11 @@ class MastersWithDebtComposer
             ->distinct('user_id')
             ->count();
 
-        $mastersWithStorageBookingDebtCount = StorageBooking::withDebt()
-//            ->distinct('user_id')
-            ->count();
+        $mastersWithStorageBookingDebtCount = StorageBooking::withUnpaidLockerRequirement()->count();
 
         $view->with([
             'mastersWithAppointmentsDebtCount' => $mastersWithAppointmentsDebtCount,
-            'mastersWithStorageBookingDebtCount' => $mastersWithStorageBookingDebtCount]
-        );
+            'mastersWithStorageBookingDebtCount' => $mastersWithStorageBookingDebtCount,
+        ]);
     }
 }

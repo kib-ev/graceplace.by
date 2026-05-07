@@ -8,23 +8,33 @@
             <hr>
 
             @php $debtAmount = $master->getDebtAmount(); @endphp
-            @if($debtAmount > 0)
+            @if($debtAmount > 0 || $storageDebtAmount > 0)
                 <div class="bg-danger text-white p-3 mb-3">
-                    <span style="font-size: 1.4em;">Задолженность: {{ number_format($debtAmount, 2) }}</span>
-                    <table class="table table-sm table-bordered text-white mb-0 mt-2" style="width: auto;">
+                    @if($debtAmount > 0)
+                    <span style="font-size: 1.4em;"><span class="me-1" aria-hidden="true">📄</span>Задолженность по записям: {{ number_format($debtAmount, 2) }}</span>
+                    <table class="table table-sm table-bordered text-white mb-3 mt-2" style="width: auto;">
                         <thead>
                             <tr>
+                                <th class="pe-3">ID</th>
                                 <th class="pe-3">Дата</th>
+                                <th class="pe-3">Время</th>
                                 <th class="pe-3">Место</th>
                                 <th class="text-end pe-3">Долг, BYN</th>
+                                <th class="pe-3">Платежка</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($master->getDebtAppointments() as $da)
+                            @foreach($debtAppointments as $da)
                                 @php $penaltyReq = $da->paymentRequirements->firstWhere(fn($r) => $r->isPenalty()); @endphp
                                 <tr>
-                                    <td class="pe-3">{{ $da->start_at->format('d.m.Y H:i') }}</td>
+                                    <td class="pe-3">
+                                        <a href="{{ route('admin.appointments.edit', $da) }}" class="text-black">
+                                            {{ $da->id }}
+                                        </a>
+                                    </td>
+                                    <td class="pe-3">{{ $da->start_at->format('d.m.Y') }}</td>
+                                    <td class="pe-3">{{ $da->start_at->format('H:i') }} - {{ $da->end_at->format('H:i') }}</td>
                                     <td class="pe-3">{{ $da->place->name ?? '—' }}</td>
                                     <td class="text-end pe-3">
                                         @if($penaltyReq)
@@ -32,11 +42,93 @@
                                         @endif
                                         {{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}
                                     </td>
+                                    <td class="pe-3" style="min-width: 320px;">
+                                        <form method="POST" action="{{ route('admin.erip-payments.link') }}" class="d-flex gap-1">
+                                            @csrf
+                                            <input type="hidden" name="appointment_id" value="{{ $da->id }}">
+                                            <input type="hidden" name="amount" value="{{ number_format($da->paymentRequirements->sum('remaining_amount'), 2, '.', '') }}">
+                                            <input type="hidden" name="return_url" value="{{ url()->current() }}">
+                                            <select name="erip_payment_id" class="form-select form-select-sm" required>
+                                                <option value="">{{ $da->payment_options->count() === 0 ? 'Платежей (0)' : 'Платежей (' . $da->payment_options->count() . ')' }}</option>
+                                                @foreach($da->payment_options as $paymentOption)
+                                                    <option
+                                                        value="{{ $paymentOption->id }}"
+                                                        {{ $da->payment_options->count() === 1 ? 'selected' : '' }}
+                                                        {{ $paymentOption->unallocated_amount <= 0 ? 'disabled' : '' }}
+                                                    >
+                                                        {{ $paymentOption->label }}{{ $paymentOption->unallocated_amount <= 0 ? ' | привязан' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <button class="btn btn-sm btn-primary" type="submit">OK</button>
+                                        </form>
+                                    </td>
                                     <td><a href="{{ route('admin.appointments.edit', $da) }}" class="text-black"><i class="fa fa-edit"></i></a></td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    @endif
+
+                    @if($storageDebtAmount > 0)
+                        <span style="font-size: 1.4em;"><span class="me-1" aria-hidden="true">🗄️</span>Задолженность по локеру: {{ number_format($storageDebtAmount, 2) }}</span>
+                        <table class="table table-sm table-bordered text-white mb-0 mt-2" style="width: auto;">
+                            <thead>
+                            <tr>
+                                <th class="pe-3">ID</th>
+                                <th class="pe-3">Ячейка</th>
+                                <th class="pe-3">Период</th>
+                                <th class="text-end pe-3">Просрочка оплаты</th>
+                                <th class="text-end pe-3">Долг, BYN</th>
+                                <th class="pe-3">Платежка</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($storageDebtBookings as $sb)
+                                <tr>
+                                    <td class="pe-3">
+                                        <a href="{{ route('admin.storage-bookings.edit', $sb) }}" class="text-black">
+                                            {{ $sb->id }}
+                                        </a>
+                                    </td>
+                                    <td class="pe-3">{{ $sb->cell?->number ?? '—' }}</td>
+                                    <td class="pe-3" style="white-space: nowrap;">
+                                        @if($sb->start_at)
+                                            {{ $sb->start_at->format('d.m.Y') }} - {{ $sb->start_at->copy()->addDays((int) $sb->duration)->subDay()->format('d.m.Y') }} / {{ $sb->duration }} дней
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="text-end pe-3">{{ $sb->lockerPaymentOverdueCalendarDays() }}</td>
+                                    <td class="text-end pe-3">{{ number_format($sb->leftToPay(), 2) }}</td>
+                                    <td class="pe-3" style="min-width: 320px;">
+                                        <form method="POST" action="{{ route('admin.erip-payments.link') }}" class="d-flex gap-1">
+                                            @csrf
+                                            <input type="hidden" name="storage_booking_id" value="{{ $sb->id }}">
+                                            <input type="hidden" name="amount" value="{{ number_format($sb->leftToPay(), 2, '.', '') }}">
+                                            <input type="hidden" name="return_url" value="{{ url()->current() }}">
+                                            <select name="erip_payment_id" class="form-select form-select-sm" required>
+                                                <option value="">{{ $sb->payment_options->count() === 0 ? 'Платежей (0)' : 'Платежей (' . $sb->payment_options->count() . ')' }}</option>
+                                                @foreach($sb->payment_options as $paymentOption)
+                                                    <option
+                                                        value="{{ $paymentOption->id }}"
+                                                        {{ $sb->payment_options->count() === 1 ? 'selected' : '' }}
+                                                        {{ $paymentOption->unallocated_amount <= 0 ? 'disabled' : '' }}
+                                                    >
+                                                        {{ $paymentOption->label }}{{ $paymentOption->unallocated_amount <= 0 ? ' | привязан' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <button class="btn btn-sm btn-primary" type="submit">OK</button>
+                                        </form>
+                                    </td>
+                                    <td><a href="{{ route('admin.storage-bookings.edit', $sb) }}" class="text-black"><i class="fa fa-edit"></i></a></td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    @endif
                 </div>
             @endif
 

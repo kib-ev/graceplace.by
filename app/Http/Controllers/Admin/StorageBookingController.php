@@ -52,6 +52,7 @@ class StorageBookingController extends Controller
     public function edit(StorageBooking $storageBooking)
     {
         $storageBooking->load(['paymentRequirements.user.master', 'payments.user.master', 'user.master', 'cell']);
+
         return view('admin.storage-bookings.edit', compact('storageBooking'));
     }
 
@@ -65,6 +66,7 @@ class StorageBookingController extends Controller
                 ->whereNull('finished_at')
                 ->update(['finished_at' => now()]);
             $storageBooking->update(['finished_at' => null]);
+
             return redirect()->route('admin.storage-bookings.edit', $storageBooking)->with('success', 'Бронь активирована.');
         }
 
@@ -81,6 +83,7 @@ class StorageBookingController extends Controller
                 'model_id' => $storageBooking->model_id,
                 'start_at' => $newStartAt,
                 'duration' => 30,
+                'auto_renewal' => $storageBooking->auto_renewal,
             ]);
 
             $paymentService = new PaymentService();
@@ -101,6 +104,7 @@ class StorageBookingController extends Controller
     public function destroy(StorageBooking $storageBooking)
     {
         $storageBooking->delete();
+
         return redirect()->back();
     }
 

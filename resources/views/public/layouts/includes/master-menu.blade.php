@@ -267,16 +267,36 @@
             <div class="col">
                 <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">Локер</a>
 
-                @if($bookings->first()->daysLeft() < 0)
-                    <span class="bg-danger text-white p-1 px-2"> <b>ПРОСРОЧЕНО: {{ abs($bookings->first()->daysLeft()) }} {{ trans_choice('день|дня|дней', $bookings->first()->daysLeft()) }}</b></span>
-                @elseif($bookings->first()->daysLeft() <= 3)
-                    <span class="bg-warning text-white p-1 px-2"> <b>ОСТАЛОСЬ: {{ abs($bookings->first()->daysLeft()) }} {{ trans_choice('день|дня|дней', $bookings->first()->daysLeft()) }}</b></span>
+                @php
+                    $firstBooking = $bookings->first();
+                    $firstBookingDaysLeft = $firstBooking->daysLeft();
+                    $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
+                    $firstBookingHasDebt = $firstBooking->leftToPay() > 0;
+                @endphp
+
+                @if($firstBookingHasDebt)
+                    <span class="bg-danger text-white p-1 px-2">
+                        <b>ПРОСРОЧЕНО</b>
+                    </span>
+                @elseif($firstBookingDaysLeft < 0)
+                    <span class="bg-danger text-white p-1 px-2">
+                        <b>ПРОСРОЧЕНО: {{ abs($firstBookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($firstBookingDaysLeft)) }}</b>
+                    </span>
+                @elseif($firstBookingDaysLeft <= $endingSoonDays)
+                    <span class="bg-warning text-white p-1 px-2">
+                        <b>ОСТАЛОСЬ: {{ $firstBookingDaysLeft }} {{ trans_choice('день|дня|дней', $firstBookingDaysLeft) }}</b>
+                    </span>
                 @endif
 
                 <div class="collapse" id="collapseStorageCells">
                     <div class="card card-body">
 
                         @foreach($bookings as $booking)
+                            @php
+                                $bookingDaysLeft = $booking->daysLeft();
+                                $bookingHasDebt = $booking->leftToPay() > 0;
+                            @endphp
+
                             @if($loop->index > 0)
                                 <div class="mt-4"></div>
                             @endif
@@ -290,7 +310,7 @@
                                 <tr>
                                     <td style="width: 1%; white-space: nowrap;">Статус</td>
                                     <td>
-                                        @if($bookings->first()->daysLeft() <= 0)
+                                        @if($bookingHasDebt || $bookingDaysLeft <= 0)
                                             <span style="color: red;">Требуется оплата</span>
                                         @else
                                             <span style="color: green;">Оплачено</span>
@@ -306,22 +326,22 @@
                                 <tr>
                                     <td style="width: 1%; white-space: nowrap;">Дата окончания</td>
                                     <td>
-                                        {{ $booking->start_at->addDays($booking->duration)->format('d-m-Y') }}
+                                        {{ $booking->start_at->copy()->addDays($booking->duration)->format('d-m-Y') }}
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="width: 1%; white-space: nowrap;">Осталось</td>
                                     <td>
-                                        @php
-                                            $leftLockerDays = now()->diffInDays($booking->start_at->addDays($booking->duration), false);
-                                        @endphp
-
-                                        {{--                                            @if($leftLockerDays > 0)--}}
-                                        {{ $leftLockerDays }} {{ trans_choice('день|дня|дней', $leftLockerDays) }}
-                                        {{--                                            @else--}}
-                                        {{--                                                0 дней--}}
-                                        {{--                                            @endif--}}
+                                        @if($bookingHasDebt)
+                                            <span style="color: red;">ПРОСРОЧЕНО</span>
+                                        @elseif($bookingDaysLeft < 0)
+                                            ПРОСРОЧЕНО: {{ abs($bookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($bookingDaysLeft)) }}
+                                        @elseif($bookingDaysLeft <= \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS)
+                                            ОСТАЛОСЬ: {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
+                                        @else
+                                            {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
+                                        @endif
                                     </td>
                                 </tr>
 

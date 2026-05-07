@@ -9,7 +9,13 @@ class StorageCellController extends Controller
 {
     public function index()
     {
-        $storageCells = StorageCell::all();
+        $storageCells = StorageCell::query()
+            ->with([
+                'bookings' => function ($query) {
+                    $query->with(['user.master', 'paymentRequirements']);
+                },
+            ])
+            ->get();
 
         return view('admin.storage-cells.index', compact('storageCells'));
     }

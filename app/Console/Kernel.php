@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         // $schedule->command('masters:update-status')->dailyAt('02:00');
+        $schedule->command('storage-bookings:process-auto-renewal')->everyMinute();
     }
 
     /**

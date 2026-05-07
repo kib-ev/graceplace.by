@@ -73,6 +73,22 @@
                            value="{{ (isset($storageBooking) ? $storageBooking->duration : '') }}" required>
                 </div>
 
+                @if(isset($storageBooking) && is_null($storageBooking->finished_at))
+                    @php
+                        $autoRenewalChecked = old('auto_renewal') !== null
+                            ? (string) old('auto_renewal') === '1'
+                            : (bool) $storageBooking->auto_renewal;
+                    @endphp
+                    <div class="form-group mb-2">
+                        <div class="form-check">
+                            <input type="hidden" name="auto_renewal" value="0">
+                            <input class="form-check-input" type="checkbox" name="auto_renewal" id="storageBookingAutoRenewal" value="1"
+                                   @checked($autoRenewalChecked)>
+                            <label class="form-check-label" for="storageBookingAutoRenewal">Автопродление</label>
+                        </div>
+                    </div>
+                @endif
+
                 @if(is_null($storageBooking->finished_at))
                     <div class="form-group mb-2">
                         <button class="btn btn-primary" type="submit">Сохранить</button>

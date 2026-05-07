@@ -160,6 +160,10 @@
             background-color: inherit;
         }
 
+        .js-persist-highlight-table tbody tr.is-highlighted > td {
+            background-color: #fff8cc;
+        }
+
 
     </style>
 
@@ -198,6 +202,47 @@
 </footer>
 
 @yield('scripts')
+
+<script>
+    (function () {
+        document.querySelectorAll('.js-persist-highlight-table').forEach(function (table) {
+            const storageKey = table.dataset.highlightKey || ('table-highlight-' + window.location.pathname);
+            const bodyRows = Array.from(table.querySelectorAll('tbody tr')).filter(function (row) {
+                return !row.querySelector('td[colspan]');
+            });
+
+            bodyRows.forEach(function (row) {
+                const firstCell = row.querySelector('td:nth-child(2)');
+                if (!firstCell) {
+                    return;
+                }
+                row.dataset.rowId = firstCell.textContent.trim();
+            });
+
+            const savedRowId = localStorage.getItem(storageKey);
+            if (savedRowId) {
+                const savedRow = bodyRows.find(function (row) {
+                    return row.dataset.rowId === savedRowId;
+                });
+                if (savedRow) {
+                    savedRow.classList.add('is-highlighted');
+                }
+            }
+
+            bodyRows.forEach(function (row) {
+                row.addEventListener('click', function (event) {
+                    if (event.target.closest('a, button, input, select, textarea, form')) {
+                        return;
+                    }
+
+                    bodyRows.forEach(function (r) { r.classList.remove('is-highlighted'); });
+                    row.classList.add('is-highlighted');
+                    localStorage.setItem(storageKey, row.dataset.rowId || '');
+                });
+            });
+        });
+    })();
+</script>
 
 </body>
 </html>

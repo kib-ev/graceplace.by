@@ -15,18 +15,16 @@ use Illuminate\Support\Facades\Route;
 */
 
 if (request()->has('dev') && file_exists(base_path('/routes/_dev.php'))) {
-    include_once (base_path('/routes/_dev.php'));
+    include_once base_path('/routes/_dev.php');
 }
-
-
 
 // PUBLIC
 Route::get('/', function (Request $request) {
-    if (!auth()->check()) {
+    if (! auth()->check()) {
         return redirect()->route('login');
     }
 
-    if (!auth()->user()->hasAnyRole(['admin', 'manager']) && !auth()->user()->is_active) {
+    if (! auth()->user()->hasAnyRole(['admin', 'manager']) && ! auth()->user()->is_active) {
         return redirect()->route('user.pending-approval');
     }
 
@@ -41,12 +39,12 @@ Route::prefix('user')->name('user.')->middleware(['auth', 'active.user', 'notice
 
     Route::get('/schedule', function (Request $request) {
         $request->validate([
-            'date'  => 'date',
+            'date' => 'date',
         ]);
 
         $dateInput = $request->get('date');
 
-        if (!$dateInput) {
+        if (! $dateInput) {
             return redirect()->route('user.schedule', ['date' => now()->format('Y-m-d')]);
         }
 
@@ -103,6 +101,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->orderBy('hour_of_day')
             ->get();
         $placeNames = \App\Models\Place::pluck('name', 'id')->all();
+
         return view('admin.appointments_stats', compact('stats', 'placeNames'));
     })->middleware('admin.only');
 
@@ -122,7 +121,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
              UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10) n
         '), DB::raw('n.n'), '<=', DB::raw('FLOOR(a.duration / 60)'))
             ->whereNull('a.canceled_at')
-            ->whereBetween('a.start_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('a.start_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->groupBy('a.place_id', DB::raw('hour_of_day'))
             ->orderBy('a.place_id')
             ->orderBy('hour_of_day')
@@ -135,9 +134,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         }
 
         $placeNames = \App\Models\Place::pluck('name', 'id')->all();
+
         return view('admin.appointments_chart', compact('chartData', 'placeNames'));
     })->middleware('admin.only');
-
 
     Route::get('/appointments/cancel-stats', function (Request $request) {
         $startDate = $request->input('start_date', now()->startOfYear()->toDateString());
@@ -153,7 +152,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             )
             ->whereNotNull('a.canceled_at')
             ->whereRaw('TIMESTAMPDIFF(HOUR, a.canceled_at, a.start_at) < 24')
-            ->whereBetween('a.canceled_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('a.canceled_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->groupBy('a.place_id', 'p.name')
             ->get();
 
@@ -172,7 +171,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::resource('appointments', \App\Http\Controllers\Admin\AppointmentController::class);
 
-
     // APPOINTMENTS PAYMENTS
     Route::get('/payments', [\App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/manage', [\App\Http\Controllers\Admin\PayablePaymentController::class, 'show'])->name('payments.manage');
@@ -189,7 +187,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/payment-requirements/{id}/destroy', [\App\Http\Controllers\PaymentRequirementController::class, 'destroy'])->name('payment-requirements.destroy'); // todo refactor
 
     // MANDATORY NOTICES
-    Route::resource('mandatory-notices', \App\Http\Controllers\Admin\MandatoryNoticeController::class)->only(['index','create','store','show','destroy']);
+    Route::resource('mandatory-notices', \App\Http\Controllers\Admin\MandatoryNoticeController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 
     // OTHER
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('dashboard');
@@ -233,7 +231,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->with(['user.master', 'place'])
             ->limit(500)
             ->get()
-            ->groupBy(fn($a) => $a->created_at->format('Y/m/d'));
+            ->groupBy(fn ($a) => $a->created_at->format('Y/m/d'));
+
         return view('admin.logs', compact('appointments'));
     })->middleware('admin.only');
 
@@ -251,16 +250,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::middleware('admin.only')->group(function () {
         Route::get('/user/{user}/schedule', function ($user) {
             $master = $user->master;
+
             return view('user.schedule', compact('master'));
         });
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 
         Route::get('/users', function () {
             $users = \App\Models\User::orderBy('name')->get();
+
             return view('admin.users.index', compact('users'));
         })->name('users.index');
         Route::get('users/{user}/login', function ($user) {
             \Illuminate\Support\Facades\Auth::login($user);
+
             return redirect()->to('/');
         });
 
@@ -280,13 +282,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // ERIP IMPORTS
     Route::get('/erip-imports', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'index'])->name('erip-imports.index');
     Route::post('/erip-imports', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'store'])->name('erip-imports.store');
-    Route::get('/erip-imports/{eripImport}', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'show'])->name('erip-imports.show');
+    Route::delete('/erip-imports/{payment}', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'destroy'])->name('erip-imports.destroy');
+    Route::post('/erip-payments/link', [\App\Http\Controllers\Admin\EripPaymentLinkController::class, 'store'])->name('erip-payments.link')->middleware('admin.only');
 
     // USER SETTINGS ADMIN
     Route::post('/settings', function () {
         $user = \App\Models\User::find(request('user_id'));
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->back()->withErrors('Пользователь не найден');
         }
 
@@ -297,7 +300,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->back()->with('success', 'Настройки успешно сохранены');
     })->name('update-settings');
 
-    Route::get('/api', function() {
+    Route::get('/api', function () {
         return view('admin.api');
     })->name('api')->middleware('admin.only');
 
@@ -313,7 +316,6 @@ Route::name('public.')->middleware(['auth', 'active.user'])->group(function () {
     Route::resource('places', \App\Http\Controllers\Public\PlaceController::class)->only('show');
 
 });
-
 
 Route::name('user.')->prefix('/user')->middleware(['auth', 'active.user'])->group(function () {
     // USER SETTINGS
@@ -339,13 +341,13 @@ Route::name('user.')->prefix('/user')->middleware(['auth', 'active.user'])->grou
         $appointment = \App\Models\Appointment::with(['user', 'place', 'paymentRequirements'])
             ->find($appointmentId);
 
-        if($appointment && (auth()->user()->hasAnyRole(['admin', 'manager']) || auth()->id() == $appointment->user_id)) {
-            if($request->has('html')) {
+        if ($appointment && (auth()->user()->hasAnyRole(['admin', 'manager']) || auth()->id() == $appointment->user_id)) {
+            if ($request->has('html')) {
                 return view('user.documents.show', compact('appointment'));
             } else {
                 $mpdf = new \Mpdf\Mpdf();
                 $html = view('user.documents.show', compact('appointment'))->render();
-                $filename = 'doc_' . $appointmentId . '.pdf';
+                $filename = 'doc_'.$appointmentId.'.pdf';
 
                 $mpdf->WriteHTML($html);
                 $mpdf->Output($filename, 'I');
@@ -360,6 +362,7 @@ Auth::routes();
 
 Route::get('/logout', function () {
     \Illuminate\Support\Facades\Auth::logout();
+
     return redirect('/');
 })->name('user.logout');
 
@@ -376,8 +379,6 @@ Route::get('/public-offer/20250101', function () {
 // Маршрут акцепта оферты больше не используется, акцепт фиксируется через действия пользователя (регистрация, бронирование, оплата).
 
 use App\Http\Controllers\TicketController;
-
-
 
 // Роуты для пользователей (мастеров)
 Route::prefix('user')
@@ -411,4 +412,3 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     Route::post('/appointments', [\App\Http\Controllers\User\AppointmentController::class, 'store'])->name('user.appointments.store');
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])->name('user.appointments.cancel');
 });
-

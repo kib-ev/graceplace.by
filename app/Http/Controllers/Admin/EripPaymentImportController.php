@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\EripPayment;
-use App\Models\EripPaymentImport;
+use App\Models\Master;
 use App\Services\Erip\EripMonthlyReportParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,16 +13,42 @@ class EripPaymentImportController extends Controller
 {
     public function index()
     {
-        $imports = EripPaymentImport::query()
-            ->with('importedBy')
+        request()->validate([
+            'erip_date' => ['nullable', 'date'],
+        ]);
+
+        $eripDate = request('erip_date') ?: now()->toDateString();
+
+        $payments = EripPayment::query()
+            ->withCount('allocations')
+            ->whereDate('paid_at', $eripDate)
+            ->orderByDesc('paid_at')
             ->orderByDesc('id')
-            ->limit(30)
-            ->get();
+            ->paginate(100)
+            ->withQueryString();
 
-        $totalPayments = EripPayment::count();
-        $latestPaidAt = EripPayment::max('paid_at');
+        $mastersByPhone = Master::query()
+            ->with('user')
+            ->get()
+            ->reduce(function ($carry, Master $master) {
+                $normalizedPhone = preg_replace('/\D+/', '', (string) ($master->user?->phone ?? ''));
+                if ($normalizedPhone !== '' && ! isset($carry[$normalizedPhone])) {
+                    $carry[$normalizedPhone] = $master;
+                }
 
-        return view('admin.erip-imports.index', compact('imports', 'totalPayments', 'latestPaidAt'));
+                return $carry;
+            }, []);
+
+        $payments->setCollection(
+            $payments->getCollection()->map(function (EripPayment $payment) use ($mastersByPhone) {
+                $normalizedPayerPhone = preg_replace('/\D+/', '', (string) ($payment->payer_phone ?? ''));
+                $payment->matchedMaster = $mastersByPhone[$normalizedPayerPhone] ?? null;
+
+                return $payment;
+            })
+        );
+
+        return view('admin.erip-imports.index', compact('payments', 'eripDate'));
     }
 
     public function store(Request $request, EripMonthlyReportParser $parser)
@@ -44,21 +70,10 @@ class EripPaymentImportController extends Controller
         $uploaded = $request->file('report');
         $parsed = $parser->parse($uploaded->getPathname());
 
-        $import = null;
+        $inserted = 0;
+        $skipped = 0;
 
-        DB::transaction(function () use (&$import, $parsed, $uploaded) {
-            $import = EripPaymentImport::create([
-                'original_filename' => $uploaded->getClientOriginalName(),
-                'report_month' => $parsed['report_month'],
-                'imported_by_user_id' => auth()->id(),
-                'rows_total' => count($parsed['rows']),
-                'rows_inserted' => 0,
-                'rows_skipped' => 0,
-            ]);
-
-            $inserted = 0;
-            $skipped = 0;
-
+        DB::transaction(function () use ($parsed, &$inserted, &$skipped) {
             foreach ($parsed['rows'] as $row) {
                 $fingerprint = sha1(json_encode([
                     $row['operation_number'],
@@ -67,14 +82,13 @@ class EripPaymentImportController extends Controller
                     $row['payer_raw'],
                 ], JSON_UNESCAPED_UNICODE));
 
-                $exists = EripPayment::where('fingerprint', $fingerprint)->exists();
-                if ($exists) {
+                if (EripPayment::where('fingerprint', $fingerprint)->exists()) {
                     $skipped++;
+
                     continue;
                 }
 
                 EripPayment::create([
-                    'erip_payment_import_id' => $import->id,
                     'row_number' => $row['row_number'],
                     'status' => $row['status'],
                     'amount' => $row['amount'],
@@ -94,28 +108,29 @@ class EripPaymentImportController extends Controller
                 ]);
                 $inserted++;
             }
-
-            $import->update([
-                'rows_inserted' => $inserted,
-                'rows_skipped' => $skipped,
-            ]);
         });
 
         return redirect()
-            ->route('admin.erip-imports.show', $import)
-            ->with('success', "Импорт завершен: добавлено {$import->rows_inserted}, пропущено дублей {$import->rows_skipped}.");
+            ->route('admin.erip-imports.index', ['erip_date' => now()->toDateString()])
+            ->with('success', "Импорт завершен: добавлено {$inserted}, пропущено дублей {$skipped}.");
     }
 
-    public function show(EripPaymentImport $eripImport)
+    public function destroy(Request $request, EripPayment $payment)
     {
-        $payments = $eripImport->payments()
-            ->orderByDesc('paid_at')
-            ->orderByDesc('id')
-            ->paginate(100);
+        if ($payment->allocations()->exists()) {
+            return redirect()
+                ->route('admin.erip-imports.index', array_filter([
+                    'erip_date' => $request->input('erip_date'),
+                ]))
+                ->withErrors(['payment' => 'Нельзя удалить платеж: он уже привязан к записи.']);
+        }
 
-        return view('admin.erip-imports.show', [
-            'import' => $eripImport->load('importedBy'),
-            'payments' => $payments,
-        ]);
+        $payment->delete();
+
+        return redirect()
+            ->route('admin.erip-imports.index', array_filter([
+                'erip_date' => $request->input('erip_date'),
+            ]))
+            ->with('success', 'Платеж удален.');
     }
 }

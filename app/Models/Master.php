@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Master extends Model
 {
-    use HasFactory;
     use HasComments;
+    use HasFactory;
 
     protected $guarded = ['id'];
 
@@ -19,10 +19,9 @@ class Master extends Model
         return $this->belongsTo(User::class);
     }
 
-
     public function appointments()
     {
-        return $this->hasMany(Appointment::class);
+        return $this->hasMany(Appointment::class, 'user_id', 'user_id');
     }
 
     public function schedule()
@@ -100,15 +99,35 @@ class Master extends Model
         return (float) $this->debtQuery()->sum('pr.remaining_amount');
     }
 
-    public function getDebtAppointments()
+    public function getFinishedDebtAppointments()
     {
         $ids = $this->debtQuery()->distinct()->pluck('appointments.id');
 
         return Appointment::query()
-            ->with(['place', 'client', 'paymentRequirements' => fn($q) => $q->where('status', 'pending')])
+            ->with(['user.master', 'place', 'client', 'paymentRequirements' => fn ($q) => $q->where('status', 'pending')])
             ->whereIn('id', $ids)
             ->orderBy('start_at')
             ->get();
+    }
+
+    public function getDebtAppointments()
+    {
+        return $this->getFinishedDebtAppointments();
+    }
+
+    public function getStorageDebtBookings()
+    {
+        return StorageBooking::query()
+            ->with(['cell', 'paymentRequirements' => fn ($q) => $q->where('status', 'pending')])
+            ->where('user_id', $this->user_id)
+            ->withUnpaidLockerRequirement()
+            ->orderBy('start_at')
+            ->get();
+    }
+
+    public function getStorageDebtAmount(): float
+    {
+        return (float) $this->getStorageDebtBookings()->sum(fn (StorageBooking $booking) => $booking->leftToPay());
     }
 
     private function debtQuery(): Builder
@@ -117,9 +136,9 @@ class Master extends Model
             ->select('appointments.*')
             ->join('payment_requirements as pr', function ($join) {
                 $join->on('pr.payable_id', '=', 'appointments.id')
-                     ->where('pr.payable_type', Appointment::class)
-                     ->where('pr.status', 'pending')
-                     ->where('pr.remaining_amount', '>', 0);
+                    ->where('pr.payable_type', Appointment::class)
+                    ->where('pr.status', 'pending')
+                    ->where('pr.remaining_amount', '>', 0);
             })
             ->where('appointments.user_id', $this->user_id)
             ->whereNull('appointments.canceled_at')
