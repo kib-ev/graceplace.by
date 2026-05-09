@@ -1,11 +1,15 @@
 @if(auth()->user() && auth()->user()->hasRole('master'))
     @php
         $masterAppointments = auth()->user()->appointments()
-            ->whereNull('canceled_at')
+            ->with(['place', 'paymentRequirements'])
             ->where(function ($q) {
-                $q->where('start_at', '>=', now())
+                $q->where(function ($q2) {
+                    $q2->whereNull('canceled_at')
+                        ->where('start_at', '>=', now());
+                })
                     ->orWhereHas('paymentRequirements', function ($q2) {
-                        $q2->where('remaining_amount', '>', 0);
+                        $q2->where('status', 'pending')
+                            ->where('remaining_amount', '>', 0);
                     });
             })
             ->get();
@@ -27,7 +31,7 @@
                                 <th class="bg-secondary text-white">Сумма</th>
                                 <th class="bg-secondary text-white">Отмена</th>
                             </tr>
-                            @foreach($masterAppointments->load('place')->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->isoFormat('D MMM'); }) as $masterDate => $masterAppointmentByDate)
+                            @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->isoFormat('D MMM'); }) as $masterDate => $masterAppointmentByDate)
 
                                 @foreach($masterAppointmentByDate as $nextAppointment)
                                     <tr data-index="{{ $loop->index }}" class="appointment-info {{ $masterAppointmentByDate->count() == 1 ? 'js_app_'.$nextAppointment->id : '' }}">
@@ -62,16 +66,49 @@
                                         </td>
 
                                         <td class="bg-white text-nowrap text-end">
-                                            {{ number_format((new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment), 2) }} BYN
+                                            @php
+                                                $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment);
+                                                $penaltyRequirement = $nextAppointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
+                                                $leftToPay = $nextAppointment->leftToPay();
+                                            @endphp
+                                            @if(! is_null($nextAppointment->canceled_at) && $penaltyRequirement)
+                                                <span style="text-decoration: line-through; opacity: 0.75;">
+                                                    {{ number_format($fullAmount, 2) }}
+                                                </span>&nbsp;{{ number_format($leftToPay, 2) }} BYN
+                                            @else
+                                                {{ number_format($leftToPay > 0 ? $leftToPay : $fullAmount, 2) }} BYN
+                                            @endif
                                         </td>
 
                                         <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}">
-                                            @if(\Carbon\Carbon::parse($nextAppointment->start_at)->addMinutes($nextAppointment->duration)->lte(now()))
-                                                Завершена
-                                            @elseif(auth()->user() && auth()->user()->can('cancel appointment') && $nextAppointment->canBeCancelledByUser())
+                                            @php
+                                                $isCanceled = ! is_null($nextAppointment->canceled_at);
+                                                $appointmentStartAt = \Carbon\Carbon::parse($nextAppointment->start_at);
+                                                $appointmentEndAt = $appointmentStartAt->copy()->addMinutes($nextAppointment->duration);
+                                                $isStarted = now()->greaterThanOrEqualTo($appointmentStartAt);
+                                                $isEnded = now()->greaterThanOrEqualTo($appointmentEndAt);
+                                                $isUnpaid = ! $nextAppointment->isPaid();
+                                                $hasCancelPermission = auth()->user() && auth()->user()->can('cancel appointment');
+                                                $isLateCancellationWindow = ! $isStarted && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($appointmentStartAt);
+                                            @endphp
+
+                                            @if($hasCancelPermission && ! $isCanceled && $isUnpaid && ! $isEnded)
                                                 <a class="btn btn-sm btn-danger js_cancel-appointment" style="line-height: 13px;">
-                                                    Отменить
+                                                    Отмена
                                                 </a>
+
+                                                @if($isStarted)
+                                                    <div class="small text-danger mt-1">Штраф 100%</div>
+                                                @elseif($isLateCancellationWindow)
+                                                    <div class="small text-danger mt-1">Штраф 50%</div>
+                                                @endif
+                                            @elseif($isCanceled)
+                                                <span class="text-danger">Отменена</span>
+                                                @if($penaltyRequirement)
+                                                    <div class="small text-danger">{{ $penaltyRequirement->getPenaltyLabel() }}</div>
+                                                @endif
+                                            @elseif($isEnded)
+                                                Завершена
                                             @else
                                                 <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Через Direct</a>
                                             @endif
@@ -91,8 +128,12 @@
                         </table>
                     @endif
 
-                    <p class="mt-1 mb-0">Отмена записей менее чем за {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }} {{ trans_choice('час|часа|часов', \App\Models\Appointment::CANCELLATION_TIMEOUT) }}
-                        производится <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">через Direct</a>.</p>
+                    <p class="mt-1 mb-0">
+                        Отмена: за {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }}+ {{ trans_choice('час|часа|часов', \App\Models\Appointment::CANCELLATION_TIMEOUT) }} — без штрафа,
+                        менее {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }} часов — штраф 50%,
+                        после начала записи — штраф 100%.
+                        По остальным вопросам — <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">через Direct</a>.
+                    </p>
 
                     <!-- Modal -->
                     <div class="modal fade" id="modalCancelAppointment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -268,23 +309,23 @@
                 <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">Локер</a>
 
                 @php
-                    $firstBooking = $bookings->first();
-                    $firstBookingDaysLeft = $firstBooking->daysLeft();
                     $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
-                    $firstBookingHasDebt = $firstBooking->leftToPay() > 0;
+                    $bookingsWithDebt = $bookings->filter(fn($booking) => $booking->leftToPay() > 0);
+                    $minDaysLeft = $bookings->map(fn($booking) => $booking->daysLeft())->min();
+                    $maxOverdueDays = $bookingsWithDebt->map(fn($booking) => $booking->lockerPaymentOverdueCalendarDays())->max() ?? 0;
                 @endphp
 
-                @if($firstBookingHasDebt)
+                @if($bookingsWithDebt->count() > 0)
                     <span class="bg-danger text-white p-1 px-2">
-                        <b>ПРОСРОЧЕНО</b>
+                        <b>ПРОСРОЧЕНО: {{ $maxOverdueDays }} {{ trans_choice('день|дня|дней', $maxOverdueDays) }}</b>
                     </span>
-                @elseif($firstBookingDaysLeft < 0)
+                @elseif($minDaysLeft < 0)
                     <span class="bg-danger text-white p-1 px-2">
-                        <b>ПРОСРОЧЕНО: {{ abs($firstBookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($firstBookingDaysLeft)) }}</b>
+                        <b>ПРОСРОЧЕНО: {{ abs($minDaysLeft) }} {{ trans_choice('день|дня|дней', abs($minDaysLeft)) }}</b>
                     </span>
-                @elseif($firstBookingDaysLeft <= $endingSoonDays)
+                @elseif($minDaysLeft <= $endingSoonDays)
                     <span class="bg-warning text-white p-1 px-2">
-                        <b>ОСТАЛОСЬ: {{ $firstBookingDaysLeft }} {{ trans_choice('день|дня|дней', $firstBookingDaysLeft) }}</b>
+                        <b>ОСТАЛОСЬ: {{ $minDaysLeft }} {{ trans_choice('день|дня|дней', $minDaysLeft) }}</b>
                     </span>
                 @endif
 
@@ -295,6 +336,7 @@
                             @php
                                 $bookingDaysLeft = $booking->daysLeft();
                                 $bookingHasDebt = $booking->leftToPay() > 0;
+                                $bookingOverdueDays = $booking->lockerPaymentOverdueCalendarDays();
                             @endphp
 
                             @if($loop->index > 0)
@@ -334,7 +376,7 @@
                                     <td style="width: 1%; white-space: nowrap;">Осталось</td>
                                     <td>
                                         @if($bookingHasDebt)
-                                            <span style="color: red;">ПРОСРОЧЕНО</span>
+                                            <span style="color: red;">ПРОСРОЧЕНО: {{ $bookingOverdueDays }} {{ trans_choice('день|дня|дней', $bookingOverdueDays) }}</span>
                                         @elseif($bookingDaysLeft < 0)
                                             ПРОСРОЧЕНО: {{ abs($bookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($bookingDaysLeft)) }}
                                         @elseif($bookingDaysLeft <= \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS)

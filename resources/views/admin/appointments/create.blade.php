@@ -187,7 +187,7 @@
                                     {{ $comment->created_at->format('d.m.Y H:i') }}
                                 </div>
                                 <div class="comment__author">
-                                    {{ $comment->user->name }}
+                                    {{ $comment->user?->name ?? 'Удаленный пользователь' }}
                                 </div>
                                 <div class="comment__delete">
                                     <form action="{{ route('admin.comments.destroy', $comment) }}" method="post">
@@ -224,7 +224,12 @@
         </div>
 
         <div class="col-lg-4 col-sm-12">
-            @if(isset($appointment) && !$appointment->isPaid() && is_null($appointment->canceled_at))
+            @if(isset($appointment) && !$appointment->isPaid())
+                @php
+                    $cancelPenaltyReq = $appointment->paymentRequirements->firstWhere(fn($requirement) => $requirement->isPenalty());
+                    $cancelMode = $cancelPenaltyReq ? 'penalty' : 'default';
+                    $cancelPenaltyTypeValue = $cancelPenaltyReq?->reason === \App\Models\PaymentRequirement::REASON_PENALTY_50 ? 'penalty_50' : 'penalty_100';
+                @endphp
                 <form action="{{ route('admin.appointments.update', $appointment) }}" method="post">
                     @csrf
                     @method('patch')
@@ -233,12 +238,52 @@
                         <label for="">Причина отмены</label>
                         <textarea class="form-control" name="cancellation_reason"></textarea>
                     </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label d-block">Режим отмены</label>
+                        <div class="btn-group" role="group" aria-label="Режим отмены">
+                            <input type="radio" class="btn-check" name="cancel_mode" id="cancel_mode_default" value="default" autocomplete="off" {{ $cancelMode === 'default' ? 'checked' : '' }}>
+                            <label class="btn btn-outline-secondary" for="cancel_mode_default">Без штрафа</label>
+
+                            <input type="radio" class="btn-check" name="cancel_mode" id="cancel_mode_penalty" value="penalty" autocomplete="off" {{ $cancelMode === 'penalty' ? 'checked' : '' }}>
+                            <label class="btn btn-outline-danger" for="cancel_mode_penalty">Со штрафом</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3" id="cancelPenaltyTypeWrap" style="{{ $cancelMode === 'penalty' ? '' : 'display: none;' }}">
+                        <label for="cancelPenaltyType">Тип штрафа</label>
+                        <select id="cancelPenaltyType" class="form-control">
+                            <option value="penalty_50" {{ $cancelPenaltyTypeValue === 'penalty_50' ? 'selected' : '' }}>50%</option>
+                            <option value="penalty_100" {{ $cancelPenaltyTypeValue === 'penalty_100' ? 'selected' : '' }}>100%</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="cancel_penalty" id="cancelPenaltyInput" value="{{ $cancelMode === 'penalty' ? $cancelPenaltyTypeValue : 'default' }}">
                     <div class="form-group mb-3 d-flex gap-2">
-                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="default">Отменить</button>
-                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="penalty_50">Отменить — штраф 50%</button>
-                        <button class="btn btn-danger" type="submit" name="cancel_penalty" value="penalty_100">Отменить — штраф 100%</button>
+                        <button class="btn btn-danger" type="submit">{{ $appointment->canceled_at ? 'Сохранить отмену' : 'Отменить запись' }}</button>
                     </div>
                 </form>
+                <script>
+                    (function () {
+                        const modeDefault = document.getElementById('cancel_mode_default');
+                        const modePenalty = document.getElementById('cancel_mode_penalty');
+                        const penaltyWrap = document.getElementById('cancelPenaltyTypeWrap');
+                        const penaltyType = document.getElementById('cancelPenaltyType');
+                        const penaltyInput = document.getElementById('cancelPenaltyInput');
+
+                        if (!modeDefault || !modePenalty || !penaltyWrap || !penaltyType || !penaltyInput) {
+                            return;
+                        }
+
+                        function syncCancelMode() {
+                            const withPenalty = modePenalty.checked;
+                            penaltyWrap.style.display = withPenalty ? '' : 'none';
+                            penaltyInput.value = withPenalty ? penaltyType.value : 'default';
+                        }
+
+                        modeDefault.addEventListener('change', syncCancelMode);
+                        modePenalty.addEventListener('change', syncCancelMode);
+                        penaltyType.addEventListener('change', syncCancelMode);
+                        syncCancelMode();
+                    })();
+                </script>
             @endif
 
             @if(isset($appointment) && isset($appointment->canceled_at))

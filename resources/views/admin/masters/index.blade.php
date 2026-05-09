@@ -40,19 +40,6 @@
                 Неактивные ({{ $inactiveCount }})
             </a>
 
-            <div style="margin-top: 10px;">
-                @php
-                    $baseParams = array_filter(['category_id' => request('category_id'), 'is_active' => request('is_active'), 'search' => request('search')]);
-                    $debtorsCount = request('is_active') === '0' ? $debtorsInactiveCount : (request('is_active') === '1' ? $debtorsActiveCount : $debtorsActiveCount + $debtorsInactiveCount);
-                @endphp
-                <a href="{{ route('admin.masters.index', $baseParams) }}" class="{{ !request('debtors') ? 'fw-bold' : '' }}">
-                    Все
-                </a>
-                <a href="{{ route('admin.masters.index', array_merge($baseParams, ['debtors' => 1])) }}" class="{{ request('debtors') == '1' ? 'fw-bold' : '' }}" style="margin-left: 10px;">
-                    Должники ({{ $debtorsCount }})
-                </a>
-            </div>
-
             <table class="table table-bordered mb-5">
                 <tr>
                     <td style="width: 50px;"></td>

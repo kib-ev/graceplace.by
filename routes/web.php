@@ -246,6 +246,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('storage-bookings/payment-requirements', [\App\Http\Controllers\StorageBookingPaymentController::class, 'storeRequirement'])->name('storage-bookings.payment-requirements.store');
     Route::post('storage-bookings/payments', [\App\Http\Controllers\StorageBookingPaymentController::class, 'storePayment'])->name('storage-bookings.payments.store');
 
+    Route::get('/users/debtors', [\App\Http\Controllers\Admin\UserController::class, 'debtors'])->name('users.debtors');
+
     // USERS (admin only)
     Route::middleware('admin.only')->group(function () {
         Route::get('/user/{user}/schedule', function ($user) {
@@ -254,12 +256,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             return view('user.schedule', compact('master'));
         });
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
-
-        Route::get('/users', function () {
-            $users = \App\Models\User::orderBy('name')->get();
-
-            return view('admin.users.index', compact('users'));
-        })->name('users.index');
         Route::get('users/{user}/login', function ($user) {
             \Illuminate\Support\Facades\Auth::login($user);
 
@@ -334,7 +330,6 @@ Route::name('user.')->prefix('/user')->middleware(['auth', 'active.user'])->grou
 
     // CANCEL APPOINTMENT
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])
-        ->middleware('check.cancellation')
         ->name('appointments.cancel');
 
     Route::get('/documents/{appointmentId}', function (Request $request, $appointmentId) {
@@ -408,7 +403,3 @@ Route::prefix('admin')
         Route::delete('tickets/{ticket}', [TicketController::class, 'destroy'])->name('destroy');
     });
 
-Route::middleware(['auth', 'active.user'])->group(function () {
-    Route::post('/appointments', [\App\Http\Controllers\User\AppointmentController::class, 'store'])->name('user.appointments.store');
-    Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])->name('user.appointments.cancel');
-});

@@ -3,7 +3,14 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h1>Мастер - {{ $master->full_name }}</h1>
+            <h1>
+                Мастер - {{ $master->full_name }}
+                @if($master->user?->is_active)
+                    <span class="badge bg-success align-middle" style="font-size: 0.4em;">Активен</span>
+                @else
+                    <span class="badge bg-secondary align-middle" style="font-size: 0.4em;">Неактивен</span>
+                @endif
+            </h1>
             <div class=""><span style="background: #fff; color: #ccc; padding: 3px 8px; font-size: 12px;">master_id: {{ $master->id }}; user_id: {{ $master->user_id }}</span></div>
             <hr>
 
@@ -11,7 +18,14 @@
             @if($debtAmount > 0 || $storageDebtAmount > 0)
                 <div class="bg-danger text-white p-3 mb-3">
                     @if($debtAmount > 0)
-                    <span style="font-size: 1.4em;"><span class="me-1" aria-hidden="true">📄</span>Задолженность по записям: {{ number_format($debtAmount, 2) }}</span>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span style="font-size: 1.4em;"><span class="me-1" aria-hidden="true">📄</span>Задолженность по записям: {{ number_format($debtAmount, 2) }}</span>
+                        @if(!($includeAllPaymentsForBinding ?? false))
+                            <a href="{{ request()->fullUrlWithQuery(['all_payments' => 1]) }}" class="btn btn-sm btn-outline-light">Все</a>
+                        @else
+                            <a href="{{ request()->fullUrlWithQuery(['all_payments' => null]) }}" class="btn btn-sm btn-light">По дате записи</a>
+                        @endif
+                    </div>
                     <table class="table table-sm table-bordered text-white mb-3 mt-2" style="width: auto;">
                         <thead>
                             <tr>
@@ -20,6 +34,7 @@
                                 <th class="pe-3">Время</th>
                                 <th class="pe-3">Место</th>
                                 <th class="text-end pe-3">Долг, BYN</th>
+                                <th class="pe-3">Комментарии</th>
                                 <th class="pe-3">Платежка</th>
                                 <th></th>
                             </tr>
@@ -37,10 +52,34 @@
                                     <td class="pe-3">{{ $da->start_at->format('H:i') }} - {{ $da->end_at->format('H:i') }}</td>
                                     <td class="pe-3">{{ $da->place->name ?? '—' }}</td>
                                     <td class="text-end pe-3">
+                                        @if($da->canceled_at && $penaltyReq)
+                                            <span class="badge bg-dark me-1">Отменена со штрафом</span>
+                                        @elseif($da->canceled_at)
+                                            <span class="badge bg-secondary me-1">Отменена</span>
+                                        @endif
                                         @if($penaltyReq)
                                             <span class="badge bg-warning text-dark me-1">{{ $penaltyReq->getPenaltyLabel() }}</span>
                                         @endif
                                         {{ number_format($da->paymentRequirements->sum('remaining_amount'), 2) }}
+                                        @if($da->canceled_at)
+                                            <div class="small mt-1">
+                                                Полная: {{ number_format($da->getExpectedPrice(), 2) }}<br>
+                                                В треб.: {{ number_format($da->paymentRequirements->sum('expected_amount'), 2) }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="pe-3" style="min-width: 280px;">
+                                        @if($da->comments->count())
+                                            @foreach($da->comments->sortByDesc('created_at') as $comment)
+                                                <div class="small mb-1">
+                                                    <span class="text-light-emphasis">{{ $comment->created_at?->format('d.m.Y H:i') }}</span>
+                                                    — {{ $comment->user?->name ?? 'Удаленный пользователь' }}:
+                                                    {!! nl2br(e($comment->text)) !!}
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <span class="small text-light-emphasis">—</span>
+                                        @endif
                                     </td>
                                     <td class="pe-3" style="min-width: 320px;">
                                         <form method="POST" action="{{ route('admin.erip-payments.link') }}" class="d-flex gap-1">

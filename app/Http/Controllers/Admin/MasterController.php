@@ -141,7 +141,7 @@ class MasterController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Master $master)
+    public function show(Request $request, Master $master)
     {
         $master->load([
             'serviceCategories',
@@ -255,6 +255,7 @@ class MasterController extends Controller
         $storageDebtAmount = $master->getStorageDebtAmount();
 
         $normalizedMasterPhone = preg_replace('/\D+/', '', (string) ($master->user?->phone ?? ''));
+        $includeAllPaymentsForBinding = $request->boolean('all_payments');
         $eripPaymentsForBinding = EripPayment::query()
             ->with('allocations')
             ->latest('paid_at')
@@ -268,9 +269,13 @@ class MasterController extends Controller
             })
             ->values();
 
-        $debtAppointments = $debtAppointments->map(function (Appointment $appointment) use ($eripPaymentsForBinding) {
+        $debtAppointments = $debtAppointments->map(function (Appointment $appointment) use ($eripPaymentsForBinding, $includeAllPaymentsForBinding) {
             $appointment->payment_options = $eripPaymentsForBinding
-                ->filter(function (EripPayment $payment) use ($appointment) {
+                ->filter(function (EripPayment $payment) use ($appointment, $includeAllPaymentsForBinding) {
+                    if ($includeAllPaymentsForBinding) {
+                        return true;
+                    }
+
                     return $payment->paid_at
                         && $appointment->start_at
                         && $payment->paid_at->toDateString() >= $appointment->start_at->toDateString();
@@ -320,7 +325,8 @@ class MasterController extends Controller
             'placeDuration',
             'placeExpected',
             'visitsByHour',
-            'maxHourVisits'
+            'maxHourVisits',
+            'includeAllPaymentsForBinding'
         ));
     }
 

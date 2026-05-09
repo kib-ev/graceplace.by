@@ -88,9 +88,11 @@ class Master extends Model
             ->where('pr2.payable_type', Appointment::class)
             ->where('pr2.status', 'pending')
             ->where('pr2.remaining_amount', '>', 0)
-            ->whereNull('a2.canceled_at')
             ->whereNull('a2.deleted_at')
-            ->whereRaw('TIMESTAMPADD(MINUTE, a2.duration, a2.start_at) <= NOW()')
+            ->where(function (Builder $query) {
+                $query->whereNotNull('a2.canceled_at')
+                    ->orWhereRaw('TIMESTAMPADD(MINUTE, a2.duration, a2.start_at) <= NOW()');
+            })
             ->whereColumn('a2.user_id', 'masters.user_id');
     }
 
@@ -104,7 +106,13 @@ class Master extends Model
         $ids = $this->debtQuery()->distinct()->pluck('appointments.id');
 
         return Appointment::query()
-            ->with(['user.master', 'place', 'client', 'paymentRequirements' => fn ($q) => $q->where('status', 'pending')])
+            ->with([
+                'user.master',
+                'place',
+                'client',
+                'comments.user',
+                'paymentRequirements' => fn ($q) => $q->where('status', 'pending'),
+            ])
             ->whereIn('id', $ids)
             ->orderBy('start_at')
             ->get();
@@ -141,8 +149,10 @@ class Master extends Model
                     ->where('pr.remaining_amount', '>', 0);
             })
             ->where('appointments.user_id', $this->user_id)
-            ->whereNull('appointments.canceled_at')
             ->whereNull('appointments.deleted_at')
-            ->whereRaw('TIMESTAMPADD(MINUTE, appointments.duration, appointments.start_at) <= NOW()');
+            ->where(function (Builder $query) {
+                $query->whereNotNull('appointments.canceled_at')
+                    ->orWhereRaw('TIMESTAMPADD(MINUTE, appointments.duration, appointments.start_at) <= NOW()');
+            });
     }
 }
