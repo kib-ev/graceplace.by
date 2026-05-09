@@ -1,7 +1,36 @@
 @if(auth()->user() && auth()->user()->hasRole('master'))
+    <style>
+        .master-collapse-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #d6d9de;
+            border-radius: 8px;
+            background: #f8f9fb;
+            color: #2f3a4a;
+            font-weight: 600;
+            text-decoration: none;
+            line-height: 1.1;
+        }
+        .master-collapse-toggle:hover {
+            background: #eef2f7;
+            color: #1f2937;
+        }
+        .master-collapse-toggle::after {
+            content: '▾';
+            font-size: 12px;
+            opacity: 0.75;
+        }
+        .master-collapse-toggle.collapsed::after {
+            content: '▸';
+        }
+    </style>
+
     @php
-        $masterAppointments = auth()->user()->appointments()
+        $masterAppointments = \App\Models\Appointment::query()
             ->with(['place', 'paymentRequirements'])
+            ->where('user_id', auth()->id())
             ->where(function ($q) {
                 $q->where(function ($q2) {
                     $q2->whereNull('canceled_at')
@@ -17,7 +46,7 @@
 
     <div class="row mb-3 mt-3">
         <div class="col-12">
-            <a data-bs-toggle="collapse" href="#collapseAppointments" role="button">
+            <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseAppointments" role="button" aria-expanded="false">
                 Мои записи
             </a>
             <div class="collapse" id="collapseAppointments">
@@ -235,7 +264,7 @@
     @if(count($masterEndedAppointments) > 0)
         <div class="row mb-3 mt-3">
             <div class="col-12">
-                <a data-bs-toggle="collapse" href="#collapseDocs" role="button">
+                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseDocs" role="button" aria-expanded="false">
                     Акты
                 </a>
                 <div class="collapse" id="collapseDocs">
@@ -306,7 +335,7 @@
     @if(count($bookings))
         <div class="row mb-3 mt-3">
             <div class="col">
-                <a data-bs-toggle="collapse" href="#collapseStorageCells" role="button">Локер</a>
+                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseStorageCells" role="button" aria-expanded="false">Локер</a>
 
                 @php
                     $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
@@ -419,7 +448,7 @@
     <div class="row mb-3 mt-3">
         <div class="col">
 
-            <a data-bs-toggle="collapse" href="#collapseSettings" role="button">
+            <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseSettings" role="button" aria-expanded="false">
                 Настройки
             </a>
 

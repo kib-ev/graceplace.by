@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\PaymentRequirement;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -98,17 +99,64 @@ class AppointmentController extends Controller
     public function cancelAppointment(Request $request, Appointment $appointment)
     {
         try {
-            $result = (new AppointmentService())->cancelAppointment(auth()->user(), $appointment, $request->input('cancellation_reason'));
+            $penalty = $request->get('cancel_penalty');
+            $penaltyOverride = in_array($penalty, ['penalty_50', 'penalty_100', 'default'], true) ? $penalty : null;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Запись успешно отменена.'
-            ]);
+            $result = (new AppointmentService())->cancelAppointment(
+                auth()->user(),
+                $appointment,
+                $request->input('cancellation_reason'),
+                $penaltyOverride
+            );
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Запись успешно отменена.'
+                ]);
+            }
+
+            return back()->with('success', 'Запись успешно отменена.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 400);
+            }
+
+            return back()->withErrors($e->getMessage());
         }
+    }
+
+    public function mobileIndex(Request $request)
+    {
+        abort_unless(auth()->user() && auth()->user()->hasRole('master'), 403);
+
+        $appointments = Appointment::query()
+            ->with(['place', 'paymentRequirements'])
+            ->where('user_id', auth()->id())
+            ->where(function ($query) {
+                $query->where('start_at', '>=', now()->subDays(30))
+                    ->orWhereHas('paymentRequirements', function ($q) {
+                        $q->where('status', PaymentRequirement::STATUS_PENDING)
+                            ->where('remaining_amount', '>', 0);
+                    });
+            })
+            ->orderByDesc('start_at')
+            ->get();
+
+        $todayStart = now()->startOfDay();
+        $tomorrowStart = now()->copy()->addDay()->startOfDay();
+
+        $upcomingAppointments = $appointments->filter(function (Appointment $appointment) use ($tomorrowStart) {
+            return $appointment->start_at && $appointment->start_at->greaterThanOrEqualTo($tomorrowStart);
+        })->values();
+
+        $completedAppointments = $appointments->filter(function (Appointment $appointment) use ($todayStart) {
+            return $appointment->start_at && $appointment->start_at->lessThan($todayStart);
+        })->values();
+
+        return view('user.mobile.appointments', compact('upcomingAppointments', 'completedAppointments'));
     }
 }

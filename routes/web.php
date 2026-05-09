@@ -327,6 +327,9 @@ Route::name('user.')->prefix('/user')->middleware(['auth', 'active.user'])->grou
 
     // APPOINTMENTS
     Route::resource('appointments', \App\Http\Controllers\User\AppointmentController::class)->only(['store']);
+    Route::get('/my-appointments-mobile', [\App\Http\Controllers\User\AppointmentController::class, 'mobileIndex'])
+        ->middleware('master')
+        ->name('appointments.mobile');
 
     // CANCEL APPOINTMENT
     Route::post('/appointments/{appointment}/cancel', [\App\Http\Controllers\User\AppointmentController::class, 'cancelAppointment'])
