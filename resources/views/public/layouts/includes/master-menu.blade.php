@@ -18,12 +18,13 @@
             color: #1f2937;
         }
         .master-collapse-toggle::after {
-            content: '▾';
-            font-size: 12px;
-            opacity: 0.75;
+            content: '-';
+            font-size: 16px;
+            font-weight: 700;
+            opacity: 0.85;
         }
         .master-collapse-toggle.collapsed::after {
-            content: '▸';
+            content: '+';
         }
     </style>
 
