@@ -96,7 +96,10 @@
                 </tr>
                 <tr>
                     <td>Штрафы</td>
-                    <td>{{ number_format($canceledWithPaymentCount, 2, '.', ',') }} BYN</td>
+                    <td>
+                        {{ number_format($canceledWithPaymentAmount ?? 0, 2) }} BYN
+                        ({{ $canceledWithPaymentCount ?? 0 }} шт.)
+                    </td>
                 </tr>
             </table>
 

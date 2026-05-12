@@ -126,7 +126,10 @@ class Master extends Model
     public function getStorageDebtBookings()
     {
         return StorageBooking::query()
-            ->with(['cell', 'paymentRequirements' => fn ($q) => $q->where('status', 'pending')])
+            ->with([
+                'cell',
+                'paymentRequirements' => fn ($q) => $q->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES),
+            ])
             ->where('user_id', $this->user_id)
             ->withUnpaidLockerRequirement()
             ->orderBy('start_at')

@@ -38,10 +38,20 @@ class StatsController extends Controller
 
         $canceledWithPaymentCount = Appointment::whereNotNull('canceled_at')
             ->whereHas('payments', function ($query) {
-                $query->where('status', 'completed')
+                $query->where('status', Payment::STATUS_COMPLETED)
                     ->where('amount', '>', 0);
             })
             ->count();
+
+        $canceledWithPaymentAmount = DB::table('payments')
+            ->join('appointments', function ($join) {
+                $join->on('appointments.id', '=', 'payments.payable_id')
+                    ->where('payments.payable_type', '=', Appointment::class);
+            })
+            ->whereNotNull('appointments.canceled_at')
+            ->where('payments.status', Payment::STATUS_COMPLETED)
+            ->where('payments.amount', '>', 0)
+            ->sum('payments.amount');
 
         // Локер: выручка из Payments (completed) — фактически полученные деньги
         $totalLockerRevenue = DB::table('payments')
@@ -184,7 +194,7 @@ class StatsController extends Controller
             'placesCount', 'mastersCount', 'appointmentsStats',
             'years', 'monthlyStats', 'newMasters', 'uniqueMasters', 'lockerStats',
             'weeklyStatsPrev', 'weeklyStatsCurr',
-            'canceledWithPaymentCount', 'totalLockerRevenue',
+            'canceledWithPaymentCount', 'canceledWithPaymentAmount', 'totalLockerRevenue',
             'durationBuckets', 'durationStats', 'durationOtherCount', 'durationOtherRevenue', 'visited'
         ));
     }

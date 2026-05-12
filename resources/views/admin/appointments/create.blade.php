@@ -228,7 +228,19 @@
                 @php
                     $cancelPenaltyReq = $appointment->paymentRequirements->firstWhere(fn($requirement) => $requirement->isPenalty());
                     $cancelMode = $cancelPenaltyReq ? 'penalty' : 'default';
-                    $cancelPenaltyTypeValue = $cancelPenaltyReq?->reason === \App\Models\PaymentRequirement::REASON_PENALTY_50 ? 'penalty_50' : 'penalty_100';
+                    if ($cancelPenaltyReq) {
+                        $cancelPenaltyTypeValue = match ($cancelPenaltyReq->reason) {
+                            \App\Models\PaymentRequirement::REASON_PENALTY_50 => 'penalty_50',
+                            \App\Models\PaymentRequirement::REASON_PENALTY_CUSTOM => 'penalty_custom',
+                            default => 'penalty_100',
+                        };
+                        $cancelPenaltyCustomAmount = $cancelPenaltyReq->reason === \App\Models\PaymentRequirement::REASON_PENALTY_CUSTOM
+                            ? number_format((float) $cancelPenaltyReq->expected_amount, 2, '.', '')
+                            : '';
+                    } else {
+                        $cancelPenaltyTypeValue = 'penalty_50';
+                        $cancelPenaltyCustomAmount = '';
+                    }
                 @endphp
                 <form action="{{ route('admin.appointments.update', $appointment) }}" method="post">
                     @csrf
@@ -239,21 +251,23 @@
                         <textarea class="form-control" name="cancellation_reason"></textarea>
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label d-block">Режим отмены</label>
-                        <div class="btn-group" role="group" aria-label="Режим отмены">
-                            <input type="radio" class="btn-check" name="cancel_mode" id="cancel_mode_default" value="default" autocomplete="off" {{ $cancelMode === 'default' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-secondary" for="cancel_mode_default">Без штрафа</label>
-
-                            <input type="radio" class="btn-check" name="cancel_mode" id="cancel_mode_penalty" value="penalty" autocomplete="off" {{ $cancelMode === 'penalty' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-danger" for="cancel_mode_penalty">Со штрафом</label>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cancel_with_penalty" name="cancel_with_penalty_ui" value="1" autocomplete="off" {{ $cancelMode === 'penalty' ? 'checked' : '' }}>
+                            <label class="form-check-label" for="cancel_with_penalty">Со штрафом</label>
                         </div>
+                        <div class="form-text">Если не отмечено — отмена без штрафа.</div>
                     </div>
                     <div class="form-group mb-3" id="cancelPenaltyTypeWrap" style="{{ $cancelMode === 'penalty' ? '' : 'display: none;' }}">
                         <label for="cancelPenaltyType">Тип штрафа</label>
                         <select id="cancelPenaltyType" class="form-control">
                             <option value="penalty_50" {{ $cancelPenaltyTypeValue === 'penalty_50' ? 'selected' : '' }}>50%</option>
                             <option value="penalty_100" {{ $cancelPenaltyTypeValue === 'penalty_100' ? 'selected' : '' }}>100%</option>
+                            <option value="penalty_custom" {{ $cancelPenaltyTypeValue === 'penalty_custom' ? 'selected' : '' }}>Своя сумма (BYN)</option>
                         </select>
+                        <div class="mt-2" id="cancelPenaltyAmountWrap" style="{{ $cancelPenaltyTypeValue === 'penalty_custom' ? '' : 'display: none;' }}">
+                            <label for="cancel_penalty_amount">Сумма штрафа, BYN</label>
+                            <input type="number" class="form-control" name="cancel_penalty_amount" id="cancel_penalty_amount" step="0.01" min="0.01" max="999999.99" placeholder="0.00" value="{{ $cancelPenaltyCustomAmount }}">
+                        </div>
                     </div>
                     <input type="hidden" name="cancel_penalty" id="cancelPenaltyInput" value="{{ $cancelMode === 'penalty' ? $cancelPenaltyTypeValue : 'default' }}">
                     <div class="form-group mb-3 d-flex gap-2">
@@ -262,25 +276,42 @@
                 </form>
                 <script>
                     (function () {
-                        const modeDefault = document.getElementById('cancel_mode_default');
-                        const modePenalty = document.getElementById('cancel_mode_penalty');
+                        const withPenaltyCb = document.getElementById('cancel_with_penalty');
                         const penaltyWrap = document.getElementById('cancelPenaltyTypeWrap');
                         const penaltyType = document.getElementById('cancelPenaltyType');
                         const penaltyInput = document.getElementById('cancelPenaltyInput');
+                        const amountWrap = document.getElementById('cancelPenaltyAmountWrap');
+                        const amountInput = document.getElementById('cancel_penalty_amount');
 
-                        if (!modeDefault || !modePenalty || !penaltyWrap || !penaltyType || !penaltyInput) {
+                        if (!withPenaltyCb || !penaltyWrap || !penaltyType || !penaltyInput || !amountWrap || !amountInput) {
                             return;
                         }
 
-                        function syncCancelMode() {
-                            const withPenalty = modePenalty.checked;
-                            penaltyWrap.style.display = withPenalty ? '' : 'none';
-                            penaltyInput.value = withPenalty ? penaltyType.value : 'default';
+                        function syncPenaltyAmountVisibility() {
+                            const isCustom = penaltyType.value === 'penalty_custom';
+                            amountWrap.style.display = isCustom ? '' : 'none';
+                            if (!isCustom) {
+                                amountInput.removeAttribute('required');
+                            } else {
+                                amountInput.setAttribute('required', 'required');
+                            }
                         }
 
-                        modeDefault.addEventListener('change', syncCancelMode);
-                        modePenalty.addEventListener('change', syncCancelMode);
-                        penaltyType.addEventListener('change', syncCancelMode);
+                        function syncCancelMode() {
+                            const withPenalty = withPenaltyCb.checked;
+                            penaltyWrap.style.display = withPenalty ? '' : 'none';
+                            penaltyInput.value = withPenalty ? penaltyType.value : 'default';
+                            if (withPenalty) {
+                                syncPenaltyAmountVisibility();
+                            } else {
+                                amountInput.removeAttribute('required');
+                            }
+                        }
+
+                        withPenaltyCb.addEventListener('change', syncCancelMode);
+                        penaltyType.addEventListener('change', function () {
+                            syncCancelMode();
+                        });
                         syncCancelMode();
                     })();
                 </script>

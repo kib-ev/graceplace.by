@@ -31,10 +31,14 @@ trait Payable
     public function leftToPay(): float
     {
         if ($this->relationLoaded('paymentRequirements')) {
-            return max(0, $this->paymentRequirements->where('status', 'pending')->sum('remaining_amount'));
+            return max(0, $this->paymentRequirements
+                ->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
+                ->sum('remaining_amount'));
         }
 
-        return max(0, $this->paymentRequirements()->where('status', 'pending')->sum('remaining_amount'));
+        return max(0, $this->paymentRequirements()
+            ->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
+            ->sum('remaining_amount'));
     }
 
     public function getExpectedTotal(): float

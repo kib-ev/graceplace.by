@@ -16,7 +16,7 @@
             margin: 10px 0 6px;
             padding: 8px 10px;
             border-radius: 10px;
-            background: #595959;
+            background: #556d9c;
             color: #f8fafc;
             font-weight: 700;
             font-size: 14px;
@@ -104,6 +104,26 @@
             padding: 10px 4px;
             line-height: 1.2;
         }
+        .master-cancel-link {
+            display: inline;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: none;
+            font: inherit;
+            line-height: inherit;
+            color: #dc3545;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .master-cancel-link:hover {
+            color: #b02a37;
+        }
+        .mobile-appt-actions .master-cancel-link {
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
     </style>
 @endpush
 
@@ -157,6 +177,8 @@
                             $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($appointment);
                             $leftToPay = $appointment->leftToPay();
                             $penaltyRequirement = $appointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
+                            $isStartedForCancel = now()->greaterThanOrEqualTo($start);
+                            $isLateCancellationWindow = ! $isStartedForCancel && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($start);
                         @endphp
                         @if($prevDate !== $start->toDateString())
                             <div class="mobile-appt-date-block">{{ $start->isoFormat('D MMM') }} • {{ mb_strtoupper($start->isoFormat('dd')) }}</div>
@@ -189,15 +211,18 @@
                             @endif
                             @if(! $isCanceled && ! $isEnded)
                                 <div class="mobile-appt-actions">
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
+                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}" class="w-100">
                                         @csrf
-                                        <input type="hidden" name="cancel_penalty" value="default">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Отменить запись без штрафа?')">Отмена</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
-                                        @csrf
-                                        <input type="hidden" name="cancel_penalty" value="{{ $isInProgress ? 'penalty_100' : 'penalty_50' }}">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Отменить запись со штрафом?')">Отмена со штрафом</button>
+                                        @if($isStartedForCancel)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_100">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 100%?')">Отменить, штраф 100%</button>
+                                        @elseif($isLateCancellationWindow)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_50">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 50%?')">Отменить, штраф 50%</button>
+                                        @else
+                                            <input type="hidden" name="cancel_penalty" value="default">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись без штрафа?')">Отменить без штрафа</button>
+                                        @endif
                                     </form>
                                 </div>
                             @endif
@@ -231,6 +256,8 @@
                             $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($appointment);
                             $leftToPay = $appointment->leftToPay();
                             $penaltyRequirement = $appointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
+                            $isStartedForCancel = now()->greaterThanOrEqualTo($start);
+                            $isLateCancellationWindow = ! $isStartedForCancel && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($start);
                         @endphp
                         @if($prevDate !== $start->toDateString())
                             @if(!is_null($prevDate))
@@ -267,15 +294,18 @@
                             @endif
                             @if(! $isCanceled && ! $isEnded)
                                 <div class="mobile-appt-actions">
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
+                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}" class="w-100">
                                         @csrf
-                                        <input type="hidden" name="cancel_penalty" value="default">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Отменить запись без штрафа?')">Отмена</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
-                                        @csrf
-                                        <input type="hidden" name="cancel_penalty" value="{{ $isInProgress ? 'penalty_100' : 'penalty_50' }}">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Отменить запись со штрафом?')">Отмена со штрафом</button>
+                                        @if($isStartedForCancel)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_100">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 100%?')">Отменить, штраф 100%</button>
+                                        @elseif($isLateCancellationWindow)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_50">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 50%?')">Отменить, штраф 50%</button>
+                                        @else
+                                            <input type="hidden" name="cancel_penalty" value="default">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись без штрафа?')">Отменить без штрафа</button>
+                                        @endif
                                     </form>
                                 </div>
                             @endif
@@ -307,6 +337,8 @@
                             $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($appointment);
                             $leftToPay = $appointment->leftToPay();
                             $penaltyRequirement = $appointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
+                            $isStartedForCancel = now()->greaterThanOrEqualTo($start);
+                            $isLateCancellationWindow = ! $isStartedForCancel && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($start);
                         @endphp
                         @if($prevDate !== $start->toDateString())
                             @if(!is_null($prevDate))
@@ -343,15 +375,18 @@
                             @endif
                             @if(! $isCanceled && ! $isEnded)
                                 <div class="mobile-appt-actions">
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
+                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}" class="w-100">
                                         @csrf
-                                        <input type="hidden" name="cancel_penalty" value="default">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Отменить запись без штрафа?')">Отмена</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('user.appointments.cancel', $appointment) }}">
-                                        @csrf
-                                        <input type="hidden" name="cancel_penalty" value="{{ $isInProgress ? 'penalty_100' : 'penalty_50' }}">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Отменить запись со штрафом?')">Отмена со штрафом</button>
+                                        @if($isStartedForCancel)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_100">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 100%?')">Отменить, штраф 100%</button>
+                                        @elseif($isLateCancellationWindow)
+                                            <input type="hidden" name="cancel_penalty" value="penalty_50">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись со штрафом 50%?')">Отменить, штраф 50%</button>
+                                        @else
+                                            <input type="hidden" name="cancel_penalty" value="default">
+                                            <button type="submit" class="master-cancel-link" onclick="return confirm('Отменить запись без штрафа?')">Отменить без штрафа</button>
+                                        @endif
                                     </form>
                                 </div>
                             @endif

@@ -295,7 +295,13 @@ final class AppointmentService
         return $amount;
     }
 
-    public function cancelAppointment(User $user, Appointment $appointment, ?string $cancellationReason = null, ?string $penaltyOverride = null): bool
+    public function cancelAppointment(
+        User $user,
+        Appointment $appointment,
+        ?string $cancellationReason = null,
+        ?string $penaltyOverride = null,
+        ?float $penaltyCustomAmount = null,
+    ): bool
     {
         if ($appointment->payments()->exists()) {
             throw new \Exception('Запись нельзя отменить — по ней уже есть платежи. Обратитесь к администратору.');
@@ -314,9 +320,18 @@ final class AppointmentService
                 // Штрафная отмена — считаем уже оплаченное чтобы не выставить лишнее
                 $alreadyPaid = (float) $appointment->payments()->sum('amount');
                 $expected    = $this->calculateAppointmentCost($appointment);
-                $penaltyAmount = $reason === \App\Models\PaymentRequirement::REASON_PENALTY_50
-                    ? floor($expected * 100 / 2) / 100
-                    : $expected;
+
+                if ($reason === \App\Models\PaymentRequirement::REASON_PENALTY_CUSTOM) {
+                    if ($penaltyCustomAmount === null || $penaltyCustomAmount <= 0) {
+                        throw new \Exception('Укажите сумму штрафа больше нуля.');
+                    }
+                    $penaltyAmount = round($penaltyCustomAmount, 2);
+                } else {
+                    $penaltyAmount = $reason === \App\Models\PaymentRequirement::REASON_PENALTY_50
+                        ? floor($expected * 100 / 2) / 100
+                        : $expected;
+                }
+
                 $remaining = max(0, $penaltyAmount - $alreadyPaid);
 
                 // Удаляем старые требования и создаём штрафное

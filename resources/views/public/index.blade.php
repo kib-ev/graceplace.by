@@ -545,7 +545,8 @@
 
                 $(document).ready(function () {
                     // Обработка отмены записи
-                    $('.js_cancel-appointment').on('click', function () {
+                    $('.js_cancel-appointment').on('click', function (e) {
+                        e.preventDefault();
                         let info = $(this).closest('.appointment-info');
                         let modal = $('#modalCancelAppointment');
 

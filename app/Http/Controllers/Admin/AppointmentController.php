@@ -112,16 +112,30 @@ class AppointmentController extends Controller
     {
         // CANCEL with penalties
         if ($request->get('cancel') == 1) {
-            $penalty = $request->get('cancel_penalty'); // 'penalty_100' | 'penalty_50' | 'default' | null
+            $penalty = $request->get('cancel_penalty');
 
-            $penaltyOverride = in_array($penalty, ['penalty_50', 'penalty_100', 'default']) ? $penalty : null;
+            $allowed = ['penalty_50', 'penalty_100', 'penalty_custom', 'default'];
+            $penaltyOverride = in_array($penalty, $allowed, true) ? $penalty : null;
 
-            (new AppointmentService())->cancelAppointment(
-                user: auth()->user(),
-                appointment: $appointment,
-                cancellationReason: $request->get('cancellation_reason'),
-                penaltyOverride: $penaltyOverride,
-            );
+            $penaltyCustomAmount = null;
+            if ($penaltyOverride === \App\Models\PaymentRequirement::REASON_PENALTY_CUSTOM) {
+                $penaltyCustomAmount = (float) $request->input('cancel_penalty_amount', 0);
+                if ($penaltyCustomAmount <= 0 || $penaltyCustomAmount > 999999.99) {
+                    return back()->withErrors('Сумма штрафа должна быть от 0.01 до 999999.99 BYN.');
+                }
+            }
+
+            try {
+                (new AppointmentService())->cancelAppointment(
+                    user: auth()->user(),
+                    appointment: $appointment,
+                    cancellationReason: $request->get('cancellation_reason'),
+                    penaltyOverride: $penaltyOverride,
+                    penaltyCustomAmount: $penaltyCustomAmount,
+                );
+            } catch (\Exception $e) {
+                return back()->withErrors($e->getMessage());
+            }
 
             return back();
         }

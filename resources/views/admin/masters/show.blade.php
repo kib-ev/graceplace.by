@@ -68,7 +68,7 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td class="pe-3" style="min-width: 280px;">
+                                    <td class="pe-3" style="min-width: 200px;">
                                         @if($da->comments->count())
                                             @foreach($da->comments->sortByDesc('created_at') as $comment)
                                                 <div class="small mb-1">

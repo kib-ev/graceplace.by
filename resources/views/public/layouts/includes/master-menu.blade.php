@@ -1,476 +1,489 @@
-@if(auth()->user() && auth()->user()->hasRole('master'))
-    <style>
-        .master-collapse-toggle {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            border: 1px solid #d6d9de;
-            border-radius: 8px;
-            background: #f8f9fb;
-            color: #2f3a4a;
-            font-weight: 600;
-            text-decoration: none;
-            line-height: 1.1;
-        }
-        .master-collapse-toggle:hover {
-            background: #eef2f7;
-            color: #1f2937;
-        }
-        .master-collapse-toggle::after {
-            content: '-';
-            font-size: 16px;
-            font-weight: 700;
-            opacity: 0.85;
-        }
-        .master-collapse-toggle.collapsed::after {
-            content: '+';
-        }
-    </style>
+    @if(auth()->user() && auth()->user()->hasRole('master'))
+        <style>
+            .master-collapse-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 10px;
+                border: 1px solid #d6d9de;
+                border-radius: 8px;
+                background: #f8f9fb;
+                color: #2f3a4a;
+                font-weight: 600;
+                text-decoration: none;
+                line-height: 1.1;
+            }
+            .master-collapse-toggle:hover {
+                background: #eef2f7;
+                color: #1f2937;
+            }
+            .master-collapse-toggle::after {
+                content: '-';
+                font-size: 16px;
+                font-weight: 700;
+                opacity: 0.85;
+            }
+            .master-collapse-toggle.collapsed::after {
+                content: '+';
+            }
+            .master-cancel-link {
+                display: inline;
+                padding: 0;
+                margin: 0;
+                border: none;
+                background: none;
+                font: inherit;
+                line-height: inherit;
+                color: #dc3545;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            .master-cancel-link:hover {
+                color: #b02a37;
+            }
+        </style>
 
-    @php
-        $masterAppointments = \App\Models\Appointment::query()
-            ->with(['place', 'paymentRequirements'])
-            ->where('user_id', auth()->id())
-            ->where(function ($q) {
-                $q->where(function ($q2) {
-                    $q2->whereNull('canceled_at')
-                        ->where('start_at', '>=', now());
+        @php
+            $masterAppointments = \App\Models\Appointment::query()
+                ->with(['place', 'paymentRequirements'])
+                ->where('user_id', auth()->id())
+                ->where(function ($q) {
+                    $q->where(function ($q2) {
+                        $q2->whereNull('canceled_at')
+                            ->where('start_at', '>=', now());
+                    })
+                        ->orWhereHas('paymentRequirements', function ($q2) {
+                            $q2->where('status', 'pending')
+                                ->where('remaining_amount', '>', 0);
+                        });
                 })
-                    ->orWhereHas('paymentRequirements', function ($q2) {
-                        $q2->where('status', 'pending')
-                            ->where('remaining_amount', '>', 0);
-                    });
-            })
-            ->get();
-    @endphp
+                ->get();
+        @endphp
 
-    <div class="row mb-3 mt-3">
-        <div class="col-12">
-            <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseAppointments" role="button" aria-expanded="false">
-                Мои записи
-            </a>
-            <div class="collapse" id="collapseAppointments">
-                <div class="card card-body overflow-scroll">
+        <div class="row mb-3 mt-3">
+            <div class="col-12">
+                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseAppointments" role="button" aria-expanded="false">
+                    Мои записи
+                </a>
+                <div class="collapse" id="collapseAppointments">
+                    <div class="card card-body overflow-scroll">
 
-                    @if($masterAppointments->count() > 0)
-                        <table class="table table-sm table-bordered table-responsive mb-0">
-                            <tr>
-                                <th class="bg-secondary text-white" colspan="3" >Дата и время</th>
-                                <th class="bg-secondary text-white">Рабочее место</th>
-                                <th class="bg-secondary text-white">Сумма</th>
-                                <th class="bg-secondary text-white">Отмена</th>
-                            </tr>
-                            @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->isoFormat('D MMM'); }) as $masterDate => $masterAppointmentByDate)
+                        @if($masterAppointments->count() > 0)
+                            <table class="table table-sm table-bordered table-responsive mb-0">
+                                <tr>
+                                    <th class="bg-secondary text-white" colspan="3" >Дата и время</th>
+                                    <th class="bg-secondary text-white">Рабочее место</th>
+                                    <th class="bg-secondary text-white">Сумма</th>
+                                    <th class="bg-secondary text-white">Отмена</th>
+                                </tr>
+                                @foreach($masterAppointments->sortBy('start_at')->groupBy(function ($a) { return $a->start_at->isoFormat('D MMM'); }) as $masterDate => $masterAppointmentByDate)
 
-                                @foreach($masterAppointmentByDate as $nextAppointment)
-                                    <tr data-index="{{ $loop->index }}" class="appointment-info {{ $masterAppointmentByDate->count() == 1 ? 'js_app_'.$nextAppointment->id : '' }}">
+                                    @foreach($masterAppointmentByDate as $nextAppointment)
+                                        <tr data-index="{{ $loop->index }}" class="appointment-info {{ $masterAppointmentByDate->count() == 1 ? 'js_app_'.$nextAppointment->id : '' }}">
 
-                                        @if($loop->index == 0)
-                                            <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
-                                                <a href="/?date={{ $nextAppointment->start_at->format('Y-m-d') }}">{{ $masterDate }}</a>
+                                            @if($loop->index == 0)
+                                                <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
+                                                    <a href="/?date={{ $nextAppointment->start_at->format('Y-m-d') }}">{{ $masterDate }}</a>
+                                                </td>
+                                                <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
+                                                    <span>{{ mb_strtoupper($nextAppointment->start_at->isoFormat('dd')) }}</span>
+                                                </td>
+                                            @endif
+
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                                ID: <span class="js_appointment-id">{{ $nextAppointment->id }}</span>
                                             </td>
-                                            <td class="bg-white text-nowrap" style="width: 1%;" rowspan="{{ $masterAppointmentByDate->count() }}">
-                                                <span>{{ mb_strtoupper($nextAppointment->start_at->isoFormat('dd')) }}</span>
-                                            </td>
-                                        @endif
 
-                                        <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                                <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
+                                            </td>
+
+                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
+
+                                                    <span class="js_appointment-time">
+                                                        {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
+                                                    </span>
+
+                                            </td>
+
+                                            <td class="bg-white js_app_{{ $nextAppointment->id }} text-nowrap">
+                                                <span class="js_appointment-place">{{ $nextAppointment->place->name }}</span>
+                                            </td>
+
+                                            <td class="bg-white text-nowrap text-end">
+                                                @php
+                                                    $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment);
+                                                    $penaltyRequirement = $nextAppointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
+                                                    $leftToPay = $nextAppointment->leftToPay();
+                                                @endphp
+                                                @if(! is_null($nextAppointment->canceled_at) && $penaltyRequirement)
+                                                    <span style="text-decoration: line-through; opacity: 0.75;">
+                                                        {{ number_format($fullAmount, 2) }}
+                                                    </span>&nbsp;{{ number_format($leftToPay, 2) }} BYN
+                                                @else
+                                                    {{ number_format($leftToPay > 0 ? $leftToPay : $fullAmount, 2) }} BYN
+                                                @endif
+                                            </td>
+
+                                            <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}">
+                                                @php
+                                                    $isCanceled = ! is_null($nextAppointment->canceled_at);
+                                                    $appointmentStartAt = \Carbon\Carbon::parse($nextAppointment->start_at);
+                                                    $appointmentEndAt = $appointmentStartAt->copy()->addMinutes($nextAppointment->duration);
+                                                    $isStarted = now()->greaterThanOrEqualTo($appointmentStartAt);
+                                                    $isEnded = now()->greaterThanOrEqualTo($appointmentEndAt);
+                                                    $isUnpaid = ! $nextAppointment->isPaid();
+                                                    $hasCancelPermission = auth()->user() && auth()->user()->can('cancel appointment');
+                                                    $isLateCancellationWindow = ! $isStarted && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($appointmentStartAt);
+                                                @endphp
+
+                                                @if($hasCancelPermission && ! $isCanceled && $isUnpaid && ! $isEnded)
+                                                    @if($isStarted)
+                                                        <a href="#" class="master-cancel-link js_cancel-appointment">Отменить, штраф 100%</a>
+                                                    @elseif($isLateCancellationWindow)
+                                                        <a href="#" class="master-cancel-link js_cancel-appointment">Отменить, штраф 50%</a>
+                                                    @else
+                                                        <a href="#" class="master-cancel-link js_cancel-appointment">Отменить без штрафа</a>
+                                                    @endif
+                                                @elseif($isCanceled)
+                                                    <span class="text-danger">Отменена</span>
+                                                    @if($penaltyRequirement)
+                                                        <div class="small text-danger">{{ $penaltyRequirement->getPenaltyLabel() }}</div>
+                                                    @endif
+                                                @elseif($isEnded)
+                                                    Завершена
+                                                @else
+                                                    <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Через Direct</a>
+                                                @endif
+                                            </td>
+
+
+                                        </tr>
+
+                                    @endforeach
+                                @endforeach
+                            </table>
+                        @else
+                            <table class="table table-sm table-bordered mb-0">
+                                <tr>
+                                    <td>У вас нет предстоящих записей.</td>
+                                </tr>
+                            </table>
+                        @endif
+
+                        <p class="mt-1 mb-0">
+                            Отмена: за {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }}+ {{ trans_choice('час|часа|часов', \App\Models\Appointment::CANCELLATION_TIMEOUT) }} — без штрафа,
+                            менее {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }} часов — штраф 50%,
+                            после начала записи — штраф 100%.
+                            По остальным вопросам — <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">через Direct</a>.
+                        </p>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="modalCancelAppointment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Отменить запись</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Вы собираетесь отменить запись:
+
+                                        <table class="table-bordered table table-sm">
+                                            <tr style="display: none;">
+                                                <td>ID</td>
+                                                <td><span class="js_appointment-id"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Дата</td>
+                                                <td><span class="js_appointment-date"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Время</td>
+                                                <td><span class="js_appointment-time"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Рабочее место</td>
+                                                <td><span class="js_appointment-place"></span></td>
+                                            </tr>
+                                        </table>
+
+                                        <div class="form-group">
+                                            <label for="">Укажите, пожалуйста, причину отмены:</label>
+                                            <textarea class="form-control js_appointment-cancel-reason"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        <button id="sendCancelAppointmentData" type="button" class="btn btn-danger">Да, отменить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            $(document).ready(function() {
+                                // Обработчик нажатия на кнопку отмены записи
+                                $('#sendCancelAppointmentData').on('click', function() {
+                                    const button = $(this);
+                                    const modal = $('#modalCancelAppointment');
+                                    const appointmentId = modal.find('.js_appointment-id').text();
+                                    const reason = modal.find('.js_appointment-cancel-reason').val();
+
+                                    button.prop('disabled', true);
+                                    button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отмена...');
+
+                                    $.ajax({
+                                        url: '/user/appointments/' + appointmentId + '/cancel',
+                                        method: 'POST',
+                                        data: {
+                                            _token: '{{ csrf_token() }}',
+                                            cancellation_reason: reason
+                                        },
+                                        success: function(response) {
+                                            if (response.success) {
+                                                window.location.reload();
+                                            } else {
+                                                alert(response.message || 'Произошла ошибка при отмене записи');
+                                                button.prop('disabled', false);
+                                                button.html('Да, отменить');
+                                            }
+                                        },
+                                        error: function(xhr) {
+                                            alert(xhr.responseJSON?.message || 'Произошла ошибка при отмене записи');
+                                            button.prop('disabled', false);
+                                            button.html('Да, отменить');
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @php
+            $masterEndedAppointments = auth()->user()->appointments()
+                ->whereNull('canceled_at')
+                ->where('start_at', '<', now())
+                ->where('start_at', '>=', '2025-01-01 00:00')
+                ->where('start_at', '>=', now()->subDays(30))
+                ->whereHas('paymentRequirements', function($q) {
+                    $q->where('expected_amount', '>', 0);
+                })
+                ->get();
+        @endphp
+
+        @if(count($masterEndedAppointments) > 0)
+            <div class="row mb-3 mt-3">
+                <div class="col-12">
+                    <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseDocs" role="button" aria-expanded="false">
+                        Акты
+                    </a>
+                    <div class="collapse" id="collapseDocs">
+                        <div class="card card-body overflow-scroll">
+
+                            <table class="table table-sm table-bordered table-responsive mb-0">
+                                <tr>
+                                    <th class="bg-secondary text-white" colspan="2" >Дата и время</th>
+                                    <th class="bg-secondary text-white">Рабочее место</th>
+                                    <th class="bg-secondary text-white">Сумма</th>
+                                    <th class="bg-secondary text-white"></th>
+                                </tr>
+                                @foreach($masterEndedAppointments as $nextAppointment)
+                                    <tr class="appointment-info">
+
+                                        <td class="text-nowrap" style="width: 1%;">
+                                            {{ $nextAppointment->start_at->format('d.m.Y') }}
+                                        </td>
+
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
                                             ID: <span class="js_appointment-id">{{ $nextAppointment->id }}</span>
                                         </td>
 
-                                        <td class="bg-white js_app_{{ $nextAppointment->id }}" style="display: none;">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
                                             <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
                                         </td>
 
-                                        <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
 
-                                                <span class="js_appointment-time">
-                                                    {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
-                                                </span>
+                                            <span class="text-nowrap js_appointment-time">
+                                                {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
+                                            </span>
 
                                         </td>
 
-                                        <td class="bg-white js_app_{{ $nextAppointment->id }} text-nowrap">
+                                        <td class="text-nowrap js_app_{{ $nextAppointment->id }}">
                                             <span class="js_appointment-place">{{ $nextAppointment->place->name }}</span>
                                         </td>
 
-                                        <td class="bg-white text-nowrap text-end">
-                                            @php
-                                                $fullAmount = (new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment);
-                                                $penaltyRequirement = $nextAppointment->paymentRequirements->first(fn($r) => $r->isPenalty() && $r->remaining_amount > 0);
-                                                $leftToPay = $nextAppointment->leftToPay();
-                                            @endphp
-                                            @if(! is_null($nextAppointment->canceled_at) && $penaltyRequirement)
-                                                <span style="text-decoration: line-through; opacity: 0.75;">
-                                                    {{ number_format($fullAmount, 2) }}
-                                                </span>&nbsp;{{ number_format($leftToPay, 2) }} BYN
-                                            @else
-                                                {{ number_format($leftToPay > 0 ? $leftToPay : $fullAmount, 2) }} BYN
-                                            @endif
+                                        <td class="text-nowrap text-end">
+                                            {{ number_format((new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment), 2) }} BYN
                                         </td>
 
-                                        <td class="bg-white text-nowrap js_app_{{ $nextAppointment->id }}">
-                                            @php
-                                                $isCanceled = ! is_null($nextAppointment->canceled_at);
-                                                $appointmentStartAt = \Carbon\Carbon::parse($nextAppointment->start_at);
-                                                $appointmentEndAt = $appointmentStartAt->copy()->addMinutes($nextAppointment->duration);
-                                                $isStarted = now()->greaterThanOrEqualTo($appointmentStartAt);
-                                                $isEnded = now()->greaterThanOrEqualTo($appointmentEndAt);
-                                                $isUnpaid = ! $nextAppointment->isPaid();
-                                                $hasCancelPermission = auth()->user() && auth()->user()->can('cancel appointment');
-                                                $isLateCancellationWindow = ! $isStarted && now()->addHours(\App\Models\Appointment::CANCELLATION_TIMEOUT)->greaterThan($appointmentStartAt);
-                                            @endphp
-
-                                            @if($hasCancelPermission && ! $isCanceled && $isUnpaid && ! $isEnded)
-                                                <a class="btn btn-sm btn-danger js_cancel-appointment" style="line-height: 13px;">
-                                                    Отмена
-                                                </a>
-
-                                                @if($isStarted)
-                                                    <div class="small text-danger mt-1">Штраф 100%</div>
-                                                @elseif($isLateCancellationWindow)
-                                                    <div class="small text-danger mt-1">Штраф 50%</div>
-                                                @endif
-                                            @elseif($isCanceled)
-                                                <span class="text-danger">Отменена</span>
-                                                @if($penaltyRequirement)
-                                                    <div class="small text-danger">{{ $penaltyRequirement->getPenaltyLabel() }}</div>
-                                                @endif
-                                            @elseif($isEnded)
-                                                Завершена
-                                            @else
-                                                <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">Через Direct</a>
-                                            @endif
+                                        <td>
+                                            <a target="_blank" href="/user/documents/{{ $nextAppointment->id }}?download">Скачать</a>
                                         </td>
-
 
                                     </tr>
 
                                 @endforeach
-                            @endforeach
-                        </table>
-                    @else
-                        <table class="table table-sm table-bordered mb-0">
-                            <tr>
-                                <td>У вас нет предстоящих записей.</td>
-                            </tr>
-                        </table>
-                    @endif
+                            </table>
 
-                    <p class="mt-1 mb-0">
-                        Отмена: за {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }}+ {{ trans_choice('час|часа|часов', \App\Models\Appointment::CANCELLATION_TIMEOUT) }} — без штрафа,
-                        менее {{ \App\Models\Appointment::CANCELLATION_TIMEOUT }} часов — штраф 50%,
-                        после начала записи — штраф 100%.
-                        По остальным вопросам — <a target="_blank" href="https://ig.me/m/beautycoworkingminsk">через Direct</a>.
-                    </p>
-
-                    <!-- Modal -->
-                    <div class="modal fade" id="modalCancelAppointment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Отменить запись</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Вы собираетесь отменить запись:
-
-                                    <table class="table-bordered table table-sm">
-                                        <tr style="display: none;">
-                                            <td>ID</td>
-                                            <td><span class="js_appointment-id"></span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Дата</td>
-                                            <td><span class="js_appointment-date"></span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Время</td>
-                                            <td><span class="js_appointment-time"></span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Рабочее место</td>
-                                            <td><span class="js_appointment-place"></span></td>
-                                        </tr>
-                                    </table>
-
-                                    <div class="form-group">
-                                        <label for="">Укажите, пожалуйста, причину отмены:</label>
-                                        <textarea class="form-control js_appointment-cancel-reason"></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                                    <button id="sendCancelAppointmentData" type="button" class="btn btn-danger">Да, отменить</button>
-                                </div>
-                            </div>
                         </div>
                     </div>
-
-                    <script>
-                        $(document).ready(function() {
-                            // Обработчик нажатия на кнопку отмены записи
-                            $('#sendCancelAppointmentData').on('click', function() {
-                                const button = $(this);
-                                const modal = $('#modalCancelAppointment');
-                                const appointmentId = modal.find('.js_appointment-id').text();
-                                const reason = modal.find('.js_appointment-cancel-reason').val();
-
-                                button.prop('disabled', true);
-                                button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отмена...');
-
-                                $.ajax({
-                                    url: '/user/appointments/' + appointmentId + '/cancel',
-                                    method: 'POST',
-                                    data: {
-                                        _token: '{{ csrf_token() }}',
-                                        cancellation_reason: reason
-                                    },
-                                    success: function(response) {
-                                        if (response.success) {
-                                            window.location.reload();
-                                        } else {
-                                            alert(response.message || 'Произошла ошибка при отмене записи');
-                                            button.prop('disabled', false);
-                                            button.html('Да, отменить');
-                                        }
-                                    },
-                                    error: function(xhr) {
-                                        alert(xhr.responseJSON?.message || 'Произошла ошибка при отмене записи');
-                                        button.prop('disabled', false);
-                                        button.html('Да, отменить');
-                                    }
-                                });
-                            });
-                        });
-                    </script>
                 </div>
             </div>
-        </div>
-    </div>
-
-    @php
-        $masterEndedAppointments = auth()->user()->appointments()
-            ->whereNull('canceled_at')
-            ->where('start_at', '<', now())
-            ->where('start_at', '>=', '2025-01-01 00:00')
-            ->where('start_at', '>=', now()->subDays(30))
-            ->whereHas('paymentRequirements', function($q) {
-                $q->where('expected_amount', '>', 0);
-            })
-            ->get();
-    @endphp
-
-    @if(count($masterEndedAppointments) > 0)
-        <div class="row mb-3 mt-3">
-            <div class="col-12">
-                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseDocs" role="button" aria-expanded="false">
-                    Акты
-                </a>
-                <div class="collapse" id="collapseDocs">
-                    <div class="card card-body overflow-scroll">
-
-                        <table class="table table-sm table-bordered table-responsive mb-0">
-                            <tr>
-                                <th class="bg-secondary text-white" colspan="2" >Дата и время</th>
-                                <th class="bg-secondary text-white">Рабочее место</th>
-                                <th class="bg-secondary text-white">Сумма</th>
-                                <th class="bg-secondary text-white"></th>
-                            </tr>
-                            @foreach($masterEndedAppointments as $nextAppointment)
-                                <tr class="appointment-info">
-
-                                    <td class="text-nowrap" style="width: 1%;">
-                                        {{ $nextAppointment->start_at->format('d.m.Y') }}
-                                    </td>
-
-                                    <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
-                                        ID: <span class="js_appointment-id">{{ $nextAppointment->id }}</span>
-                                    </td>
-
-                                    <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="display: none;">
-                                        <span class="js_appointment-date">{{ $nextAppointment->start_at->isoFormat('D MMM') }}</span>
-                                    </td>
-
-                                    <td class="text-nowrap js_app_{{ $nextAppointment->id }}" style="width: 1%;">
-
-                                        <span class="text-nowrap js_appointment-time">
-                                            {{ $nextAppointment->start_at->format('H:i') }} - {{ $nextAppointment->end_at->format('H:i') }}
-                                        </span>
-
-                                    </td>
-
-                                    <td class="text-nowrap js_app_{{ $nextAppointment->id }}">
-                                        <span class="js_appointment-place">{{ $nextAppointment->place->name }}</span>
-                                    </td>
-
-                                    <td class="text-nowrap text-end">
-                                        {{ number_format((new \App\Services\AppointmentService())->calculateAppointmentCost($nextAppointment), 2) }} BYN
-                                    </td>
-
-                                    <td>
-                                        <a target="_blank" href="/user/documents/{{ $nextAppointment->id }}?download">Скачать</a>
-                                    </td>
-
-                                </tr>
-
-                            @endforeach
-                        </table>
-
-                    </div>
-                </div>
-            </div>
-        </div>
+        @endif
     @endif
-@endif
 
 
-{{-- Storage Cell --}}
-@if(auth()->user())
+    {{-- Storage Cell --}}
+    @if(auth()->user())
 
-    @php
-        $bookings = \App\Models\StorageBooking::whereNull('finished_at')->where('user_id', auth()->id())->get();
-    @endphp
+        @php
+            $bookings = \App\Models\StorageBooking::whereNull('finished_at')->where('user_id', auth()->id())->get();
+        @endphp
 
-    @if(count($bookings))
-        <div class="row mb-3 mt-3">
-            <div class="col">
-                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseStorageCells" role="button" aria-expanded="false">Локер</a>
+        @if(count($bookings))
+            <div class="row mb-3 mt-3">
+                <div class="col">
+                    <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseStorageCells" role="button" aria-expanded="false">Локер</a>
 
-                @php
-                    $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
-                    $bookingsWithDebt = $bookings->filter(fn($booking) => $booking->leftToPay() > 0);
-                    $minDaysLeft = $bookings->map(fn($booking) => $booking->daysLeft())->min();
-                    $maxOverdueDays = $bookingsWithDebt->map(fn($booking) => $booking->lockerPaymentOverdueCalendarDays())->max() ?? 0;
-                @endphp
+                    @php
+                        $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
+                        $bookingsWithDebt = $bookings->filter(fn($booking) => $booking->leftToPay() > 0);
+                        $minDaysLeft = $bookings->map(fn($booking) => $booking->daysLeft())->min();
+                        $maxOverdueDays = $bookingsWithDebt->map(fn($booking) => $booking->lockerPaymentOverdueCalendarDays())->max() ?? 0;
+                    @endphp
 
-                @if($bookingsWithDebt->count() > 0)
-                    <span class="bg-danger text-white p-1 px-2">
-                        <b>ПРОСРОЧЕНО: {{ $maxOverdueDays }} {{ trans_choice('день|дня|дней', $maxOverdueDays) }}</b>
-                    </span>
-                @elseif($minDaysLeft < 0)
-                    <span class="bg-danger text-white p-1 px-2">
-                        <b>ПРОСРОЧЕНО: {{ abs($minDaysLeft) }} {{ trans_choice('день|дня|дней', abs($minDaysLeft)) }}</b>
-                    </span>
-                @elseif($minDaysLeft <= $endingSoonDays)
-                    <span class="bg-warning text-white p-1 px-2">
-                        <b>ОСТАЛОСЬ: {{ $minDaysLeft }} {{ trans_choice('день|дня|дней', $minDaysLeft) }}</b>
-                    </span>
-                @endif
+                    @if($bookingsWithDebt->count() > 0)
+                        <span class="bg-danger text-white p-1 px-2">
+                            <b>ПРОСРОЧЕНО: {{ $maxOverdueDays }} {{ trans_choice('день|дня|дней', $maxOverdueDays) }}</b>
+                        </span>
+                    @elseif($minDaysLeft < 0)
+                        <span class="bg-danger text-white p-1 px-2">
+                            <b>ПРОСРОЧЕНО: {{ abs($minDaysLeft) }} {{ trans_choice('день|дня|дней', abs($minDaysLeft)) }}</b>
+                        </span>
+                    @elseif($minDaysLeft <= $endingSoonDays)
+                        <span class="bg-warning text-white p-1 px-2">
+                            <b>ОСТАЛОСЬ: {{ $minDaysLeft }} {{ trans_choice('день|дня|дней', $minDaysLeft) }}</b>
+                        </span>
+                    @endif
 
-                <div class="collapse" id="collapseStorageCells">
-                    <div class="card card-body">
+                    <div class="collapse" id="collapseStorageCells">
+                        <div class="card card-body">
 
-                        @foreach($bookings as $booking)
-                            @php
-                                $bookingDaysLeft = $booking->daysLeft();
-                                $bookingHasDebt = $booking->leftToPay() > 0;
-                                $bookingOverdueDays = $booking->lockerPaymentOverdueCalendarDays();
-                            @endphp
+                            @foreach($bookings as $booking)
+                                @php
+                                    $bookingDaysLeft = $booking->daysLeft();
+                                    $bookingHasDebt = $booking->leftToPay() > 0;
+                                    $bookingOverdueDays = $booking->lockerPaymentOverdueCalendarDays();
+                                @endphp
 
-                            @if($loop->index > 0)
-                                <div class="mt-4"></div>
-                            @endif
-
-                            <table class="table table-bordered table-sm mb-0">
-                                <tr>
-                                    <td>Номер ячейки</td>
-                                    <td>{{ $booking->cell->number }}</td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width: 1%; white-space: nowrap;">Статус</td>
-                                    <td>
-                                        @if($bookingHasDebt || $bookingDaysLeft <= 0)
-                                            <span style="color: red;">Требуется оплата</span>
-                                        @else
-                                            <span style="color: green;">Оплачено</span>
-                                        @endif
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width: 1%; white-space: nowrap;">Дата начала</td>
-                                    <td>{{ $booking->start_at->format('d-m-Y') }}</td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width: 1%; white-space: nowrap;">Дата окончания</td>
-                                    <td>
-                                        {{ $booking->start_at->copy()->addDays($booking->duration)->format('d-m-Y') }}
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width: 1%; white-space: nowrap;">Осталось</td>
-                                    <td>
-                                        @if($bookingHasDebt)
-                                            <span style="color: red;">ПРОСРОЧЕНО: {{ $bookingOverdueDays }} {{ trans_choice('день|дня|дней', $bookingOverdueDays) }}</span>
-                                        @elseif($bookingDaysLeft < 0)
-                                            ПРОСРОЧЕНО: {{ abs($bookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($bookingDaysLeft)) }}
-                                        @elseif($bookingDaysLeft <= \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS)
-                                            ОСТАЛОСЬ: {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
-                                        @else
-                                            {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
-                                        @endif
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width: 1%; white-space: nowrap;">Стоимость продления</td>
-                                    <td>
-                                        {{ $booking->cell->cost_per_month }} BYN / 30 дней
-                                    </td>
-                                </tr>
-
-                                @if(isset($booking->cell->secret))
-                                    <tr>
-                                        <td style="width: 1%; white-space: nowrap;">Код</td>
-                                        <td>
-                                            {{ $booking->cell->secret }}
-                                        </td>
-                                    </tr>
+                                @if($loop->index > 0)
+                                    <div class="mt-4"></div>
                                 @endif
 
+                                <table class="table table-bordered table-sm mb-0">
+                                    <tr>
+                                        <td>Номер ячейки</td>
+                                        <td>{{ $booking->cell->number }}</td>
+                                    </tr>
 
-                            </table>
-                        @endforeach
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Статус</td>
+                                        <td>
+                                            @if($bookingHasDebt || $bookingDaysLeft <= 0)
+                                                <span style="color: red;">Требуется оплата</span>
+                                            @else
+                                                <span style="color: green;">Оплачено</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Дата начала</td>
+                                        <td>{{ $booking->start_at->format('d-m-Y') }}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Дата окончания</td>
+                                        <td>
+                                            {{ $booking->start_at->copy()->addDays($booking->duration)->format('d-m-Y') }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Осталось</td>
+                                        <td>
+                                            @if($bookingHasDebt)
+                                                <span style="color: red;">ПРОСРОЧЕНО: {{ $bookingOverdueDays }} {{ trans_choice('день|дня|дней', $bookingOverdueDays) }}</span>
+                                            @elseif($bookingDaysLeft < 0)
+                                                ПРОСРОЧЕНО: {{ abs($bookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($bookingDaysLeft)) }}
+                                            @elseif($bookingDaysLeft <= \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS)
+                                                ОСТАЛОСЬ: {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
+                                            @else
+                                                {{ $bookingDaysLeft }} {{ trans_choice('день|дня|дней', $bookingDaysLeft) }}
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="width: 1%; white-space: nowrap;">Стоимость продления</td>
+                                        <td>
+                                            {{ $booking->cell->cost_per_month }} BYN / 30 дней
+                                        </td>
+                                    </tr>
+
+                                    @if(isset($booking->cell->secret))
+                                        <tr>
+                                            <td style="width: 1%; white-space: nowrap;">Код</td>
+                                            <td>
+                                                {{ $booking->cell->secret }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+
+                                </table>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
+
+    {{-- Settings --}}
+    @if(auth()->user() && auth()->user()->hasRole('master'))
+        <div class="row mb-3 mt-3">
+            <div class="col">
+
+                <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseSettings" role="button" aria-expanded="false">
+                    Настройки
+                </a>
+
+                <div class="collapse" id="collapseSettings">
+                    <div class="card card-body">
+
+                        <form action="{{ route('user.update-settings') }}" method="POST">
+                            @csrf
+                            <h3>Показывать рабочие места:</h3>
+                            @foreach(\App\Models\Place::where('is_hidden', false)->orderBy('sort')->get() as $workspace)
+                                <div>
+                                    <input id="workspace_{{ $workspace->id }}" type="checkbox" name="workspace_visibility[]" value="{{ $workspace->id }}"
+                                        {{ in_array($workspace->id, auth()->user()->getSetting('workspace_visibility', [])) ? 'checked' : '' }}>
+                                    <label for="workspace_{{ $workspace->id }}">{{ $workspace->name }}</label>
+                                </div>
+                            @endforeach
+                            <button id="saveSettings" type="submit">Сохранить</button>
+                        </form>
+
                     </div>
                 </div>
             </div>
         </div>
     @endif
-@endif
-
-
-{{-- Settings --}}
-@if(auth()->user() && auth()->user()->hasRole('master'))
-    <div class="row mb-3 mt-3">
-        <div class="col">
-
-            <a class="master-collapse-toggle collapsed" data-bs-toggle="collapse" href="#collapseSettings" role="button" aria-expanded="false">
-                Настройки
-            </a>
-
-            <div class="collapse" id="collapseSettings">
-                <div class="card card-body">
-
-                    <form action="{{ route('user.update-settings') }}" method="POST">
-                        @csrf
-                        <h3>Показывать рабочие места:</h3>
-                        @foreach(\App\Models\Place::where('is_hidden', false)->orderBy('sort')->get() as $workspace)
-                            <div>
-                                <input id="workspace_{{ $workspace->id }}" type="checkbox" name="workspace_visibility[]" value="{{ $workspace->id }}"
-                                    {{ in_array($workspace->id, auth()->user()->getSetting('workspace_visibility', [])) ? 'checked' : '' }}>
-                                <label for="workspace_{{ $workspace->id }}">{{ $workspace->name }}</label>
-                            </div>
-                        @endforeach
-                        <button id="saveSettings" type="submit">Сохранить</button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-    </div>
-@endif

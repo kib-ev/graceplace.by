@@ -42,10 +42,9 @@ class UserController extends Controller
                     ->from('payment_requirements as pr3')
                     ->join('storage_bookings as sb3', 'sb3.id', '=', 'pr3.payable_id')
                     ->where('pr3.payable_type', StorageBooking::class)
-                    ->where('pr3.status', 'pending')
+                    ->whereIn('pr3.status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
                     ->where('pr3.remaining_amount', '>', 0)
                     ->whereNull('sb3.deleted_at')
-                    ->where('sb3.start_at', '<=', now())
                     ->whereNull('sb3.finished_at')
                     ->whereColumn('sb3.user_id', 'users.id'),
             ])
@@ -70,7 +69,18 @@ class UserController extends Controller
             ->orderBy('users.name')
             ->get();
 
-        return view('admin.users.debtors', compact('users', 'activeCount', 'inactiveCount'));
+        $totalAppointmentsDebt = (float) $users->sum('appointments_debt_amount_byn');
+        $totalStorageDebt = (float) $users->sum('storage_debt_amount_byn');
+        $totalDebtAll = $totalAppointmentsDebt + $totalStorageDebt;
+
+        return view('admin.users.debtors', compact(
+            'users',
+            'activeCount',
+            'inactiveCount',
+            'totalAppointmentsDebt',
+            'totalStorageDebt',
+            'totalDebtAll'
+        ));
     }
 
     public function update(Request $request, User $user)

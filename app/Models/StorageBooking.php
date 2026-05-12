@@ -41,10 +41,9 @@ class StorageBooking extends Model
     public function scopeWithUnpaidLockerRequirement(Builder $builder): Builder
     {
         return $builder
-            ->where('start_at', '<=', now())
             ->whereNull('finished_at')
             ->whereHas('paymentRequirements', fn ($q) => $q
-                ->where('status', 'pending')
+                ->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
                 ->where('remaining_amount', '>', 0)
             );
     }
@@ -62,12 +61,35 @@ class StorageBooking extends Model
             return 0;
         }
 
-        $start = $this->start_at->copy()->startOfDay();
+        $unpaidRequirements = $this->relationLoaded('paymentRequirements')
+            ? $this->paymentRequirements
+                ->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
+                ->where('remaining_amount', '>', 0)
+            : $this->paymentRequirements()
+                ->whereIn('status', PaymentRequirement::UNPAID_REQUIREMENT_STATUSES)
+                ->where('remaining_amount', '>', 0)
+                ->get();
+
+        if ($unpaidRequirements->isEmpty()) {
+            return 0;
+        }
+
+        $fallbackDueDate = $this->start_at->copy()->addDays((int) $this->duration);
+        $oldestDueDate = $unpaidRequirements
+            ->map(fn (PaymentRequirement $requirement) => $requirement->due_date?->copy() ?? $fallbackDueDate->copy())
+            ->sort()
+            ->first();
+
+        if (! $oldestDueDate) {
+            return 0;
+        }
+
+        $dueDate = $oldestDueDate->startOfDay();
         $today = now()->copy()->startOfDay();
 
-        return $today->lessThan($start)
+        return $today->lessThanOrEqualTo($dueDate)
             ? 0
-            : (int) $start->diffInDays($today);
+            : (int) $dueDate->diffInDays($today);
     }
 
     public function adminCellListMarkerHexColor(int $endingSoonWithinDays = self::ADMIN_CELL_MARKER_ENDING_SOON_DAYS): string

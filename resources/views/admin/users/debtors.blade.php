@@ -20,6 +20,25 @@
                 @endif
             </form>
 
+            @if($users->isNotEmpty())
+                <div class="alert alert-light border mb-3 py-2">
+                    <div class="row g-2 small">
+                        <div class="col-md-3">
+                            <span class="text-muted">Записи:</span>
+                            <strong>{{ number_format($totalAppointmentsDebt ?? 0, 2) }}</strong> BYN
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted">Локер:</span>
+                            <strong>{{ number_format($totalStorageDebt ?? 0, 2) }}</strong> BYN
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <span class="text-muted">Итого по списку ({{ $users->count() }}):</span>
+                            <strong class="fs-6 text-danger">{{ number_format($totalDebtAll ?? 0, 2) }}</strong> BYN
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <table class="table table-bordered mb-5 js-persist-highlight-table" data-highlight-key="users-debtors-row-highlight">
                 <thead>
                 <tr>

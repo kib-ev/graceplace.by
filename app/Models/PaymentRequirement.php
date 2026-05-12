@@ -21,13 +21,25 @@ class PaymentRequirement extends Model
     const STATUS_PAID = 'paid';
     const STATUS_OVERDUE = 'overdue';
 
+    /** Статусы, при которых требование ещё считается долгом (есть remaining_amount). */
+    public const UNPAID_REQUIREMENT_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_OVERDUE,
+    ];
+
     const REASON_DEFAULT    = 'default';
     const REASON_PENALTY_50 = 'penalty_50';
     const REASON_PENALTY_100 = 'penalty_100';
+    /** Индивидуальная сумма штрафа (задаётся администратором при отмене). */
+    const REASON_PENALTY_CUSTOM = 'penalty_custom';
 
     public function isPenalty(): bool
     {
-        return in_array($this->reason, [self::REASON_PENALTY_50, self::REASON_PENALTY_100]);
+        return in_array($this->reason, [
+            self::REASON_PENALTY_50,
+            self::REASON_PENALTY_100,
+            self::REASON_PENALTY_CUSTOM,
+        ]);
     }
 
     public function getPenaltyLabel(): ?string
@@ -35,6 +47,7 @@ class PaymentRequirement extends Model
         return match($this->reason) {
             self::REASON_PENALTY_50  => 'Штраф 50%',
             self::REASON_PENALTY_100 => 'Штраф 100%',
+            self::REASON_PENALTY_CUSTOM => 'Штраф (сумма по решению администратора)',
             default                  => null,
         };
     }
