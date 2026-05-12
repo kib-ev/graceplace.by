@@ -92,6 +92,26 @@ class StorageBooking extends Model
             : (int) $dueDate->diffInDays($today);
     }
 
+    /**
+     * Whole calendar days from booking start (start of day) until today (start of day).
+     * Used in the user cabinet for unpaid locker bookings as the «просрочка» counter.
+     */
+    public function calendarDaysElapsedSinceBookingStart(): int
+    {
+        if (! $this->start_at) {
+            return 0;
+        }
+
+        $start = $this->start_at->copy()->startOfDay();
+        $today = now()->copy()->startOfDay();
+
+        if ($today->lessThan($start)) {
+            return 0;
+        }
+
+        return (int) $start->diffInDays($today);
+    }
+
     public function adminCellListMarkerHexColor(int $endingSoonWithinDays = self::ADMIN_CELL_MARKER_ENDING_SOON_DAYS): string
     {
         if ($this->leftToPay() > 0) {

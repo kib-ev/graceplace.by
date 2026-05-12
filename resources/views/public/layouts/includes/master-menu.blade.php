@@ -355,12 +355,16 @@
                         $endingSoonDays = \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS;
                         $bookingsWithDebt = $bookings->filter(fn($booking) => $booking->leftToPay() > 0);
                         $minDaysLeft = $bookings->map(fn($booking) => $booking->daysLeft())->min();
-                        $maxOverdueDays = $bookingsWithDebt->map(fn($booking) => $booking->lockerPaymentOverdueCalendarDays())->max() ?? 0;
+                        $maxDebtElapsedDays = $bookingsWithDebt->map(fn($booking) => $booking->calendarDaysElapsedSinceBookingStart())->max() ?? 0;
                     @endphp
 
-                    @if($bookingsWithDebt->count() > 0)
+                    @if($bookingsWithDebt->count() > 0 && $maxDebtElapsedDays > 0)
                         <span class="bg-danger text-white p-1 px-2">
-                            <b>ПРОСРОЧЕНО: {{ $maxOverdueDays }} {{ trans_choice('день|дня|дней', $maxOverdueDays) }}</b>
+                            <b>ПРОСРОЧЕНО: {{ $maxDebtElapsedDays }} {{ trans_choice('день|дня|дней', $maxDebtElapsedDays) }}</b>
+                        </span>
+                    @elseif($bookingsWithDebt->count() > 0)
+                        <span class="bg-warning text-dark p-1 px-2">
+                            <b>Требуется оплата</b>
                         </span>
                     @elseif($minDaysLeft < 0)
                         <span class="bg-danger text-white p-1 px-2">
@@ -379,7 +383,7 @@
                                 @php
                                     $bookingDaysLeft = $booking->daysLeft();
                                     $bookingHasDebt = $booking->leftToPay() > 0;
-                                    $bookingOverdueDays = $booking->lockerPaymentOverdueCalendarDays();
+                                    $bookingDebtElapsedDays = $booking->calendarDaysElapsedSinceBookingStart();
                                 @endphp
 
                                 @if($loop->index > 0)
@@ -419,7 +423,7 @@
                                         <td style="width: 1%; white-space: nowrap;">Осталось</td>
                                         <td>
                                             @if($bookingHasDebt)
-                                                <span style="color: red;">ПРОСРОЧЕНО: {{ $bookingOverdueDays }} {{ trans_choice('день|дня|дней', $bookingOverdueDays) }}</span>
+                                                <span style="color: red;">ПРОСРОЧЕНО: {{ $bookingDebtElapsedDays }} {{ trans_choice('день|дня|дней', $bookingDebtElapsedDays) }}</span>
                                             @elseif($bookingDaysLeft < 0)
                                                 ПРОСРОЧЕНО: {{ abs($bookingDaysLeft) }} {{ trans_choice('день|дня|дней', abs($bookingDaysLeft)) }}
                                             @elseif($bookingDaysLeft <= \App\Models\StorageBooking::ADMIN_CELL_MARKER_ENDING_SOON_DAYS)
