@@ -96,23 +96,26 @@
 
                 @php
                     $appointmentsToDay = $appointments->filter(function ($appointment) use ($nextDate) { return $appointment->start_at->format('Y-m-d') == $nextDate->format('Y-m-d'); });
+                    $appointmentsPenaltyDay = $appointmentsToDay->filter(fn ($appointment) => $appointment->paymentRequirements->contains(fn ($r) => $r->isPenalty()));
+                    $appointmentsCanceledNoPenaltyDay = $appointmentsToDay
+                        ->filter(fn ($appointment) => $appointment->canceled_at !== null)
+                        ->filter(fn ($appointment) => ! $appointment->paymentRequirements->contains(fn ($r) => $r->isPenalty()));
                 @endphp
 
-
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <ul class="nav nav-tabs mb-2" id="appointmentsDayTabs{{ $i }}" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#actual{{ $i }}" type="button" role="tab" aria-controls="profile" aria-selected="true">Актуальные ({{ $appointmentsToDay->whereNull('canceled_at')->count() }})</button>
+                        <button class="nav-link active" id="actual-tab-{{ $i }}" data-bs-toggle="tab" data-bs-target="#actual{{ $i }}" type="button" role="tab" aria-controls="actual{{ $i }}" aria-selected="true">Актуальные ({{ $appointmentsToDay->whereNull('canceled_at')->count() }})</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#cancel{{ $i }}" type="button" role="tab" aria-controls="home" aria-selected="false">Отмененные ({{ $appointmentsToDay->whereNotNull('canceled_at')->count() }})</button>
+                        <button class="nav-link" id="penalty-tab-{{ $i }}" data-bs-toggle="tab" data-bs-target="#penalty{{ $i }}" type="button" role="tab" aria-controls="penalty{{ $i }}" aria-selected="false">Штрафы ({{ $appointmentsPenaltyDay->count() }})</button>
                     </li>
-
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cancel-tab-{{ $i }}" data-bs-toggle="tab" data-bs-target="#cancel{{ $i }}" type="button" role="tab" aria-controls="cancel{{ $i }}" aria-selected="false">Отмененные ({{ $appointmentsCanceledNoPenaltyDay->count() }})</button>
+                    </li>
                 </ul>
 
-
-                {{--  TAB 1  --}}
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="actual{{ $i }}" role="tabpanel" aria-labelledby="profile-tab">
+                <div class="tab-content mb-4" id="appointmentsDayTabsContent{{ $i }}">
+                    <div class="tab-pane fade show active" id="actual{{ $i }}" role="tabpanel" aria-labelledby="actual-tab-{{ $i }}">
                         <table id="appointmentsList1" class="table table-bordered table-responsive mb-5">
 
                             @forelse($appointmentsToDay->whereNull('canceled_at') as $appointment)
@@ -280,20 +283,157 @@
                             </tr>
                         </table>
                     </div>
-                </div>
 
+                    <div class="tab-pane fade" id="penalty{{ $i }}" role="tabpanel" aria-labelledby="penalty-tab-{{ $i }}">
+                        <table class="table table-bordered mb-5" id="appointmentsListPenalty{{ $i }}">
 
-                {{--  TAB 2  --}}
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade" id="cancel{{ $i }}" role="tabpanel" aria-labelledby="profile-tab">
-                        <table id="appointmentsList2" class="table table-bordered mb-5">
-
-                            @forelse($appointmentsToDay->whereNotNull('canceled_at') as $appointment)
+                            @forelse($appointmentsPenaltyDay as $appointment)
+                                @php $penaltyReq = $appointment->paymentRequirements->firstWhere(fn ($r) => $r->isPenalty()); @endphp
 
                                 <tr class="{{ !is_null($appointment->canceled_at) ? 'canceled' : '' }}">
                                     <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
                                         {{ $appointment->start_at?->format('H:i') }} -
-                                        {{ $appointment->start_at->addMinutes($appointment->duration)?->format('H:i') }}
+                                        {{ $appointment->start_at->copy()->addMinutes($appointment->duration)?->format('H:i') }}
+
+                                        <br>
+
+                                        <span style="color: #ccc; font-size: 0.7em;">{{ $appointment->created_at->format('d.m.Y H:i') }}</span>
+
+                                    </td>
+
+                                    <td style="width: 1%; min-width: 30px;">
+                                        @if($appointment->isCreatedByUser())
+                                            <span class="self-added"><i class="fa fa-user"></i></span>
+                                        @else
+
+                                        @endif
+                                    </td>
+
+                                    <td style="width: 190px;">
+                                        @if($appointment->user->master)
+                                            <div class="flex-fill" style="display:flex; justify-content: space-between;">
+                                                <a href="{{ route('admin.masters.show', $appointment->user->master) }}">
+                                                    {{ $appointment->user->name }}
+                                                </a>
+                                            </div>
+                                        @else
+                                            {{ $appointment->user->name }}
+                                        @endif
+                                    </td>
+
+                                    <td style="width: 140px;">
+                                        {{ $appointment->user->phone }}
+                                    </td>
+
+                                    <td style="width: 40px;">
+                                        @if($appointment->user->master && $appointment->user->master->direct)
+                                            <a target="_blank" href="{{ $appointment->user->master->direct }}">direct</a>
+                                        @endif
+                                    </td>
+
+                                    <td style="width: 180px; white-space: nowrap;">
+                                        @if(isset($appointment->place))
+                                            <a href="{{ request()->fullUrlWithQuery(['place_id' => $appointment->place_id]) }}">{{ $appointment->place->name }}</a>
+                                        @endif
+                                    </td>
+
+                                    <td style="">
+                                        @if($penaltyReq)
+                                            <span class="badge bg-warning text-dark me-1">{{ $penaltyReq->getPenaltyLabel() }}</span>
+                                            @if($penaltyReq->remaining_amount > 0)
+                                                <span class="badge bg-danger">Долг {{ number_format($penaltyReq->remaining_amount, 2, '.') }} BYN</span>
+                                            @else
+                                                <span class="badge bg-secondary">Оплачен</span>
+                                            @endif
+                                            <br>
+                                        @endif
+                                        {{ $appointment->description }}
+
+                                        <div class="comments">
+                                            @foreach($appointment->comments as $comment)
+                                                <div class="comment {{ $comment->type }} {{ $comment->user->hasAnyRole(['admin', 'manager']) ? 'admin' : 'master' }} mb-1">
+                                                    <div class="label" style="font-size: 0.8em; color: #ccc;">
+                                                        {{ $comment->created_at->format('d.m.Y H:i') }} - {{ $comment->user->name }}
+                                                    </div>
+                                                    <div class="text" style="border: 1px solid #ccc; padding: 5px 10px;">
+                                                        {{ $comment->text }}
+                                                    </div>
+                                                </div>
+                                            @endforeach
+
+                                            @if($appointment->canceled_at)
+                                                <hr>
+                                                @if($appointment->canceled_at < $appointment->start_at)
+                                                    <span style="font-size: 0.9em; color: #ccc;">От отмены до начала записи: <br> {{ \Carbon\Carbon::parse($appointment->canceled_at)->diffAsCarbonInterval($appointment->start_at)->forHumans() }}</span>
+                                                @else
+                                                    <span style="font-size: 0.9em; color: #ccc;">Отмена после начала записи</span>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    <td style="width: 100px; white-space: nowrap; text-align: right;">
+                                        @if(count($appointment->paymentRequirements) == 0)
+                                            <span style="color: #c1bebe;">{{ number_format($appointment->getExpectedPrice(), 2, '.') }} BYN</span>
+                                        @elseif($appointment->isPaid())
+                                            <b style="color: #000;">{{ number_format($appointment->paymentRequirements->first()->getPaidAmount(), 2, '.') }} BYN</b>
+                                        @else
+                                            <span style="color: #000; font-weight: 300;">{{ number_format($appointment->paymentRequirements->first()->expected_amount, 2, '.') }} BYN</span>
+                                        @endif
+
+                                        @if($appointment->payments->where('status', 'completed')->count() > 0)
+                                            <br>
+                                            <span style="font-size: 0.85em; color: #666;">
+                                                {{ ucfirst($appointment->payments->where('status', 'completed')->first()->payment_method) }}
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td style="width: 1%;">
+                                        <a href="{{ route('admin.appointments.edit', $appointment) }}"><i class="fa fa-edit"></i></a>
+                                    </td>
+                                </tr>
+
+                            @empty
+                                <tr>
+                                    <td colspan="9">Нет записей</td>
+                                </tr>
+                            @endforelse
+
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th style="text-align: right;">ИТОГО</th>
+
+                                @php
+                                    $totalPenaltyPaid = $appointmentsPenaltyDay->sum(function ($a) {
+                                        return $a->payments->where('status', 'completed')->sum('amount');
+                                    });
+                                @endphp
+
+                                <th style="width: 100px; white-space: nowrap; text-align: right;">
+                                    <b>{{ number_format($totalPenaltyPaid, 2, '.') }} BYN</b>
+                                </th>
+
+                                <th></th>
+
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="cancel{{ $i }}" role="tabpanel" aria-labelledby="cancel-tab-{{ $i }}">
+                        <table id="appointmentsList2" class="table table-bordered mb-5">
+
+                            @forelse($appointmentsCanceledNoPenaltyDay as $appointment)
+
+                                <tr class="{{ !is_null($appointment->canceled_at) ? 'canceled' : '' }}">
+                                    <td style="width: 1%; white-space: nowrap;" title="{{ 'id: '.$appointment->id }}">
+                                        {{ $appointment->start_at?->format('H:i') }} -
+                                        {{ $appointment->start_at->copy()->addMinutes($appointment->duration)?->format('H:i') }}
 
                                         <br>
 
@@ -402,7 +542,7 @@
                                 <th style="text-align: right;">ИТОГО</th>
 
                                 @php
-                                    $totalCanceledPaid = $appointmentsToDay->whereNotNull('canceled_at')->sum(function ($a) {
+                                    $totalCanceledPaid = $appointmentsCanceledNoPenaltyDay->sum(function ($a) {
                                         return $a->payments->where('status', 'completed')->sum('amount');
                                     });
                                 @endphp
@@ -416,6 +556,7 @@
                             </tr>
                         </table>
                     </div>
+
                 </div>
 
             @endfor

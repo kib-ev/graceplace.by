@@ -139,7 +139,7 @@
                                             —
                                         @endif
                                     </td>
-                                    <td class="text-end pe-3">{{ $sb->lockerPaymentOverdueCalendarDays() }}</td>
+                                    <td class="text-end pe-3">{{ $sb->calendarDaysElapsedSinceBookingStart() }}</td>
                                     <td class="text-end pe-3">{{ number_format($sb->leftToPay(), 2) }}</td>
                                     <td class="pe-3" style="min-width: 320px;">
                                         <form method="POST" action="{{ route('admin.erip-payments.link') }}" class="d-flex gap-1">
