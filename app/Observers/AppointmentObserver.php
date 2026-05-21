@@ -23,10 +23,18 @@ class AppointmentObserver
         $paymentService = app(PaymentService::class);
         $paymentService->createPaymentRequirementForAppointment($appointment);
 
-        // MERGE CLOSEST APPOINTMENTS ------------------------------------
-        $appointments = Appointment::whereDate('start_at', $appointment->start_at)->whereNull('canceled_at')->get();
-        (new AppointmentService())->mergeAppointments($appointments);
-        // END -----------------------------------------------------------
+        if ($appointment->is_created_by_user) {
+            $appointments = Appointment::query()
+                ->whereDate('start_at', $appointment->start_at)
+                ->whereNull('canceled_at')
+                ->with(['place', 'paymentRequirements'])
+                ->get();
+
+            (new AppointmentService())->mergeAppointments(
+                $appointments,
+                AppointmentService::MERGE_GAP_MINUTES
+            );
+        }
     }
 
     public function updating(Appointment $appointment): bool

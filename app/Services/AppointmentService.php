@@ -17,6 +17,9 @@ final class AppointmentService
     public static int $minAppointmentDuration = 60; // for masters
     public static int $adminMinAppointmentDuration = 30; // for admins
 
+    /** Макс. пауза (мин.) между записями одного мастера на одном месте для автообъединения. */
+    public const MERGE_GAP_MINUTES = 30;
+
     protected Collection|null $appointments = null;
     protected Carbon|null $date = null;
 
@@ -390,51 +393,96 @@ final class AppointmentService
         return $result;
     }
 
-    public function mergeAppointments(Collection $appointments, $interval = 0)
+    public function mergeAppointments(Collection $appointments, int $interval = 0): void
     {
         try {
             $appointmentsCollection = collect($appointments)->whereNull('canceled_at')->sortBy('start_at');
 
-            // GROUP BY USER ID AND PLACE ID
             foreach ($appointmentsCollection->groupBy(function ($appointment) {
-                return 'user_id_' . $appointment->user_id . '_place_id_' . $appointment->place_id;
+                return 'user_id_'.$appointment->user_id.'_place_id_'.$appointment->place_id;
             }) as $groupUserAppointments) {
-
-                // FIND CLOSEST APPOINTMENTS
-                $groupUserAppointments->each(function ($appointment1) use ($groupUserAppointments) {
-                    $groupUserAppointments->where('id','!=', $appointment1->id)->each(function ($appointment2) use ($appointment1, $groupUserAppointments) {
-
-                        if($appointment1->end_at == $appointment2->start_at) {
-                            $newDuration = $appointment1->duration + $appointment2->duration;
-
-                            // move comments from second to first
-                            $appointment2->comments()->update([
-                                'model_id' => $appointment1->id
-                            ]);
-
-                            // remove existing payment requirements for both appointments
-                            $appointment1->paymentRequirements()->delete();
-                            $appointment2->paymentRequirements()->delete();
-
-                            // delete second appointment
-                            $appointment2->delete();
-
-                            // update duration for first
-                            $appointment1->update([
-                                'duration' => $newDuration,
-                            ]);
-
-                            // create fresh payment requirement for merged appointment
-                            $expected = $this->calculateAppointmentCost($appointment1->fresh(['place']));
-                            $appointment1->createRequirement($expected, $appointment1->start_at->toDateString());
-                        }
-                    });
-                });
+                $this->mergeAppointmentGroup($groupUserAppointments, $interval);
             }
         } catch (\Exception $e) {
-            \Log::error('Error merging appointments: ' . $e->getMessage());
+            \Log::error('Error merging appointments: '.$e->getMessage());
             throw new \Exception('Не удалось объединить записи. Пожалуйста, попробуйте еще раз.');
         }
+    }
+
+    /**
+     * @param  Collection<int, Appointment>  $groupUserAppointments
+     */
+    private function mergeAppointmentGroup(Collection $groupUserAppointments, int $interval): void
+    {
+        $sample = $groupUserAppointments->first();
+
+        if (! $sample) {
+            return;
+        }
+
+        $maxPasses = max(1, $groupUserAppointments->count());
+
+        for ($pass = 0; $pass < $maxPasses; $pass++) {
+            $sorted = Appointment::query()
+                ->where('user_id', $sample->user_id)
+                ->where('place_id', $sample->place_id)
+                ->whereDate('start_at', $sample->start_at)
+                ->whereNull('canceled_at')
+                ->orderBy('start_at')
+                ->with(['place', 'paymentRequirements'])
+                ->get();
+
+            if ($sorted->count() < 2) {
+                return;
+            }
+
+            $merged = false;
+
+            for ($i = 0; $i < $sorted->count() - 1; $i++) {
+                $earlier = $sorted[$i]->fresh(['place']);
+                $later = $sorted[$i + 1]->fresh(['place']);
+
+                if (! $earlier || ! $later) {
+                    continue;
+                }
+
+                $gapMinutes = (int) $earlier->end_at->diffInMinutes($later->start_at, false);
+
+                if ($gapMinutes < 0 || $gapMinutes > $interval) {
+                    continue;
+                }
+
+                $this->mergeTwoAppointments($earlier, $later);
+                $merged = true;
+                break;
+            }
+
+            if (! $merged) {
+                return;
+            }
+        }
+    }
+
+    private function mergeTwoAppointments(Appointment $earlier, Appointment $later): void
+    {
+        $newDuration = (int) $earlier->start_at->diffInMinutes($later->end_at);
+
+        $later->comments()->update([
+            'model_id' => $earlier->id,
+        ]);
+
+        $earlier->paymentRequirements()->delete();
+        $later->paymentRequirements()->delete();
+
+        $later->delete();
+
+        $earlier->update([
+            'duration' => $newDuration,
+        ]);
+
+        $earlier = $earlier->fresh(['place']);
+        $expected = $this->calculateAppointmentCost($earlier);
+        $earlier->createRequirement($expected, $earlier->start_at->toDateString());
     }
 
     public function isTimeSlotAvailable($placeId, Carbon $startAt, Carbon $endAt): bool

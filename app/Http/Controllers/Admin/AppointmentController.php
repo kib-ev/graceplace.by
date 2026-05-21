@@ -177,7 +177,7 @@ class AppointmentController extends Controller
             ->with(['place', 'paymentRequirements'])
             ->get();
 
-        (new AppointmentService())->mergeAppointments($appointments);
+        (new AppointmentService())->mergeAppointments($appointments, AppointmentService::MERGE_GAP_MINUTES);
 
         return redirect()->route('admin.appointments.index', ['date_from'=> $date, 'date_to' => $date]);
     }
