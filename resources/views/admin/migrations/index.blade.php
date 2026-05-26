@@ -5,6 +5,14 @@
         <div class="col-12">
             <h1 class="mb-3">Миграции</h1>
 
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger">{{ $errors->first() }}</div>
+            @endif
+
             @if(session()->has('migrate_exit_code'))
                 <div class="alert {{ session('migrate_exit_code') === 0 ? 'alert-success' : 'alert-danger' }}">
                     {{ session('migrate_exit_code') === 0 ? 'Миграции выполнены.' : 'Ошибка запуска миграций.' }}
@@ -37,9 +45,21 @@
                             @if($pendingMigrations->isEmpty())
                                 <p class="mb-0 text-success">Нет ожидающих миграций.</p>
                             @else
-                                <ul class="mb-0">
+                                <ul class="list-unstyled mb-0">
                                     @foreach($pendingMigrations as $migration)
-                                        <li><code>{{ $migration }}</code></li>
+                                        <li class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                            <code class="small">{{ $migration }}</code>
+                                            <form
+                                                method="POST"
+                                                action="{{ route('admin.migrations.destroy') }}"
+                                                onsubmit="return confirm('Удалить файл миграции {{ $migration }}.php?')"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="migration" value="{{ $migration }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                            </form>
+                                        </li>
                                     @endforeach
                                 </ul>
                             @endif

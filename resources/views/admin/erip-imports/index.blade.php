@@ -59,12 +59,14 @@
                     <th>Сумма</th>
                     <th>№ операции</th>
                     <th>Статус</th>
-{{--                    <th></th>--}}
                 </tr>
                 </thead>
                 <tbody>
                 @forelse($payments as $payment)
-                    @php $isClosed = ($payment->allocations_count ?? 0) > 0 && (float) $payment->unallocated_amount <= 0; @endphp
+                    @php
+                        $isClosed = ($payment->allocations_count ?? 0) > 0 && (float) $payment->unallocated_amount <= 0;
+                        $payerLabel = $payment->payerLabel();
+                    @endphp
                     <tr>
                         <td>{{ $payment->id }}</td>
                         <td>{{ $payment->paid_at?->format('d.m.Y H:i') ?? '—' }}</td>
@@ -72,27 +74,44 @@
                         <td>
                             @if($payment->matchedMaster)
                                 <a href="{{ route('admin.masters.show', $payment->matchedMaster) }}" target="_blank">
-                                    {{ $payment->payer_phone ?? '—' }} {{ $payment->matchedMaster->full_name }}
+                                    {{ $payerLabel !== '' ? $payerLabel : $payment->matchedMaster->full_name }}
                                 </a>
+                            @elseif($payerLabel !== '')
+                                {{ $payerLabel }}
                             @else
                                 {{ $payment->payer_phone ?? '—' }}
+                            @endif
+
+                            @if(! $payment->matchedMaster)
+                                @php
+                                    $selectedMasterId = $mastersForSelect->first(function ($master) use ($payment) {
+                                        $phone = trim((string) ($master->user?->phone ?? ''));
+                                        $paymentPhone = trim((string) ($payment->payer_phone ?? ''));
+
+                                        return $phone !== ''
+                                            && $paymentPhone !== ''
+                                            && preg_replace('/\D+/', '', $phone) === preg_replace('/\D+/', '', $paymentPhone)
+                                            && trim($master->full_name) === trim((string) ($payment->payer_name ?? ''));
+                                    })?->id;
+                                @endphp
+                                <form method="POST" action="{{ route('admin.erip-imports.update-payer', $payment) }}" class="d-flex gap-1 align-items-center mt-1">
+                                    @csrf
+                                    <input type="hidden" name="erip_date" value="{{ $eripDate }}">
+                                    <select name="master_id" class="form-select form-select-sm" required style="min-width: 220px;">
+                                        <option value="">Выберите мастера…</option>
+                                        @foreach($mastersForSelect as $master)
+                                            <option value="{{ $master->id }}" {{ (int) $selectedMasterId === (int) $master->id ? 'selected' : '' }}>
+                                                {{ $master->user?->phone }} {{ $master->full_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary">OK</button>
+                                </form>
                             @endif
                         </td>
                         <td style="background: {{ $isClosed ? '#9fe3a6' : '#ff9595' }};">{{ number_format((float) $payment->amount, 2) }}</td>
                         <td>{{ $payment->operation_number ?? '—' }}</td>
                         <td>{{ $payment->status ?? '—' }}</td>
-{{--                        <td style="width: 1%; white-space: nowrap;">--}}
-{{--                            @if(($payment->allocations_count ?? 0) > 0)--}}
-{{--                                <span class="text-muted" title="Платеж уже привязан">🔒</span>--}}
-{{--                            @else--}}
-{{--                                <form method="POST" action="{{ route('admin.erip-imports.destroy', $payment) }}" onsubmit="return confirm('Удалить платеж?')">--}}
-{{--                                    @csrf--}}
-{{--                                    @method('DELETE')--}}
-{{--                                    <input type="hidden" name="erip_date" value="{{ $eripDate }}">--}}
-{{--                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>--}}
-{{--                                </form>--}}
-{{--                            @endif--}}
-{{--                        </td>--}}
                     </tr>
                 @empty
                     <tr>
@@ -106,4 +125,3 @@
         </div>
     </div>
 @endsection
-

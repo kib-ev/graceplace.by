@@ -48,7 +48,34 @@ class EripPaymentImportController extends Controller
             })
         );
 
-        return view('admin.erip-imports.index', compact('payments', 'eripDate'));
+        $mastersForSelect = Master::query()
+            ->with('user')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('admin.erip-imports.index', compact('payments', 'eripDate', 'mastersForSelect'));
+    }
+
+    public function updatePayer(Request $request, EripPayment $payment)
+    {
+        $data = $request->validate([
+            'master_id' => ['required', 'integer', 'exists:masters,id'],
+            'erip_date' => ['nullable', 'date'],
+        ]);
+
+        $master = Master::query()->with('user')->findOrFail($data['master_id']);
+
+        $payment->update([
+            'payer_phone' => $master->user?->phone,
+            'payer_name' => $master->full_name,
+        ]);
+
+        return redirect()
+            ->route('admin.erip-imports.index', array_filter([
+                'erip_date' => $data['erip_date'] ?: now()->toDateString(),
+            ]))
+            ->with('success', 'Подпись мастера сохранена.');
     }
 
     public function store(Request $request, EripMonthlyReportParser $parser)

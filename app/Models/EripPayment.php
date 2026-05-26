@@ -19,6 +19,11 @@ class EripPayment extends Model
         return $this->hasMany(EripPaymentAllocation::class);
     }
 
+    public function payerLabel(): string
+    {
+        return trim(($this->payer_phone ?? '').' '.($this->payer_name ?? ''));
+    }
+
     public function getAllocatedAmountAttribute(): float
     {
         if ($this->relationLoaded('allocations')) {

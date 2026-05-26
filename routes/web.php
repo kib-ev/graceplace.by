@@ -280,6 +280,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/erip-imports', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'store'])->name('erip-imports.store');
     Route::delete('/erip-imports/{payment}', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'destroy'])->name('erip-imports.destroy');
     Route::post('/erip-payments/link', [\App\Http\Controllers\Admin\EripPaymentLinkController::class, 'store'])->name('erip-payments.link')->middleware('admin.only');
+    Route::post('/erip-imports/{payment}/payer', [\App\Http\Controllers\Admin\EripPaymentImportController::class, 'updatePayer'])->name('erip-imports.update-payer')->middleware('admin.only');
 
     // USER SETTINGS ADMIN
     Route::post('/settings', function () {
@@ -305,6 +306,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         ->middleware('admin.only');
     Route::post('/migrations', [\App\Http\Controllers\Admin\MigrationController::class, 'migrate'])
         ->name('migrations.run')
+        ->middleware('admin.only');
+    Route::delete('/migrations', [\App\Http\Controllers\Admin\MigrationController::class, 'destroy'])
+        ->name('migrations.destroy')
         ->middleware('admin.only');
 });
 
